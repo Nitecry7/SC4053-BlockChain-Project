@@ -20,7 +20,7 @@ Paths are relative to `contracts/` unless they start at the repo root.
 | **3a Single fill and settlement** | One `_settleFill` used everywhere | `src/OrderBook.sol`, `test/OrderBook.Match.t.sol`, `assertSolvent()` in the base test | `_settleFill` (A4 and A5, maker price, price-improvement refund), `lastTradePrice`, `hasTradePrice`, `Trade` event | exact match, maker partial fill, taker partial fill, price-improvement refund, the SPEC.md worked example to the wei | Worked example exact; `assertSolvent` passes | 2h |
 | **3b Sweep and cap** | Multi-level matching | same files | match loop capped at `MAX_MATCHES_PER_TX`; remainder rests | sweep several price levels, FIFO at equal price, non-crossing order rests, cap leaves a crossed remainder, self-trade settles correctly | `assertSolvent` after every test. **Person 2 can integrate on Anvil** | 1.5h |
 | **4 Cancel** (bonus 1) | Refund only the unfilled part | `src/OrderBook.sol`, `test/OrderBook.Cancel.t.sol` | `cancelOrder` (owner only, active statuses only, CEI order, `OrderCancelled` event) | cancel open, cancel partial, cancel filled reverts, cancel twice reverts, non-owner reverts, cancel head, middle and tail | Every refund exact; links stay valid | 1.5h |
-| **5 Batch** (bonus 2) | Clear crossed books | `src/OrderBook.sol`, `test/OrderBook.Batch.t.sol` | `matchOrders(maxMatches)`, reusing `_settleFill`; the head with the lower `bookSeq` is the maker | clears a book left crossed by the cap, cap respected, 3+ traders settled, no-op when not crossed, `InvalidMaxCount` for 0 and for more than the cap | No duplicated settlement code | 1.5h |
+| **5 Batch** (bonus 2) | Clear crossed books | `src/OrderBook.sol`, `test/OrderBook.Batch.t.sol` | `matchOrders(maxMatches)`, reusing `_settleFill`; the head with the lower `bookSeq` is the maker | clears a book left crossed by the cap, cap respected, 3+ traders settled, a filled taker is unlinked as well as a filled maker (both are in the book here), no-op when not crossed, `InvalidMaxCount` for 0 and for more than the cap | No duplicated settlement code | 1.5h |
 | **Freeze ABI** | Signatures final | `CONTRACT_INTERFACE.md` (banner changes to FROZEN) | none | none | Person 2 confirms. **Done 1 Nov** (target was Mon 2 Nov, revised from 31 Oct) | — |
 | **6a Stop placement** (bonus 3) | Funded pending stops | `src/OrderBook.sol`, `test/OrderBook.Stop.t.sol` | `placeStopLimitOrder` (escrow at placement, sorted stop lists); `cancelOrder` handles PendingTrigger | escrow on placement, `StopOrderPlaced` event, tick checks on both prices, cancel pending stop, not shown by `getBook` | Solvency includes pending stops | 1.5h |
 | **6b Triggering** | Activate and match | same files | `triggerStopOrders(maxCount)`: checks `hasTradePrice`, activates from the heads of the stop lists, stamps a fresh `bookSeq` on activation, **one shared `MAX_MATCHES_PER_TX` fill budget per call** | no trigger before the first trade, an activated stop queues behind equal-price orders that entered the book earlier, wrong side of the price, triggers and fills, triggers but rests, `maxCount` respected, shared budget (activated orders rest once the budget runs out, then `matchOrders` clears them), cascade within one call | All earlier tests still green | 2h |
@@ -106,6 +106,62 @@ Tests in contracts/test/OrderBook.Place.t.sol:
 - several orders on each side end up in the correct book order (assertBookSorted)
 Run forge build, forge test and forge fmt --check, show the real output, log the
 session, do not commit.
+```
+
+### Phase 3a
+```text
+Read CLAUDE.md and SPEC.md. In placeLimitOrder, after pulling escrow, match the incoming
+order against the head of the opposite side while it crosses and fewer than
+MAX_MATCHES_PER_TX fills have happened, then rest any remainder. All settlement goes
+through one internal _settleFill(makerId, takerId, qty):
+- execution at the maker's price; cost = qty * price / PRICE_SCALE (exact, thanks to
+  lot and tick sizes)
+- the buyer receives qty base and the seller receives cost quote
+- the buy order's lockedQuote is reset to requiredQuote(remaining, its limit price),
+  and any excess is refunded to the buyer (price improvement), so lockedQuote is 0 when
+  the order is filled
+- update filled and status (PartiallyFilled or Filled), unlink filled makers, set
+  lastTradePrice and hasTradePrice, and emit Trade
+Tests in contracts/test/OrderBook.Match.t.sol, calling assertSolvent and
+assertBookSorted in each one:
+- exact match, maker partly filled, taker partly filled
+- buyer price-improvement refund
+- the SPEC.md worked example, with every balance exact to the wei
+- a non-crossing order rests
+- lastTradePrice and hasTradePrice update, and the Trade event fields
+- a reentrancy test: a malicious mock token that re-enters placeLimitOrder or
+  cancelOrder during transfer must revert with ReentrancyGuardReentrantCall
+Then run /review-engine as a separate subagent review. Log real findings with
+/log-issue, fix them with regression tests, and run forge build, forge test and
+forge fmt --check. Show the real output, log the session, do not commit.
+```
+
+### Phase 3b (draft, not run; check against the Phase 3a review before running)
+```text
+Read CLAUDE.md and SPEC.md. Phase 3a already added the match loop, the MAX_MATCHES_PER_TX
+cap and basic sweep and cap tests, so this phase hardens multi-level matching. Do not
+change _settleFill or add a second settlement path. If a test exposes a bug, stop, show
+the failing output, and fix it with /log-issue. Do not weaken the test.
+Tests in contracts/test/OrderBook.Match.t.sol, calling assertSolvent and assertBookSorted
+in each one. Skip any case Phase 3a already covers, and say which:
+- sweep several price levels on both sides, with a partly filled last maker, every balance
+  exact to the wei, and lastTradePrice equal to the last fill's price
+- FIFO at equal price by bookSeq: several makers at one price fill in entry order, on both
+  sides, and a partly filled maker keeps its place at the head
+- the crossing boundary one tick away for a sell taker (Phase 3a covers the buy side)
+- the cap: exactly MAX_MATCHES_PER_TX fills fills the taker with no remainder; one more
+  maker leaves the taker resting while crossed, PartiallyFilled and fully funded; a later
+  non-crossing placement leaves the crossed book unchanged
+- a resting remainder that hits BookTooDeep reverts the whole transaction, fills included
+- self-trade: a trader's buy fills their own sell, the trader's balances net to the
+  correct amounts, and both orders end Filled or PartiallyFilled correctly
+- one fuzz test: random sequences of lot- and tick-aligned placements from three traders
+  keep assertSolvent and assertBookSorted true after every placement
+Add a gas report for a full MAX_MATCHES_PER_TX sweep and for an insert at MAX_INSERT_SCAN
+depth (forge test --gas-report), and propose whether the proposed MAX_* values should
+change (SPEC O2). Do not change the values without asking.
+Run forge build, forge test and forge fmt --check, show the real output, log the session,
+do not commit. When this phase is merged, Person 2 can integrate on Anvil.
 ```
 
 ## Agree with Person 2 before coding

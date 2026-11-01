@@ -36,6 +36,8 @@
 - Every loop over orders has an explicit upper bound. triggerStopOrders shares ONE fill
   budget of MAX_MATCHES_PER_TX across the whole call.
 - Checks-effects-interactions in every function that moves tokens; all external writes nonReentrant.
+  Documented exceptions in placeLimitOrder: escrow pull before matching, and payouts during matching,
+  both protected by nonReentrant (see SPEC.md). Do not move the pull to the end.
 - Custom errors only, no revert strings.
 
 ## Working rules

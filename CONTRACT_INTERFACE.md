@@ -81,11 +81,12 @@ error InvalidTokens();       // constructor: zero address, or base == quote
 ```
 
 ## Inherited errors
-`OrderBook` inherits this error from OpenZeppelin `ReentrancyGuard`, so it is in the compiled ABI. It is **not**
-declared in `IOrderBook.sol`, because declaring it in both would not compile.
+`OrderBook` gets these errors from OpenZeppelin `ReentrancyGuard` and `SafeERC20`, so they are in the compiled ABI.
+They are **not** declared in `IOrderBook.sol`.
 
 ```solidity
 error ReentrancyGuardReentrantCall(); // a write was re-entered during a token transfer
+error SafeERC20FailedOperation(address token); // a token transfer returned false or the token has no code
 ```
 
 ## Event semantics
@@ -104,7 +105,7 @@ error ReentrancyGuardReentrantCall(); // a write was re-entered during a token t
 | Added `requiredQuote` | Frontend approval uses the engine's own escrow formula |
 | Exposed constants as public getters | Frontend validation and display |
 | Fixed event semantics for stop orders | Frontend knows which events to listen for |
-| Documented inherited `ReentrancyGuardReentrantCall` | It is in the compiled ABI, so the frontend can decode it |
+| Documented inherited `ReentrancyGuardReentrantCall` and `SafeERC20FailedOperation` | They are in the compiled ABI, so the frontend can decode them |
 
 ## Deployment handoff (agree with Person 2)
 - `contracts/script/Deploy.s.sol` (Person 2) deploys the tokens, then `OrderBook(base, quote)`. Person 1 reviews the OrderBook part.
