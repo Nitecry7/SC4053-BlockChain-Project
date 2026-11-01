@@ -238,3 +238,16 @@ pinned submodule. A plain copy would have committed thousands of vendored files 
 - Escrow order follows SPEC.md: run the checks, record the order, pull escrow, match, then rest any remainder. This relies on `nonReentrant`, and SPEC.md section 5 now documents why the deviation from strict CEI is safe. The code committed in this phase still pulls escrow last; Phase 3a changes it, when matching is added.
 - CONTRACT_INTERFACE.md now states that `getOrder` returns an all-zero `Order` for an unknown ID, and that the frontend should treat `id == 0` as "not found". No signature changed.
 - Merge Phase 2b into main with `--no-ff`.
+
+---
+
+## 2026-11-01: Phase 3a prompt written, not run (uncommitted)
+
+**Prompt (summary):** Commit and merge Phase 2b, create `engine/phase-3a`, write the human's Phase 3a prompt into docs/ENGINE_PHASES.md, and stop. Do not run it tonight.
+
+**What the AI did:** Added the prompt word for word. No engine code changed on this branch.
+
+**Left for Phase 3a:**
+- The code on main still pulls escrow last, and the prompt's "after pulling escrow, match" changes that.
+- The CLAUDE.md engine rule still asks for checks-effects-interactions in every function that moves tokens, with no mention of the exception now documented in SPEC.md. CLAUDE.md is a shared file, so it was not edited.
+- The prompt's loop and cap overlap with Phase 3b, so 3b's remaining work would be its tests: sweep, FIFO at equal price, the cap, and self-trade.

@@ -108,6 +108,34 @@ Run forge build, forge test and forge fmt --check, show the real output, log the
 session, do not commit.
 ```
 
+### Phase 3a
+```text
+Read CLAUDE.md and SPEC.md. In placeLimitOrder, after pulling escrow, match the incoming
+order against the head of the opposite side while it crosses and fewer than
+MAX_MATCHES_PER_TX fills have happened, then rest any remainder. All settlement goes
+through one internal _settleFill(makerId, takerId, qty):
+- execution at the maker's price; cost = qty * price / PRICE_SCALE (exact, thanks to
+  lot and tick sizes)
+- the buyer receives qty base and the seller receives cost quote
+- the buy order's lockedQuote is reset to requiredQuote(remaining, its limit price),
+  and any excess is refunded to the buyer (price improvement), so lockedQuote is 0 when
+  the order is filled
+- update filled and status (PartiallyFilled or Filled), unlink filled makers, set
+  lastTradePrice and hasTradePrice, and emit Trade
+Tests in contracts/test/OrderBook.Match.t.sol, calling assertSolvent and
+assertBookSorted in each one:
+- exact match, maker partly filled, taker partly filled
+- buyer price-improvement refund
+- the SPEC.md worked example, with every balance exact to the wei
+- a non-crossing order rests
+- lastTradePrice and hasTradePrice update, and the Trade event fields
+- a reentrancy test: a malicious mock token that re-enters placeLimitOrder or
+  cancelOrder during transfer must revert with ReentrancyGuardReentrantCall
+Then run /review-engine as a separate subagent review. Log real findings with
+/log-issue, fix them with regression tests, and run forge build, forge test and
+forge fmt --check. Show the real output, log the session, do not commit.
+```
+
 ## Agree with Person 2 before coding
 1. **Layout:** one shared `contracts/` Foundry project (Person 1 scaffolds it and pushes to main first), with `web/` for the frontend.
 2. **Toolchain:** solc 0.8.24 pinned in foundry.toml; OZ v5.x as a git submodule; `engine/*` and `web/*` branches merged into main by PR.
