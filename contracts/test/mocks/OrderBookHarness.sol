@@ -7,6 +7,10 @@ import {OrderBook} from "../../src/OrderBook.sol";
 contract OrderBookHarness is OrderBook {
     constructor(address base, address quote) OrderBook(base, quote) {}
 
+    function nextOrderId() external view returns (uint256) {
+        return _nextOrderId;
+    }
+
     function exposedInsert(uint256 orderId) external {
         _insert(orderId);
     }

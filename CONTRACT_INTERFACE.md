@@ -13,6 +13,7 @@ Behaviour is defined in SPEC.md. This file is the ABI contract between the engin
 - Buy orders: approve the quote token for at least `requiredQuote(amount, limitPrice)`.
 - Sell orders: approve the base token for at least `amount`.
 - Order IDs start at 1. An ID of 0 means "none" (for example, an empty book side).
+- `getOrder` returns an all-zero `Order` for an unknown ID. The frontend should treat `id == 0` as "not found".
 
 ## Solidity
 

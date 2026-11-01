@@ -1,13 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IOrderBook} from "./interfaces/IOrderBook.sol";
 
 /// @notice Limit order book for one base/quote pair. Behaviour is defined in SPEC.md.
-/// @dev Phase 1 skeleton: function bodies are stubs until their phase in docs/ENGINE_PHASES.md.
+/// @dev Function bodies that only revert are stubs until their phase in docs/ENGINE_PHASES.md.
 contract OrderBook is IOrderBook, ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
     uint256 public constant PRICE_SCALE = 1e18;
     uint256 public constant LOT_SIZE = 1e9;
     uint256 public constant TICK_SIZE = 1e9;
@@ -42,8 +47,39 @@ contract OrderBook is IOrderBook, ReentrancyGuard {
         quoteToken = quote;
     }
 
-    function placeLimitOrder(Side, uint256, uint256) external nonReentrant returns (uint256) {
-        revert();
+    /// @dev Phase 2b: no matching yet, so a crossing order simply rests.
+    function placeLimitOrder(Side side, uint256 price, uint256 amount) external nonReentrant returns (uint256 orderId) {
+        if (amount == 0) revert ZeroAmount();
+        if (price == 0) revert ZeroPrice();
+        if (amount % LOT_SIZE != 0) revert InvalidLotSize();
+        if (price % TICK_SIZE != 0) revert InvalidTickSize();
+
+        uint256 lockedQuote = side == Side.Buy ? requiredQuote(amount, price) : 0;
+
+        orderId = _nextOrderId++;
+        _orders[orderId] = Order({
+            id: orderId,
+            trader: msg.sender,
+            side: side,
+            price: price,
+            triggerPrice: 0,
+            amount: amount,
+            filled: 0,
+            lockedQuote: lockedQuote,
+            createdAt: uint64(block.timestamp),
+            status: Status.Open
+        });
+        _stampBookSeq(orderId);
+        _insert(orderId);
+        _userOrderIds[msg.sender].push(orderId);
+
+        emit OrderPlaced(orderId, msg.sender, side, price, amount);
+
+        if (side == Side.Buy) {
+            IERC20(quoteToken).safeTransferFrom(msg.sender, address(this), lockedQuote);
+        } else {
+            IERC20(baseToken).safeTransferFrom(msg.sender, address(this), amount);
+        }
     }
 
     function cancelOrder(uint256) external nonReentrant {
@@ -62,8 +98,9 @@ contract OrderBook is IOrderBook, ReentrancyGuard {
         revert();
     }
 
-    function getOrder(uint256) external view returns (Order memory) {
-        revert();
+    /// @dev An unknown ID returns an all-zero order.
+    function getOrder(uint256 orderId) external view returns (Order memory) {
+        return _orders[orderId];
     }
 
     function getBestBid() external view returns (uint256 orderId, uint256 price) {
@@ -90,12 +127,12 @@ contract OrderBook is IOrderBook, ReentrancyGuard {
         }
     }
 
-    function getUserOrderIds(address) external view returns (uint256[] memory) {
-        revert();
+    function getUserOrderIds(address trader) external view returns (uint256[] memory) {
+        return _userOrderIds[trader];
     }
 
-    function requiredQuote(uint256, uint256) external pure returns (uint256) {
-        revert();
+    function requiredQuote(uint256 amount, uint256 price) public pure returns (uint256) {
+        return Math.mulDiv(amount, price, PRICE_SCALE, Math.Rounding.Ceil);
     }
 
     function _stampBookSeq(uint256 orderId) internal {
