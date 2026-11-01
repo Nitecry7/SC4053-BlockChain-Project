@@ -168,5 +168,6 @@ There is no background execution on-chain.
 - `lastTradePrice` is easy to manipulate in a thin market, so stop orders are for teaching purposes only.
 - A deep book can make placement revert (`BookTooDeep`), which is a deliberate gas bound.
 - Only 18-decimal tokens are supported; fee-on-transfer and rebasing tokens are not.
+- A token without a `decimals()` function is rejected with an empty revert, not `UnsupportedDecimals`.
 - The minimum order size and price granularity are 1e-9 of a whole token.
 - Self-trades are allowed.

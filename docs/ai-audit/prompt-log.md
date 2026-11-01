@@ -150,3 +150,30 @@ pinned submodule. A plain copy would have committed thousands of vendored files 
 - Prompts live in ENGINE_PHASES.md from now on, starting with the updated Phase 1 prompt.
 - Added `.claude/commands/` from section 10 of the plan. `log-issue` uses the brief's four-part format, checked against `docs/project.pdf`.
 - Asked Person 2, in a comment on PR #1, to review CONTRACT_INTERFACE.md and merge by noon on 2 Nov.
+
+---
+
+## 2026-11-01: Phase 1, skeleton
+
+**Prompt (summary):** The Phase 1 prompt in docs/ENGINE_PHASES.md: interface, configurable-decimals mock, OrderBook skeleton with bare `revert()` stubs, abstract test base, constructor revert tests, delete the smoke test, check the interface against CONTRACT_INTERFACE.md, do not commit.
+
+**What the AI produced:**
+- `src/interfaces/IOrderBook.sol`, `src/OrderBook.sol`, `test/mocks/MockERC20.sol`, `test/OrderBookBase.t.sol`. Deleted `test/Toolchain.t.sol`.
+- `lastTradePrice` and `hasTradePrice` are public state variables, not stubs, and stay at their defaults until Phase 3a. Writes already carry `nonReentrant`.
+- Two tests beyond the prompt check that setUp stored the tokens and constants, and funded and approved the traders.
+
+**What the AI got wrong or left unclear:**
+- The first attempt, one large shell script, failed with a quoting error before running anything. The AI confirmed the tree was unchanged and recreated the files with the file tool. No effect on the code.
+- OpenZeppelin `ReentrancyGuard` adds `ReentrancyGuardReentrantCall()` to the compiled ABI. CONTRACT_INTERFACE.md does not list it. IOrderBook.sol itself matches the doc; the difference is only in the OrderBook ABI. Flagged for a human decision, not changed.
+- A token with no `decimals()` function makes the constructor revert without `UnsupportedDecimals`. It still cannot deploy. Not tested; flagged.
+
+**Evidence:**
+- `forge build`: success with 8 warnings: 5 mutability warnings on view stubs, 2 uninitialized-state lint warnings on `lastTradePrice` and `hasTradePrice`, and 1 unreachable-code warning in `ReentrancyGuard`, which appears to come from `nonReentrant` wrapping a stub that always reverts. All 8 are expected to go once the functions are implemented; not yet confirmed.
+- `forge test`: 7 passed, 0 failed, 0 skipped. `forge fmt --check`: no differences.
+- Scripted comparison of the doc block with IOrderBook.sol: 51 statements each, same order, 25 comments each, no differences.
+
+**Human decisions:**
+- `ReentrancyGuardReentrantCall()` is documented in CONTRACT_INTERFACE.md as an inherited error. It sits outside the IOrderBook block, because declaring it in both the interface and the guard would not compile.
+- The freeze banner now says "target 2 Nov".
+- The empty revert for a token without `decimals()` is a known limitation in SPEC.md. The AI added `test_constructor_emptyRevertWhenTokenHasNoDecimals`, so the note rests on a test: 8 passed, 0 failed.
+- Merge Phase 1 into main with `--no-ff`, before Person 2 has reviewed PR #1. The merge includes the PR #1 commits.

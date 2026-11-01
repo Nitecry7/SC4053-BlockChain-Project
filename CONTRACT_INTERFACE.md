@@ -1,7 +1,7 @@
 # OrderBook contract interface
 
 > **STATUS: DRAFT, not yet confirmed by Person 2.** Do not build the frontend against it
-> as final until this banner says FROZEN. After freezing (target 31 Oct), any change
+> as final until this banner says FROZEN. After freezing (target 2 Nov), any change
 > needs both teammates' agreement.
 
 Behaviour is defined in SPEC.md. This file is the ABI contract between the engine
@@ -80,6 +80,14 @@ error UnsupportedDecimals(); // constructor: a token does not have 18 decimals
 error InvalidTokens();       // constructor: zero address, or base == quote
 ```
 
+## Inherited errors
+`OrderBook` inherits this error from OpenZeppelin `ReentrancyGuard`, so it is in the compiled ABI. It is **not**
+declared in `IOrderBook.sol`, because declaring it in both would not compile.
+
+```solidity
+error ReentrancyGuardReentrantCall(); // a write was re-entered during a token transfer
+```
+
 ## Event semantics
 - `OrderPlaced` is emitted for plain limit orders, before any `Trade` from that order.
 - `StopOrderPlaced` is emitted when a stop-limit order is placed. `OrderPlaced` is **not** emitted for it.
@@ -96,6 +104,7 @@ error InvalidTokens();       // constructor: zero address, or base == quote
 | Added `requiredQuote` | Frontend approval uses the engine's own escrow formula |
 | Exposed constants as public getters | Frontend validation and display |
 | Fixed event semantics for stop orders | Frontend knows which events to listen for |
+| Documented inherited `ReentrancyGuardReentrantCall` | It is in the compiled ABI, so the frontend can decode it |
 
 ## Deployment handoff (agree with Person 2)
 - `contracts/script/Deploy.s.sol` (Person 2) deploys the tokens, then `OrderBook(base, quote)`. Person 1 reviews the OrderBook part.
