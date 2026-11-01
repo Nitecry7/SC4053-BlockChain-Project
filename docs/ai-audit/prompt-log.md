@@ -307,3 +307,49 @@ pinned submodule. A plain copy would have committed thousands of vendored files 
 - `SafeERC20FailedOperation` added to the inherited errors in the frozen CONTRACT_INTERFACE.md, by the human's decision. No signature changed. Person 2 has not been asked.
 - **The human approved the rewrite of `test_place_crossingOrderTradesInsteadOfResting`** (formerly `test_place_crossingOrdersRestWithoutTrading`).
 - Commit Phase 3a, merge into main with `--no-ff`, push, and create `engine/phase-3b`. Phase 3b is to be run by the human in the morning.
+
+---
+
+## 2026-11-02: Phase 4 prompt drafted; Phase 3b commit request not carried out
+
+**Prompt (summary):** Commit Phase 3b, merge into main with `--no-ff`, push, create `engine/phase-4` with `git push -u`, and draft the Phase 4 prompt, including reentrancy tests against the real `cancelOrder` and during the refund transfer.
+
+**What the AI found:** `engine/phase-3b` had no changes and no commits beyond main (`6d1d14c`, no stashes). The Phase 3b prompt was still marked as a draft, the log had no Phase 3b entry, and the suite was unchanged at 80 tests. So there was no Phase 3b work in this checkout to commit.
+
+**What the AI did:** Drafted the Phase 4 prompt in docs/ENGINE_PHASES.md, uncommitted on `engine/phase-3b`. It did not commit, merge or create `engine/phase-4`, because an empty merge would make main's history show Phase 3b as done. It asked the human how to proceed. The draft moves to `engine/phase-4`, uncommitted, once Phase 3b is merged.
+
+**Draft choices for the human to check:** "the refund transfer" is read as both the `cancelOrder` refund and the price-improvement refund in `_settleFill`, which the Phase 3a review said was never a re-entry point. The check order means an unknown ID reverts with `NotOrderOwner`.
+
+**Human decisions:** Run Phase 3b first, then commit and merge. The owner-before-status order is accepted, so an unknown ID gives `NotOrderOwner`.
+
+---
+
+## 2026-11-02: Phase 3b, sweeps, cap, self-trade and gas
+
+**Prompt (summary):** The Phase 3b prompt in docs/ENGINE_PHASES.md: harden multi-level matching with tests only, add a fuzz test and a gas report, and propose `MAX_*` values without changing them. Do not commit. The human then authorised commit and merge once the review findings were fixed and the checks passed.
+
+**What the AI produced:** Tests only, in `test/OrderBook.Match.t.sol`. `OrderBook.sol` did not change, and no test exposed a contract bug. Phase 3a already covered the buy-side one-tick boundary and the basic sweep and cap, so those were not repeated.
+
+**Independent review (subagent, no context from this session):** no contract bugs. It worked out the expected balances by hand and they were correct. How each finding was handled:
+
+| Finding | Severity | Outcome |
+|---|---|---|
+| The "worst case" gas test had no refunds and a cheap scan, so 1,281,301 understated the worst placement by about 500k | Medium | Replaced with `test_gas_worstCasePlacement`. The AI reproduced the reviewer's 1,778,221 exactly |
+| `test_cap_remainderHittingBookTooDeepRevertsFillsToo` did not itself prove a fill happened before the revert | Low | Now places a filling order afterwards, which shows the reverted call really crossed |
+| The fuzz test never reached the cap or a crossed book (0 in 500 seeds, by the reviewer's replay) | Low | Added `testFuzz_coarsePlacementsKeepSolvencyAndBookOrder` |
+| FIFO tests cannot tell `bookSeq` from order ID | Info | Not testable until stops exist. The Phase 6b row already requires this case |
+| No Phase 3b log entry or O2 proposal yet | Info | This entry, and O2 in SPEC.md |
+
+**What the AI got wrong:**
+- The AI labelled the first gas test "worst single placement ... with refunds" without checking. Carol's limit equalled the maker price, so no refunds happened, and the AI gave the human 1.28M as the worst case before the review corrected it.
+- The AI's first replacement fuzz was still ineffective. A temporary metric showed 0 of 40 seeds reached the cap or a crossed book (best: 9 fills). The AI redesigned the generator with separate price bands and occasional large orders. The metric then showed the cap and a crossed book each reached in 10 of 15 seeds, and 10 fills at most in one placement. The metric was deleted afterwards.
+- The new fuzz is slow: at 100 runs it took about 40 seconds. It is set to 25 runs in the default profile and 200 in the `deep` profile. Its coverage per seed is what the metric measured, not its run count.
+
+**Evidence, final run before committing:**
+- `forge build --force`: success, 6 warnings, the same kinds as Phase 3a.
+- `forge test`: 95 passed, 0 failed, 0 skipped. `forge fmt --check`: passes.
+- All six mutants from the Phase 3a review were caught, and the source was restored afterwards.
+
+**Human decisions:**
+- Keep `MAX_MATCHES_PER_TX = 10` and `MAX_INSERT_SCAN = 100`. Gas figures are in SPEC.md, and O2 is resolved.
+- The interface comments still say "proposed 10" and "proposed 100". CONTRACT_INTERFACE.md is frozen and IOrderBook.sol must match it, so they were not changed. The values did not change.
