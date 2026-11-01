@@ -1,0 +1,28 @@
+# Foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/*/31337/
+contracts/broadcast/**/dry-run/
+
+# Coverage
+lcov.info
+coverage/
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+
+# Node / Next.js
+node_modules/
+web/.next/
+web/out/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Course brief: kept locally, intentionally untracked (repo may be public)
+docs/project.pdf
