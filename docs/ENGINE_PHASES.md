@@ -85,6 +85,29 @@ prev/next consistency and the sort order, and call it in every test.
 Run forge build and forge test, show the real output, log the session, do not commit.
 ```
 
+### Phase 2b
+```text
+Read CLAUDE.md and SPEC.md. Implement placeLimitOrder WITHOUT matching: checks
+(ZeroAmount, ZeroPrice, InvalidLotSize, InvalidTickSize), then create the order (IDs from
+1, status Open, createdAt), stamp bookSeq, insert into the book, record it in the
+trader's order list, emit OrderPlaced, and pull escrow last with SafeERC20 (sell: amount
+of base; buy: requiredQuote(amount, price) of quote, stored in lockedQuote). Follow
+checks-effects-interactions and use nonReentrant. Implement getOrder, getUserOrderIds and
+requiredQuote. Crossing orders simply rest for now; matching comes in Phase 3a.
+Add assertSolvent() to the base test: the contract's base balance equals the sum of
+unfilled base on open sell orders, and its quote balance equals the sum of lockedQuote on
+open buy orders. Call it in every placement test.
+Tests in contracts/test/OrderBook.Place.t.sol:
+- each revert (zero amount, zero price, bad lot, bad tick, no allowance, insufficient
+  balance) leaves no state change and no order created
+- exact escrow pulled for buys and sells, and requiredQuote matches it
+- the stored Order fields are correct; IDs increase from 1; getUserOrderIds per trader
+- OrderPlaced event fields
+- several orders on each side end up in the correct book order (assertBookSorted)
+Run forge build, forge test and forge fmt --check, show the real output, log the
+session, do not commit.
+```
+
 ## Agree with Person 2 before coding
 1. **Layout:** one shared `contracts/` Foundry project (Person 1 scaffolds it and pushes to main first), with `web/` for the frontend.
 2. **Toolchain:** solc 0.8.24 pinned in foundry.toml; OZ v5.x as a git submodule; `engine/*` and `web/*` branches merged into main by PR.

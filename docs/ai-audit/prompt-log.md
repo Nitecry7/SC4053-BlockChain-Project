@@ -208,3 +208,33 @@ pinned submodule. A plain copy would have committed thousands of vendored files 
 - Added `.gitattributes` (LF for `*.sol`, `*.md`, `*.toml`, `*.json`) and renormalised, so `forge fmt --check` works in this checkout.
 - `_unlink` must be guarded in code, not only by a comment. The AI added a link check that reverts with the existing `OrderNotActive`, since the frozen interface allows no new error. Logged as `docs/ai-audit/issues/001-unlink-empties-book-side.md`, with failing and passing test output.
 - Merge Phase 2a into main with `--no-ff`.
+
+---
+
+## 2026-11-01: Phase 2b, place and rest
+
+**Prompt (summary):** The Phase 2b prompt in docs/ENGINE_PHASES.md: `placeLimitOrder` without matching and with escrow pulled last, `getOrder`, `getUserOrderIds`, `requiredQuote`, `assertSolvent`, and placement tests. Do not commit.
+
+**What the AI produced:**
+- `src/OrderBook.sol`: the placement flow and the three functions. `requiredQuote` uses OpenZeppelin `Math.mulDiv` rounding up, and is `public` so placement can call it.
+- `test/OrderBook.Place.t.sol` (22 tests), `assertSolvent` in the base test, and a `nextOrderId` accessor on the harness.
+
+**AI choices the human should check:**
+- `assertSolvent` uses the SPEC A8 statuses (Open, PartiallyFilled, PendingTrigger), wider than "open" in the prompt, so it will not need changing in later phases. It sums over every placed order rather than walking the book.
+- `getOrder` returns an all-zero order for an unknown ID. Neither SPEC.md nor the interface defines this case.
+- Beyond the prompt: tests for validation order, `BookTooDeep` on placement without pulling escrow, a failed attempt not using up an ID, the smallest aligned order, and rounding up on unaligned `requiredQuote` inputs, plus one fuzz test.
+
+**What the AI got wrong or left unclear:**
+- **Conflict for Phase 3a, not resolved here.** The prompt pulls escrow last. SPEC section 5 pulls escrow at step 2, before matching, and says "Escrow is pulled before any matching". With no matching the order is harmless in Phase 2b, so the AI followed the prompt. It cannot carry into Phase 3a: a taker's fills pay out of the contract's balance, so with escrow pulled last a fill would either revert or pay out of other traders' escrow.
+- The AI's first version of the new test file failed `forge fmt --check` on one wrapped line. Fixed with `forge fmt`.
+- Closed a gap from Phase 2a: a temporary test file, deleted afterwards, showed `assertBookSorted` and `assertSolvent` both detect faults (4 of 4 tests failed as intended, with the helpers' own messages).
+
+**Evidence:**
+- `forge build`: success, 6 warnings: unreachable code in `ReentrancyGuard` and 2 uninitialized-state lints (both from code not yet implemented), `require-revert-in-loop` (intended), `unsafe-typecast` on `uint64(block.timestamp)`, and `reentrancy-events` on `OrderPlaced`. That lint looks like a false positive: in the source, the emit comes before the only external call.
+- `forge test`: 53 passed, 0 failed, 0 skipped. `forge fmt --check`: passes.
+- Temporary source mutations, each restored afterwards: pulling base for buys failed tests through `assertSolvent`; removing the `bookSeq` stamp failed 1; swapping the validation order failed 1.
+
+**Human decisions:**
+- Escrow order follows SPEC.md: run the checks, record the order, pull escrow, match, then rest any remainder. This relies on `nonReentrant`, and SPEC.md section 5 now documents why the deviation from strict CEI is safe. The code committed in this phase still pulls escrow last; Phase 3a changes it, when matching is added.
+- CONTRACT_INTERFACE.md now states that `getOrder` returns an all-zero `Order` for an unknown ID, and that the frontend should treat `id == 0` as "not found". No signature changed.
+- Merge Phase 2b into main with `--no-ff`.

@@ -31,6 +31,27 @@ abstract contract OrderBookBase is Test {
         _fund(carol);
     }
 
+    /// @dev SPEC A8. Sums over every order placed, not over the book, so an escrowed order missing from the book
+    /// still counts. Only for orders placed through the contract: the sums do not see orders the harness writes.
+    function assertSolvent() internal view {
+        uint256 sumBase = 0;
+        uint256 sumQuote = 0;
+        uint256 nextId = book.nextOrderId();
+
+        for (uint256 id = 1; id < nextId; id++) {
+            IOrderBook.Order memory order = book.readOrder(id);
+            if (order.status == IOrderBook.Status.Filled || order.status == IOrderBook.Status.Cancelled) continue;
+            if (order.side == IOrderBook.Side.Sell) {
+                sumBase += order.amount - order.filled;
+            } else {
+                sumQuote += order.lockedQuote;
+            }
+        }
+
+        assertEq(base.balanceOf(address(book)), sumBase, "base held != unfilled base on active sells");
+        assertEq(quote.balanceOf(address(book)), sumQuote, "quote held != lockedQuote on active buys");
+    }
+
     /// @dev Walks both lists and checks the links, the side of each order, and strict priority order.
     function assertBookSorted() internal view {
         _assertSideSorted(IOrderBook.Side.Buy);

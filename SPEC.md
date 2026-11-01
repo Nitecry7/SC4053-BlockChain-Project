@@ -41,7 +41,7 @@ Non-custodial: no admin or owner role exists. Escrowed tokens leave the contract
 | Insertion | Walk from the head; revert with `BookTooDeep` after `MAX_INSERT_SCAN` steps |
 | Matching on placement | Up to `MAX_MATCHES_PER_TX` fills, then the remainder rests (even if still crossed) |
 | Self-trade | Allowed. A trader's order can fill against their own order; settlement is still correct. Documented, not prevented |
-| Token transfers | OpenZeppelin `SafeERC20`; `ReentrancyGuard` on every state-changing external; CEI |
+| Token transfers | OpenZeppelin `SafeERC20`; `ReentrancyGuard` on every state-changing external; CEI, with one documented exception for the escrow pull in `placeLimitOrder` (section 5) |
 | Fee-on-transfer / rebasing tokens | Unsupported (documented limitation) |
 | Errors | Custom errors only |
 | Fees | None |
@@ -101,13 +101,20 @@ Filled and Cancelled are terminal. Orders in a terminal state are never in any l
 ### placeLimitOrder(side, price, amount)
 Steps, in order:
 1. Validate in the order of section 2.
-2. Pull escrow (A2 or A3), and stamp `bookSeq`.
+2. Record the order and stamp `bookSeq`, then pull escrow (A2 or A3).
 3. Emit `OrderPlaced`.
 4. Match against the opposite head while crossed (buy: `price >= bestAsk`; sell: `price <= bestBid`), up to `MAX_MATCHES_PER_TX` fills.
 5. Rest any remainder in the book.
 6. Update `lastTradePrice` and `hasTradePrice` on each fill.
 
 Escrow is pulled before any matching. It is the order's own funding, and the fills then pay out of the contract's balance.
+
+**Deviation from strict CEI (decided 1 Nov).** The escrow pull is an external call, and matching changes state after it. Strict CEI would pull escrow last, but then the fills would pay out before the order was funded: a fill would either revert or spend other traders' escrow. This is safe because:
+- `nonReentrant` is on every state-changing external, so a token that calls back during the pull cannot reach placement, cancellation, matching or triggering. The call reverts with `ReentrancyGuardReentrantCall`.
+- The order is recorded before the pull, so the contract's state already describes it during the call.
+- A failed pull reverts the whole transaction, so no fill can happen without the escrow.
+
+Known limit: the guard does not cover view functions. During the pull, a token callback could read an order that is recorded but not yet funded, matched or rested.
 
 ### cancelOrder(orderId)
 - Caller must be the order's trader, else `NotOrderOwner`.
