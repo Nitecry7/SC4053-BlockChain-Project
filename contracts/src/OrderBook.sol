@@ -47,7 +47,8 @@ contract OrderBook is IOrderBook, ReentrancyGuard {
         quoteToken = quote;
     }
 
-    /// @dev Phase 2b: no matching yet, so a crossing order simply rests.
+    /// @dev Escrow is pulled before matching because fills pay out of the contract's balance. SPEC section 5 explains
+    /// why this deviation from strict CEI is safe under nonReentrant.
     function placeLimitOrder(Side side, uint256 price, uint256 amount) external nonReentrant returns (uint256 orderId) {
         if (amount == 0) revert ZeroAmount();
         if (price == 0) revert ZeroPrice();
@@ -70,16 +71,18 @@ contract OrderBook is IOrderBook, ReentrancyGuard {
             status: Status.Open
         });
         _stampBookSeq(orderId);
-        _insert(orderId);
         _userOrderIds[msg.sender].push(orderId);
-
-        emit OrderPlaced(orderId, msg.sender, side, price, amount);
 
         if (side == Side.Buy) {
             IERC20(quoteToken).safeTransferFrom(msg.sender, address(this), lockedQuote);
         } else {
             IERC20(baseToken).safeTransferFrom(msg.sender, address(this), amount);
         }
+
+        emit OrderPlaced(orderId, msg.sender, side, price, amount);
+
+        _matchTaker(orderId);
+        if (_orders[orderId].status != Status.Filled) _insert(orderId);
     }
 
     function cancelOrder(uint256) external nonReentrant {
@@ -133,6 +136,54 @@ contract OrderBook is IOrderBook, ReentrancyGuard {
 
     function requiredQuote(uint256 amount, uint256 price) public pure returns (uint256) {
         return Math.mulDiv(amount, price, PRICE_SCALE, Math.Rounding.Ceil);
+    }
+
+    /// @dev Fills the taker against the opposite head while crossed, up to MAX_MATCHES_PER_TX fills.
+    function _matchTaker(uint256 takerId) internal {
+        Order storage taker = _orders[takerId];
+        Side makerSide = taker.side == Side.Buy ? Side.Sell : Side.Buy;
+
+        for (uint256 fills = 0; fills < MAX_MATCHES_PER_TX && taker.filled < taker.amount; fills++) {
+            uint256 makerId = _bookHead[makerSide];
+            if (makerId == 0) break;
+
+            Order storage maker = _orders[makerId];
+            bool crossed = taker.side == Side.Buy ? taker.price >= maker.price : taker.price <= maker.price;
+            if (!crossed) break;
+
+            _settleFill(makerId, takerId, Math.min(taker.amount - taker.filled, maker.amount - maker.filled));
+        }
+    }
+
+    /// @dev The only settlement path (SPEC A4 to A6). Executes at the maker's price. All state changes come before
+    /// the transfers. The maker is unlinked here when filled; the caller decides whether a taker rests.
+    function _settleFill(uint256 makerId, uint256 takerId, uint256 qty) internal {
+        Order storage maker = _orders[makerId];
+        Order storage taker = _orders[takerId];
+        (Order storage buyOrder, Order storage sellOrder) = maker.side == Side.Buy ? (maker, taker) : (taker, maker);
+
+        uint256 price = maker.price;
+        uint256 cost = Math.mulDiv(qty, price, PRICE_SCALE);
+
+        maker.filled += qty;
+        taker.filled += qty;
+
+        uint256 newLocked = requiredQuote(buyOrder.amount - buyOrder.filled, buyOrder.price);
+        uint256 refund = buyOrder.lockedQuote - cost - newLocked;
+        buyOrder.lockedQuote = newLocked;
+
+        maker.status = maker.filled == maker.amount ? Status.Filled : Status.PartiallyFilled;
+        taker.status = taker.filled == taker.amount ? Status.Filled : Status.PartiallyFilled;
+        if (maker.status == Status.Filled) _unlink(makerId);
+
+        lastTradePrice = price;
+        hasTradePrice = true;
+
+        emit Trade(makerId, takerId, maker.trader, taker.trader, price, qty, cost);
+
+        IERC20(baseToken).safeTransfer(buyOrder.trader, qty);
+        IERC20(quoteToken).safeTransfer(sellOrder.trader, cost);
+        if (refund != 0) IERC20(quoteToken).safeTransfer(buyOrder.trader, refund);
     }
 
     function _stampBookSeq(uint256 orderId) internal {

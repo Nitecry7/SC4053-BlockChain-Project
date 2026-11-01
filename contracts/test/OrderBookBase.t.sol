@@ -52,10 +52,19 @@ abstract contract OrderBookBase is Test {
         assertEq(quote.balanceOf(address(book)), sumQuote, "quote held != lockedQuote on active buys");
     }
 
-    /// @dev Walks both lists and checks the links, the side of each order, and strict priority order.
+    /// @dev Walks both lists and checks the links, the side and status of each order, and strict priority order.
+    /// Then checks SPEC section 4 for every order placed: Open and PartiallyFilled orders are in the book, others not.
     function assertBookSorted() internal view {
         _assertSideSorted(IOrderBook.Side.Buy);
         _assertSideSorted(IOrderBook.Side.Sell);
+
+        uint256 nextId = book.nextOrderId();
+        for (uint256 id = 1; id < nextId; id++) {
+            IOrderBook.Order memory order = book.readOrder(id);
+            bool live = order.status == IOrderBook.Status.Open || order.status == IOrderBook.Status.PartiallyFilled;
+            bool inBook = book.bookHead(order.side) == id || book.bookPrev(id) != 0;
+            assertEq(inBook, live, "book membership does not match status");
+        }
     }
 
     function _assertSideSorted(IOrderBook.Side side) private view {
@@ -70,6 +79,10 @@ abstract contract OrderBookBase is Test {
             IOrderBook.Order memory order = book.readOrder(current);
             assertEq(uint8(order.side), uint8(side), "order on the wrong side");
             assertEq(book.bookPrev(current), prev, "prev link does not match the walk");
+            assertTrue(
+                order.status == IOrderBook.Status.Open || order.status == IOrderBook.Status.PartiallyFilled,
+                "order in the book is not live"
+            );
 
             if (prev != 0) {
                 uint256 prevPrice = book.readOrder(prev).price;
@@ -87,7 +100,7 @@ abstract contract OrderBookBase is Test {
         }
     }
 
-    function _fund(address trader) private {
+    function _fund(address trader) internal {
         base.mint(trader, INITIAL_BALANCE);
         quote.mint(trader, INITIAL_BALANCE);
         vm.startPrank(trader);

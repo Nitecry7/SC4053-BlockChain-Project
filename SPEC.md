@@ -41,7 +41,7 @@ Non-custodial: no admin or owner role exists. Escrowed tokens leave the contract
 | Insertion | Walk from the head; revert with `BookTooDeep` after `MAX_INSERT_SCAN` steps |
 | Matching on placement | Up to `MAX_MATCHES_PER_TX` fills, then the remainder rests (even if still crossed) |
 | Self-trade | Allowed. A trader's order can fill against their own order; settlement is still correct. Documented, not prevented |
-| Token transfers | OpenZeppelin `SafeERC20`; `ReentrancyGuard` on every state-changing external; CEI, with one documented exception for the escrow pull in `placeLimitOrder` (section 5) |
+| Token transfers | OpenZeppelin `SafeERC20`; `ReentrancyGuard` on every state-changing external; CEI, with the exceptions in `placeLimitOrder` documented in section 5 |
 | Fee-on-transfer / rebasing tokens | Unsupported (documented limitation) |
 | Errors | Custom errors only |
 | Fees | None |
@@ -75,6 +75,7 @@ Notation: `cost(q, p) = q * p / PRICE_SCALE`.
 - **A8. Solvency invariant** (checked after every test via `assertSolvent`):
   - base held by the contract == sum of `amount - filled` over sell orders that are Open, PartiallyFilled or PendingTrigger
   - quote held by the contract == sum of `lockedQuote` over buy orders in those statuses
+  - These equalities cover tokens that reach the contract through orders. Tokens sent to it directly are out of scope, and then the balance can exceed the sum (section 8).
 
 ### Worked example (whole tokens for readability; all values are lot- and tick-aligned)
 1. Alice sells 10 NTU at 2.0. Escrow: 10 NTU.
@@ -114,7 +115,13 @@ Escrow is pulled before any matching. It is the order's own funding, and the fil
 - The order is recorded before the pull, so the contract's state already describes it during the call.
 - A failed pull reverts the whole transaction, so no fill can happen without the escrow.
 
-Known limit: the guard does not cover view functions. During the pull, a token callback could read an order that is recorded but not yet funded, matched or rested.
+**Second deviation: payouts during matching (documented 2 Nov).** `_settleFill` itself follows CEI: each fill's state changes come before that fill's transfers. But `placeLimitOrder` as a whole does not. Fill N's payouts come before fill N+1's state changes, and before any remainder rests. The same `nonReentrant` reasoning applies, and writes cannot observe the gap.
+
+Known limit: the guard does not cover view functions. A token callback can read intermediate state:
+- during the pull: an order that is recorded but not yet funded, matched or rested
+- during a payout: the current fill already settled, but a partly filled taker not yet in the book and later fills not yet made
+
+`test_payout_viewsShowFillSettledAndRemainderNotYetRested` pins what views show during a payout. Nothing should treat views read during a token callback as final.
 
 ### cancelOrder(orderId)
 - Caller must be the order's trader, else `NotOrderOwner`.
@@ -170,6 +177,7 @@ There is no background execution on-chain.
   behind orders that entered the book before it activated. The interface is unchanged.
 - **O2.** The numeric values of `MAX_MATCHES_PER_TX` and `MAX_INSERT_SCAN`, from the gas report.
 - **O3.** The Bonus 2 "multi-party" interpretation: confirm with the TA.
+- **O4 (resolved 2 Nov).** On a crossed book, section 5 step 4 (match the opposite head) takes precedence over section 2 (Priority). The behaviour is kept and listed in section 8.
 
 ## 8. Known limitations (for the report)
 - `lastTradePrice` is easy to manipulate in a thin market, so stop orders are for teaching purposes only.
@@ -178,3 +186,7 @@ There is no background execution on-chain.
 - A token without a `decimals()` function is rejected with an empty revert, not `UnsupportedDecimals`.
 - The minimum order size and price granularity are 1e-9 of a whole token.
 - Self-trades are allowed.
+- A capped placement can leave the book crossed, and `matchOrders` clears it. Until then, price-time priority does not hold across the crossing: a new sell can fill at once against a resting bid, ahead of an older, better-priced ask. `test_match_crossedBookNewTakerFillsOppositeHeadAheadOfOlderOrder` pins this.
+- Dust griefing is cheap. `MAX_INSERT_SCAN` + 1 minimum-size orders make any worse-priced resting order revert with `BookTooDeep`, and `MAX_MATCHES_PER_TX` minimum-size orders use up a taker's fills. The cost is gas plus almost no capital. Tuning the constants does not remove this.
+- Payouts are pushed, so a token that can refuse a transfer to one address (a blocklist or a hook) would let a maker block every taker that crosses it. Plain demo tokens are not affected.
+- Tokens sent directly to the contract are stranded, because no function can recover them. Trader escrow is not affected.

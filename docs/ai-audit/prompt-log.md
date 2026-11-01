@@ -251,3 +251,59 @@ pinned submodule. A plain copy would have committed thousands of vendored files 
 - The code on main still pulls escrow last, and the prompt's "after pulling escrow, match" changes that.
 - The CLAUDE.md engine rule still asks for checks-effects-interactions in every function that moves tokens, with no mention of the exception now documented in SPEC.md. CLAUDE.md is a shared file, so it was not edited.
 - The prompt's loop and cap overlap with Phase 3b, so 3b's remaining work would be its tests: sweep, FIFO at equal price, the cap, and self-trade.
+
+---
+
+## 2026-11-02: Side tasks during the Phase 3a review
+
+**Prompt (summary):** While the independent review runs: draft the Phase 3b prompt (not Phase 4), install Slither and solc-select, and add the escrow exception to the CLAUDE.md engine rules.
+
+**What the AI did:**
+- Drafted the Phase 3b prompt in docs/ENGINE_PHASES.md, marked as a draft to check against the review. Not run. The human has not reviewed it yet.
+- Installed slither-analyzer 0.11.6 and solc-select 1.2.0 with pip into the global Python 3.12, and installed solc 0.8.24 through solc-select. `slither --version` printed `0.11.6` in Git Bash. Slither has not been run on the code. `solc-select use` was not run, since it was not requested.
+- Added the exception to the CLAUDE.md engine rules.
+
+**Human decision:** CLAUDE.md is listed as a shared file that both teammates must agree to change. The human, as engine owner, decided this rule change does not need Person 2's sign-off. Person 2 has not been asked.
+
+**Timing note:** The CLAUDE.md edit landed while the review subagent was running, and that subagent was told to read CLAUDE.md. It may have seen either version.
+
+---
+
+## 2026-11-02: Phase 3a, matching and settlement
+
+**Prompt (summary):** The Phase 3a prompt in docs/ENGINE_PHASES.md: escrow before matching, one `_settleFill`, match tests including a reentrant mock token, then `/review-engine`, `/log-issue` for real findings, fixes with regression tests. Do not commit.
+
+**What the AI produced:**
+- `src/OrderBook.sol`: `_matchTaker` and `_settleFill`. Escrow is now pulled before matching, and any remainder rests after it.
+- `test/OrderBook.Match.t.sol`, `test/mocks/ReentrantERC20.sol`, `test/mocks/ViewSpyERC20.sol`.
+- The match loop and cap landed here as the prompt required, with basic sweep and cap tests.
+
+**A test was rewritten, not weakened:** `test_place_crossingOrdersRestWithoutTrading` failed once matching existed (`1000000000000000000 != 0`). It pinned the Phase 2b behaviour that the 2b prompt called temporary. It is now `test_place_crossingOrderTradesInsteadOfResting` and asserts that the orders trade. `test_place_revertsBookTooDeepWithoutPullingEscrow` was renamed `test_place_bookTooDeepRevertRollsBackEscrowPull`, because the pull now happens and is rolled back.
+
+**Independent review (subagent, no context from this session):** 73 tests passing at the time, and no fund-loss, stranding or list-corruption bug in the implemented code. Its own random-walk and mutation checks ran on throwaway copies. How each finding was handled:
+
+| Finding | Severity | Outcome |
+|---|---|---|
+| F1 second CEI deviation, undocumented | Medium | Fixed in SPEC.md, pinned by tests. Issue 002. CLAUDE.md updated by human decision |
+| F2 crossed book breaks price-time priority | Medium | Human: keep the behaviour. SPEC O4 resolved, limitation in section 8, pinned by a test |
+| F3 dust griefing is nearly free | Medium | Human: documenting is enough, keep `LOT_SIZE`. In SPEC section 8 |
+| F4 overflow in `_settleFill` | Low | Fixed with `mulDiv`, regression test. Issue 003 |
+| F5 push payouts can be blocked by a hostile token | Low | Documented in SPEC section 8 |
+| F6 direct transfers break A8's equality and are stranded | Low | Documented in A8 and section 8 |
+| Interface drift: `SafeERC20FailedOperation` in the ABI, not in the doc | Low | Human: added next to `ReentrancyGuardReentrantCall` in CONTRACT_INTERFACE.md |
+| F7 three matching mutants survived | High (tests) | Fixed with three tests. Issue 004 |
+| F8 ordering inside `_settleFill` untested | Medium (tests) | Fixed with two payout tests. Issue 002 |
+| F9 misleading test name | Low | Renamed |
+| F10 helpers miss book membership | Low | `assertBookSorted` strengthened. Issue 004 |
+| F11 further missing tests | Low | Left for Phase 3b. The sell-side tick boundary was added to the draft |
+| Phase 5 note: `matchOrders` must also unlink a filled taker | Later | Added to the Phase 5 row in ENGINE_PHASES.md |
+
+**What the AI got wrong:** Everything in issues 002, 003 and 004. Also, the AI's mutation script reported one caught mutant as SURVIVED because of its own output filter. A direct run settled it, and issue 004 records this.
+
+**Human decisions:**
+- F2: keep the behaviour, document it as a limitation (a capped placement can leave the book crossed, and `matchOrders` clears it), and pin it with a test. The AI added `test_match_crossedBookNewTakerFillsOppositeHeadAheadOfOlderOrder`. `matchOrders` is still a stub until Phase 5, so the clearing half is not tested yet.
+- F3: documenting dust griefing is enough. `LOT_SIZE` stays as it is.
+- CLAUDE.md now names both exceptions: the escrow pull before matching and payouts during matching. The AI kept the existing "Do not move the pull to the end" sentence.
+- `SafeERC20FailedOperation` added to the inherited errors in the frozen CONTRACT_INTERFACE.md, by the human's decision. No signature changed. Person 2 has not been asked.
+- **The human approved the rewrite of `test_place_crossingOrderTradesInsteadOfResting`** (formerly `test_place_crossingOrdersRestWithoutTrading`).
+- Commit Phase 3a, merge into main with `--no-ff`, push, and create `engine/phase-3b`. Phase 3b is to be run by the human in the morning.

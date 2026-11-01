@@ -106,7 +106,7 @@ contract OrderBookPlaceTest is OrderBookBase {
         _assertRevertsLeavingNoState(SELL, 1e18, tooMuch, reason);
     }
 
-    function test_place_revertsBookTooDeepWithoutPullingEscrow() public {
+    function test_place_bookTooDeepRevertRollsBackEscrowPull() public {
         uint256 ahead = book.MAX_INSERT_SCAN() + 1;
         for (uint256 i = 0; i < ahead; i++) {
             _place(alice, SELL, (ahead - i) * 1e18, 1e18);
@@ -301,16 +301,16 @@ contract OrderBookPlaceTest is OrderBookBase {
         _assertChecks();
     }
 
-    function test_place_crossingOrdersRestWithoutTrading() public {
+    function test_place_crossingOrderTradesInsteadOfResting() public {
         uint256 ask = _place(alice, SELL, 2e18, 1e18);
         uint256 bid = _place(bob, BUY, 3e18, 1e18);
 
-        assertEq(book.getOrder(ask).filled, 0);
-        assertEq(book.getOrder(bid).filled, 0);
-        assertEq(book.bookHead(SELL), ask);
-        assertEq(book.bookHead(BUY), bid);
-        assertFalse(book.hasTradePrice());
-        assertEq(book.lastTradePrice(), 0);
+        assertEq(book.getOrder(ask).filled, 1e18);
+        assertEq(book.getOrder(bid).filled, 1e18);
+        assertEq(book.bookHead(SELL), 0);
+        assertEq(book.bookHead(BUY), 0);
+        assertTrue(book.hasTradePrice());
+        assertEq(book.lastTradePrice(), 2e18);
         _assertChecks();
     }
 }
