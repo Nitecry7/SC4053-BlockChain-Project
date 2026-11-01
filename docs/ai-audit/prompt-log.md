@@ -97,3 +97,56 @@ pinned submodule. A plain copy would have committed thousands of vendored files 
 - `bookSeq` is stamped when an order enters the book: at placement, or at stop activation. The order ID is not used.
 - It stays internal, so the interface is unchanged.
 - Updated SPEC.md, the CLAUDE.md engine rules and ENGINE_PHASES.md. Phase 2a must test a case where a higher order ID with a lower `bookSeq` ranks first, and Phase 6b must test that an activated stop queues behind earlier equal-price orders.
+
+---
+
+## 2026-10-28: Phase 0, commit, push and PR #1
+
+**Prompt (summary):**
+- Leave `docs/project.pdf` out of the commit.
+- Check GitHub CLI auth.
+- Verify the staged files.
+- Commit, push `engine/setup`, and open a PR asking Person 2 to review the interface and spec.
+- Ask Person 2 to make the repo private.
+
+**Dropping project.pdf:**
+- When showing the file list, the AI pointed out that the repo looked public, because it could be read without signing in.
+- Committing the course brief would therefore publish it.
+- The human decided to keep it local: it is unstaged, listed in `.gitignore`, and noted in SPEC.md as intentionally untracked.
+
+**gh auth issue:**
+- `gh auth status` reported an invalid saved token for AdvaithK500.
+- The AI stopped instead of trying to work around it.
+- The human ran `gh auth login -h github.com` (HTTPS, web browser), and the re-check showed a valid login with the `repo` scope.
+
+**Repo visibility:**
+- The repo (`Nitecry7/SC4053-BlockChain-Project`) is public.
+- Engine code is coursework, so PR #1 asks Person 2, who owns the repo, to switch it to private before any engine code is pushed.
+
+**Evidence:**
+- The staged-file check found no `project.pdf`, `out/`, `cache/` or nested `.git`. `.gitmodules` and both submodules were staged as gitlinks (mode 160000).
+- Commit `cd35f8b`, pushed to `origin/engine/setup`.
+- PR: https://github.com/Nitecry7/SC4053-BlockChain-Project/pull/1
+
+---
+
+## 2026-11-01: Status check and revised schedule (no code changes)
+
+**Prompt (summary):** Resuming after a few days away. Without editing, read the spec docs and prompt log, check git and PRs, run `forge build` and `forge test`, check repo visibility, then propose a plan for 1 to 8 Nov using the cut order, and give the exact next step.
+
+**Findings (verified by the AI with git, gh and forge):**
+- Only Phase 0 is done. `contracts/src/` held only `.gitkeep`, and the one passing test was the Phase 0 smoke test.
+- PR #1 was open with 0 comments and 0 reviews. Person 2 had pushed nothing, and `origin/faheem` had no commits beyond main.
+- The repo is now private.
+- Phase 0 gaps: PR #1 not merged, so not yet on main as the acceptance line requires; `.claude/commands/` missing, although Phase 0 lists it; the last prompt-log entry uncommitted.
+
+**What the earlier AI work got wrong or left unclear:**
+- ENGINE_PHASES.md listed `.claude/commands/` under Phase 0 and was marked done, but the folder was never created.
+- ENGINE_PHASES.md holds no phase prompts. The Phase 1 prompt in section 11 of the plan predates the 28 Oct decisions: it fixes the mock at 18 decimals and omits `LOT_SIZE`, `TICK_SIZE` and the constructor tests. Its "bodies that revert" also did not say how, given the rules against revert strings and new errors. The AI proposed an updated prompt using a bare `revert()`.
+- The estimates are still untested: only Phase 0 has a logged result.
+
+**Human decisions:**
+- Accepted the revised schedule. Phase 7 now runs before Phase 6, with a stop-limit go/no-go on the night of Tue 3 Nov. The ABI freeze moves to Mon 2 Nov.
+- Prompts live in ENGINE_PHASES.md from now on, starting with the updated Phase 1 prompt.
+- Added `.claude/commands/` from section 10 of the plan. `log-issue` uses the brief's four-part format, checked against `docs/project.pdf`.
+- Asked Person 2, in a comment on PR #1, to review CONTRACT_INTERFACE.md and merge by noon on 2 Nov.
