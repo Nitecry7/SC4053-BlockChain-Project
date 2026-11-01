@@ -21,7 +21,7 @@ Paths are relative to `contracts/` unless they start at the repo root.
 | **3b Sweep and cap** | Multi-level matching | same files | match loop capped at `MAX_MATCHES_PER_TX`; remainder rests | sweep several price levels, FIFO at equal price, non-crossing order rests, cap leaves a crossed remainder, self-trade settles correctly | `assertSolvent` after every test. **Person 2 can integrate on Anvil** | 1.5h |
 | **4 Cancel** (bonus 1) | Refund only the unfilled part | `src/OrderBook.sol`, `test/OrderBook.Cancel.t.sol` | `cancelOrder` (owner only, active statuses only, CEI order, `OrderCancelled` event) | cancel open, cancel partial, cancel filled reverts, cancel twice reverts, non-owner reverts, cancel head, middle and tail | Every refund exact; links stay valid | 1.5h |
 | **5 Batch** (bonus 2) | Clear crossed books | `src/OrderBook.sol`, `test/OrderBook.Batch.t.sol` | `matchOrders(maxMatches)`, reusing `_settleFill`; the head with the lower `bookSeq` is the maker | clears a book left crossed by the cap, cap respected, 3+ traders settled, no-op when not crossed, `InvalidMaxCount` for 0 and for more than the cap | No duplicated settlement code | 1.5h |
-| **Freeze ABI** | Signatures final | `CONTRACT_INTERFACE.md` (banner changes to FROZEN) | none | none | Person 2 confirms. **Target Mon 2 Nov** (revised from 31 Oct) | — |
+| **Freeze ABI** | Signatures final | `CONTRACT_INTERFACE.md` (banner changes to FROZEN) | none | none | Person 2 confirms. **Done 1 Nov** (target was Mon 2 Nov, revised from 31 Oct) | — |
 | **6a Stop placement** (bonus 3) | Funded pending stops | `src/OrderBook.sol`, `test/OrderBook.Stop.t.sol` | `placeStopLimitOrder` (escrow at placement, sorted stop lists); `cancelOrder` handles PendingTrigger | escrow on placement, `StopOrderPlaced` event, tick checks on both prices, cancel pending stop, not shown by `getBook` | Solvency includes pending stops | 1.5h |
 | **6b Triggering** | Activate and match | same files | `triggerStopOrders(maxCount)`: checks `hasTradePrice`, activates from the heads of the stop lists, stamps a fresh `bookSeq` on activation, **one shared `MAX_MATCHES_PER_TX` fill budget per call** | no trigger before the first trade, an activated stop queues behind equal-price orders that entered the book earlier, wrong side of the price, triggers and fills, triggers but rests, `maxCount` respected, shared budget (activated orders rest once the budget runs out, then `matchOrders` clears them), cascade within one call | All earlier tests still green | 2h |
 | **7 Fuzz and invariants** | Accounting proven | `test/OrderBook.Fuzz.t.sol`, `test/invariant/{Handler.sol,OrderBookInvariant.t.sol}` | none | SPEC A8 solvency (pending stops included), `filled <= amount`, lists sorted, no terminal-status order in any list | Invariants pass at a sensible depth (runs and depth set in foundry.toml) | 3h |
@@ -62,6 +62,27 @@ zero address on each side. Delete contracts/test/Toolchain.t.sol.
 Run forge build and forge test and show the real output. Check IOrderBook.sol against
 CONTRACT_INTERFACE.md line by line and report any mismatch. Log the session in
 docs/ai-audit/prompt-log.md. Do not commit.
+```
+
+### Phase 2a
+```text
+Read CLAUDE.md and SPEC.md. Implement the two sorted doubly linked lists in OrderBook.sol:
+bids descending by price, asks ascending, ties broken by the internal bookSeq (stamped
+when an order enters the book), not by order ID. Internal _insert(orderId), bounded by
+MAX_INSERT_SCAN (revert BookTooDeep past it), and _unlink(orderId), which handles head,
+tail, middle and the only element. Implement getBestBid, getBestAsk and
+getBook(side, maxOrders) (bounded by maxOrders). Do not implement placeLimitOrder yet.
+Tests in contracts/test/OrderBook.Book.t.sol, using a harness contract that exposes
+_insert and _unlink and can write orders directly:
+- ordering across several prices on both sides, and FIFO at equal price
+- the bookSeq case: a higher order ID with a lower bookSeq ranks first
+- unlinking the head, middle, tail and only element, with links checked afterwards
+- BookTooDeep when the scan limit is exceeded
+- getBook respects maxOrders and returns orders in priority order; empty book views
+  return zero
+Add an assertBookSorted helper to the base test that walks both lists, checks
+prev/next consistency and the sort order, and call it in every test.
+Run forge build and forge test, show the real output, log the session, do not commit.
 ```
 
 ## Agree with Person 2 before coding

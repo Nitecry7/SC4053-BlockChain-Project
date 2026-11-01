@@ -177,3 +177,34 @@ pinned submodule. A plain copy would have committed thousands of vendored files 
 - The freeze banner now says "target 2 Nov".
 - The empty revert for a token without `decimals()` is a known limitation in SPEC.md. The AI added `test_constructor_emptyRevertWhenTokenHasNoDecimals`, so the note rests on a test: 8 passed, 0 failed.
 - Merge Phase 1 into main with `--no-ff`, before Person 2 has reviewed PR #1. The merge includes the PR #1 commits.
+
+---
+
+## 2026-11-01: Phase 2a, book structure
+
+**Prompt (summary):** The Phase 2a prompt in docs/ENGINE_PHASES.md: sorted doubly linked lists, `_insert` bounded by `MAX_INSERT_SCAN`, `_unlink`, `getBestBid`, `getBestAsk`, `getBook`, harness tests, and an `assertBookSorted` helper. Do not commit.
+
+**What the AI produced:**
+- `src/OrderBook.sol`: list storage, `_stampBookSeq`, `_insert`, `_unlink`, `_ranksAhead` and the three views.
+- `test/mocks/OrderBookHarness.sol`, `test/OrderBook.Book.t.sol` (20 tests), and `assertBookSorted` in the base test.
+
+**AI choices the human should check:**
+- `assertBookSorted` lives in the base test but needs the internal links, and no new interface function is allowed. So the base test now deploys `OrderBookHarness` as `book`, and later phases will test through the harness. The harness adds accessors only. The constructor tests still deploy `OrderBook` directly.
+- "Past the limit" is read as: exactly `MAX_INSERT_SCAN` orders ahead succeeds, one more reverts. Both boundaries are tested.
+- `assertBookSorted` is called in every Book test, but not in the constructor tests, which never touch the lists.
+- Beyond the prompt: tests for a deep book accepting a new best order, for price beating `bookSeq`, and for side independence.
+
+**What the AI got wrong or left unclear:**
+- `_unlink` has a precondition the compiler cannot enforce: calling it on an order that is not in the book empties that side, because such an order looks like a head with no successor. It is documented on the function, and Phase 4 must check status first. It is not guarded in code.
+- `forge fmt --check` reported whole-file differences after the branch switches. Cause: `core.autocrlf=true` checks files out with CRLF. LF copies of the six Solidity files pass `forge fmt --check`, so the formatting is fine, but the check will keep failing in this checkout until line endings are settled.
+
+**Evidence:**
+- `forge build`: success, 6 warnings: 2 mutability warnings on remaining stubs, 1 unreachable-code warning in `ReentrancyGuard`, 2 uninitialized-state lints, and a new `require-revert-in-loop` lint on `BookTooDeep`, which is intended.
+- `forge test`: 28 passed, 0 failed, 0 skipped.
+- Temporary source mutations, each restored afterwards: flipping the `bookSeq` comparison failed 3 tests; breaking the prev link in `_unlink` failed 1 (`test_unlink_middle`); lowering the scan limit by one failed 1. All three failures came from direct assertions, so `assertBookSorted` itself has not been shown to catch a fault.
+
+**Human decisions:**
+- Person 2 approved CONTRACT_INTERFACE.md verbally, as reported by Person 1. There is no written approval on GitHub. The banner now says FROZEN. The earlier PR #1 comment asking Person 2 to merge is outdated and is to be ignored.
+- Added `.gitattributes` (LF for `*.sol`, `*.md`, `*.toml`, `*.json`) and renormalised, so `forge fmt --check` works in this checkout.
+- `_unlink` must be guarded in code, not only by a comment. The AI added a link check that reverts with the existing `OrderNotActive`, since the frozen interface allows no new error. Logged as `docs/ai-audit/issues/001-unlink-empties-book-side.md`, with failing and passing test output.
+- Merge Phase 2a into main with `--no-ff`.

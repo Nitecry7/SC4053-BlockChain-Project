@@ -1,7 +1,6 @@
 # OrderBook contract interface
 
-> **STATUS: DRAFT, not yet confirmed by Person 2.** Do not build the frontend against it
-> as final until this banner says FROZEN. After freezing (target 2 Nov), any change
+> **STATUS: FROZEN (1 Nov). Person 2 approved it verbally.** Any change to this interface
 > needs both teammates' agreement.
 
 Behaviour is defined in SPEC.md. This file is the ABI contract between the engine
@@ -96,7 +95,7 @@ error ReentrancyGuardReentrantCall(); // a write was re-entered during a token t
 - `Trade.price` is the maker's price. `Trade.quoteAmount = baseAmount * price / PRICE_SCALE`.
 - Order status changes have no event of their own. Read them with `getOrder`.
 
-## Changes from the plan's section 5 (pending Person 2 confirmation)
+## Changes from the plan's section 5 (confirmed by Person 2)
 | Change | Reason |
 |---|---|
 | Added `LOT_SIZE`, `TICK_SIZE`, `InvalidLotSize`, `InvalidTickSize` | Dust prevention: every fill cost is exact (SPEC.md A1) |

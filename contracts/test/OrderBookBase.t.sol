@@ -5,14 +5,17 @@ import {Test} from "forge-std/Test.sol";
 import {OrderBook} from "../src/OrderBook.sol";
 import {IOrderBook} from "../src/interfaces/IOrderBook.sol";
 import {MockERC20} from "./mocks/MockERC20.sol";
+import {OrderBookHarness} from "./mocks/OrderBookHarness.sol";
 
 /// @dev Shared setup for every OrderBook test: tokens, book, and three funded traders.
+/// The book is a harness, so that assertBookSorted can read the internal links in every phase.
 abstract contract OrderBookBase is Test {
     uint256 internal constant INITIAL_BALANCE = 1_000_000e18;
+    uint256 private constant MAX_BOOK_WALK = 1_000;
 
     MockERC20 internal base;
     MockERC20 internal quote;
-    OrderBook internal book;
+    OrderBookHarness internal book;
 
     address internal alice = makeAddr("alice");
     address internal bob = makeAddr("bob");
@@ -21,11 +24,46 @@ abstract contract OrderBookBase is Test {
     function setUp() public virtual {
         base = new MockERC20("Base", "BASE", 18);
         quote = new MockERC20("Quote", "QUOTE", 18);
-        book = new OrderBook(address(base), address(quote));
+        book = new OrderBookHarness(address(base), address(quote));
 
         _fund(alice);
         _fund(bob);
         _fund(carol);
+    }
+
+    /// @dev Walks both lists and checks the links, the side of each order, and strict priority order.
+    function assertBookSorted() internal view {
+        _assertSideSorted(IOrderBook.Side.Buy);
+        _assertSideSorted(IOrderBook.Side.Sell);
+    }
+
+    function _assertSideSorted(IOrderBook.Side side) private view {
+        uint256 prev = 0;
+        uint256 current = book.bookHead(side);
+        uint256 steps = 0;
+
+        while (current != 0) {
+            assertLt(steps, MAX_BOOK_WALK, "book walk did not end: cycle in list");
+            steps++;
+
+            IOrderBook.Order memory order = book.readOrder(current);
+            assertEq(uint8(order.side), uint8(side), "order on the wrong side");
+            assertEq(book.bookPrev(current), prev, "prev link does not match the walk");
+
+            if (prev != 0) {
+                uint256 prevPrice = book.readOrder(prev).price;
+                if (prevPrice == order.price) {
+                    assertLt(book.bookSeq(prev), book.bookSeq(current), "equal price not in bookSeq order");
+                } else if (side == IOrderBook.Side.Buy) {
+                    assertGt(prevPrice, order.price, "bids not descending");
+                } else {
+                    assertLt(prevPrice, order.price, "asks not ascending");
+                }
+            }
+
+            prev = current;
+            current = book.bookNext(current);
+        }
     }
 
     function _fund(address trader) private {
