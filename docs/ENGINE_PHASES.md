@@ -136,7 +136,7 @@ Then run /review-engine as a separate subagent review. Log real findings with
 forge fmt --check. Show the real output, log the session, do not commit.
 ```
 
-### Phase 3b (draft, not run; check against the Phase 3a review before running)
+### Phase 3b
 ```text
 Read CLAUDE.md and SPEC.md. Phase 3a already added the match loop, the MAX_MATCHES_PER_TX
 cap and basic sweep and cap tests, so this phase hardens multi-level matching. Do not

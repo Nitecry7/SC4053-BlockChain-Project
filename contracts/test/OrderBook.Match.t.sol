@@ -299,6 +299,322 @@ contract OrderBookMatchTest is OrderBookBase {
         _assertChecks();
     }
 
+    // Phase 3b: sweeps
+
+    function test_sweep_buyTakerAcrossLevelsPartlyFillsLastMaker() public {
+        uint256 first = _place(alice, SELL, 2e18, 1e18);
+        uint256 second = _place(carol, SELL, 3e18, 2e18);
+        uint256 last = _place(alice, SELL, 4e18, 5e18);
+
+        uint256 bid = _place(bob, BUY, 5e18, 5e18);
+
+        _assertStatus(first, IOrderBook.Status.Filled);
+        _assertStatus(second, IOrderBook.Status.Filled);
+        _assertStatus(last, IOrderBook.Status.PartiallyFilled);
+        _assertStatus(bid, IOrderBook.Status.Filled);
+        assertEq(book.getOrder(last).filled, 2e18);
+        assertEq(book.bookHead(SELL), last);
+        assertEq(book.lastTradePrice(), 4e18);
+        _assertBalances(bob, 5e18, -16e18);
+        _assertBalances(alice, -6e18, 10e18);
+        _assertBalances(carol, -2e18, 6e18);
+        assertEq(base.balanceOf(address(book)), 3e18);
+        assertEq(quote.balanceOf(address(book)), 0);
+        _assertChecks();
+    }
+
+    function test_sweep_sellTakerAcrossLevelsPartlyFillsLastMaker() public {
+        uint256 first = _place(bob, BUY, 4e18, 1e18);
+        uint256 second = _place(carol, BUY, 3e18, 2e18);
+        uint256 last = _place(bob, BUY, 2e18, 5e18);
+
+        uint256 ask = _place(alice, SELL, 1e18, 5e18);
+
+        _assertStatus(first, IOrderBook.Status.Filled);
+        _assertStatus(second, IOrderBook.Status.Filled);
+        _assertStatus(last, IOrderBook.Status.PartiallyFilled);
+        _assertStatus(ask, IOrderBook.Status.Filled);
+        assertEq(book.getOrder(last).filled, 2e18);
+        assertEq(book.getOrder(last).lockedQuote, 6e18);
+        assertEq(book.bookHead(BUY), last);
+        assertEq(book.lastTradePrice(), 2e18);
+        _assertBalances(alice, -5e18, 14e18);
+        _assertBalances(bob, 3e18, -14e18);
+        _assertBalances(carol, 2e18, -6e18);
+        assertEq(base.balanceOf(address(book)), 0);
+        assertEq(quote.balanceOf(address(book)), 6e18);
+        _assertChecks();
+    }
+
+    // Phase 3b: FIFO at equal price
+
+    function _assertFifo(IOrderBook.Side makerSide) private {
+        IOrderBook.Side takerSide = makerSide == BUY ? SELL : BUY;
+        uint256 first = _place(alice, makerSide, 2e18, 1e18);
+        uint256 second = _place(carol, makerSide, 2e18, 1e18);
+        uint256 third = _place(alice, makerSide, 2e18, 1e18);
+
+        _place(bob, takerSide, 2e18, 1e18);
+        _assertStatus(first, IOrderBook.Status.Filled);
+        assertEq(book.getOrder(second).filled, 0);
+        assertEq(book.getOrder(third).filled, 0);
+        assertEq(book.bookHead(makerSide), second);
+        _assertChecks();
+
+        _place(bob, takerSide, 2e18, 0.5e18);
+        _assertStatus(second, IOrderBook.Status.PartiallyFilled);
+        assertEq(book.bookHead(makerSide), second, "partly filled maker keeps its place");
+        assertEq(book.getOrder(third).filled, 0);
+        _assertChecks();
+
+        _place(bob, takerSide, 2e18, 1e18);
+        _assertStatus(second, IOrderBook.Status.Filled);
+        _assertStatus(third, IOrderBook.Status.PartiallyFilled);
+        assertEq(book.getOrder(third).filled, 0.5e18);
+        assertEq(book.bookHead(makerSide), third);
+        _assertChecks();
+    }
+
+    function test_fifo_askMakersFillInEntryOrder() public {
+        _assertFifo(SELL);
+    }
+
+    function test_fifo_bidMakersFillInEntryOrder() public {
+        _assertFifo(BUY);
+    }
+
+    // Phase 3b: crossing boundary
+
+    function test_match_sellOneTickAboveBidDoesNotCross() public {
+        uint256 bid = _place(bob, BUY, 2e18, 1e18);
+        uint256 ask = _place(alice, SELL, 2e18 + 1e9, 1e18);
+
+        _assertStatus(bid, IOrderBook.Status.Open);
+        _assertStatus(ask, IOrderBook.Status.Open);
+        assertFalse(book.hasTradePrice());
+        _assertChecks();
+    }
+
+    // Phase 3b: the cap
+
+    function test_cap_exactlyMaxFillsFillsTakerWithNoRemainder() public {
+        uint256 cap = book.MAX_MATCHES_PER_TX();
+        for (uint256 i = 0; i < cap; i++) {
+            _place(alice, SELL, 2e18, 1e18);
+        }
+
+        uint256 bid = _place(bob, BUY, 2e18, cap * 1e18);
+
+        _assertStatus(bid, IOrderBook.Status.Filled);
+        assertEq(book.bookHead(SELL), 0);
+        assertEq(book.bookHead(BUY), 0);
+        assertEq(book.getOrder(bid).lockedQuote, 0);
+        _assertChecks();
+    }
+
+    function test_cap_oneMoreMakerLeavesFundedCrossedTakerThatLaterOrdersDoNotClear() public {
+        uint256 cap = book.MAX_MATCHES_PER_TX();
+        uint256 lastAsk;
+        for (uint256 i = 0; i <= cap; i++) {
+            lastAsk = _place(alice, SELL, 2e18, 1e18);
+        }
+
+        uint256 bid = _place(bob, BUY, 3e18, (cap + 1) * 1e18);
+
+        _assertStatus(bid, IOrderBook.Status.PartiallyFilled);
+        assertEq(book.getOrder(bid).filled, cap * 1e18);
+        assertEq(book.getOrder(bid).lockedQuote, 3e18);
+        assertEq(quote.balanceOf(address(book)), 3e18);
+        assertEq(int256(quote.balanceOf(bob)) - int256(INITIAL_BALANCE), -int256(cap * 2e18 + 3e18));
+        assertEq(book.bookHead(BUY), bid);
+        assertEq(book.bookHead(SELL), lastAsk);
+        _assertChecks();
+
+        _place(carol, BUY, 1e18, 1e18);
+        _place(carol, SELL, 5e18, 1e18);
+
+        assertEq(book.bookHead(BUY), bid);
+        assertEq(book.bookHead(SELL), lastAsk);
+        assertEq(book.getOrder(bid).filled, cap * 1e18);
+        assertEq(book.getOrder(lastAsk).filled, 0);
+        _assertChecks();
+    }
+
+    /// @dev Bids taken in ascending price order always insert at the head, so no scan limit applies while building.
+    function _placeRisingBids(uint256 count) private {
+        for (uint256 i = 0; i < count; i++) {
+            _place(bob, BUY, (i + 3) * 1e18, 1e18);
+        }
+    }
+
+    function test_cap_remainderHittingBookTooDeepRevertsFillsToo() public {
+        uint256 cap = book.MAX_MATCHES_PER_TX();
+        uint256 scan = book.MAX_INSERT_SCAN();
+        _placeRisingBids(scan + 1 + cap);
+        uint256 ask = _place(alice, SELL, 2e18, (cap + 1) * 1e18);
+        assertEq(book.getOrder(ask).filled, cap * 1e18);
+        assertEq(book.bookHead(SELL), ask);
+
+        uint256 nextId = book.nextOrderId();
+        uint256 carolBase = base.balanceOf(carol);
+        uint256 carolQuote = quote.balanceOf(carol);
+        uint256 lastPrice = book.lastTradePrice();
+
+        vm.expectRevert(IOrderBook.BookTooDeep.selector);
+        _place(carol, BUY, 2e18, 2e18);
+
+        assertEq(book.getOrder(ask).filled, cap * 1e18, "fill rolled back");
+        assertEq(book.nextOrderId(), nextId);
+        assertEq(base.balanceOf(carol), carolBase);
+        assertEq(quote.balanceOf(carol), carolQuote);
+        assertEq(book.lastTradePrice(), lastPrice);
+        _assertChecks();
+
+        // The reverted call did cross: the same price with no remainder fills the ask.
+        uint256 filler = _place(carol, BUY, 2e18, 1e18);
+        _assertStatus(filler, IOrderBook.Status.Filled);
+        _assertStatus(ask, IOrderBook.Status.Filled);
+        _assertChecks();
+    }
+
+    // Phase 3b: self-trade
+
+    function test_selfTrade_partialFillNetsCorrectly() public {
+        uint256 ask = _place(alice, SELL, 2e18, 3e18);
+        uint256 bid = _place(alice, BUY, 3e18, 1e18);
+
+        _assertStatus(ask, IOrderBook.Status.PartiallyFilled);
+        _assertStatus(bid, IOrderBook.Status.Filled);
+        _assertBalances(alice, -2e18, 0);
+        assertEq(base.balanceOf(address(book)), 2e18);
+        assertEq(quote.balanceOf(address(book)), 0);
+        assertEq(book.lastTradePrice(), 2e18);
+        _assertChecks();
+    }
+
+    function test_selfTrade_fullFillReturnsEverything() public {
+        uint256 ask = _place(alice, SELL, 2e18, 3e18);
+        uint256 bid = _place(alice, BUY, 3e18, 3e18);
+
+        _assertStatus(ask, IOrderBook.Status.Filled);
+        _assertStatus(bid, IOrderBook.Status.Filled);
+        _assertBalances(alice, 0, 0);
+        assertEq(base.balanceOf(address(book)), 0);
+        assertEq(quote.balanceOf(address(book)), 0);
+        _assertChecks();
+    }
+
+    // Phase 3b: random sequences
+
+    function testFuzz_randomPlacementsKeepSolvencyAndBookOrder(uint256 seed) public {
+        address[3] memory traders = [alice, bob, carol];
+        for (uint256 i = 0; i < 30; i++) {
+            uint256 r = uint256(keccak256(abi.encode(seed, i)));
+            IOrderBook.Side side = r % 2 == 0 ? BUY : SELL;
+            address trader = traders[(r >> 8) % 3];
+            uint256 price = (((r >> 16) % 20) + 1) * 1e17 + ((r >> 32) % 1_000) * 1e9;
+            uint256 amount = (((r >> 48) % 50) + 1) * 1e17 + ((r >> 64) % 1_000) * 1e9;
+
+            _place(trader, side, price, amount);
+
+            _assertChecks();
+        }
+    }
+
+    /// @dev Small orders rest on separate price bands, so equal-price queues build up. Occasional large orders cross
+    /// the whole book, which is what reaches the fill cap and leaves crossed books.
+    function _coarsePlacement(uint256 seed, uint256 i)
+        private
+        view
+        returns (address trader, IOrderBook.Side side, uint256 price, uint256 amount)
+    {
+        uint256 r = uint256(keccak256(abi.encode(seed, i)));
+        address[3] memory traders = [alice, bob, carol];
+        trader = traders[(r >> 8) % 3];
+        side = r % 2 == 0 ? BUY : SELL;
+        if ((r >> 32) % 12 == 0) {
+            price = side == BUY ? 6e18 : 1e18;
+            amount = 100e18;
+        } else {
+            price = (((r >> 16) % 3) + (side == BUY ? 1 : 4)) * 1e18;
+            amount = (((r >> 48) % 3) + 1) * 1e17;
+        }
+    }
+
+    /// forge-config: default.fuzz.runs = 25
+    /// forge-config: deep.fuzz.runs = 200
+    function testFuzz_coarsePlacementsKeepSolvencyAndBookOrder(uint256 seed) public {
+        for (uint256 i = 0; i < 80; i++) {
+            (address trader, IOrderBook.Side side, uint256 price, uint256 amount) = _coarsePlacement(seed, i);
+
+            _place(trader, side, price, amount);
+
+            _assertChecks();
+        }
+    }
+
+    // Phase 3b: gas measurements for SPEC O2. Run with --gas-report and --isolate
+
+    function test_gas_fullCapSweepWithRefunds() public {
+        uint256 cap = book.MAX_MATCHES_PER_TX();
+        for (uint256 i = 0; i < cap; i++) {
+            _place(alice, SELL, 2e18, 1e18);
+        }
+
+        _place(bob, BUY, 3e18, cap * 1e18);
+
+        assertEq(book.bookHead(SELL), 0);
+        _assertChecks();
+    }
+
+    function test_gas_insertAtMaxScanDepth() public {
+        _placeRisingBids(book.MAX_INSERT_SCAN());
+
+        uint256 bid = _place(carol, BUY, 1e18, 1e18);
+
+        assertEq(book.bookNext(bid), 0);
+        assertEq(book.getBook(BUY, type(uint256).max).length, book.MAX_INSERT_SCAN() + 1);
+        _assertChecks();
+    }
+
+    /// @dev The worst placement built so far, not a proven upper bound: a full cap of fills with a refund on each, and
+    /// fresh makers and a fresh taker so balances go from zero to nonzero, then a rest behind MAX_INSERT_SCAN
+    /// equal-price bids, which also reads bookSeq at every step. Equal-price bids go first, since they cannot be
+    /// inserted behind a deep book. Capped sells then leave asks resting below them, which crosses the book.
+    function test_gas_worstCasePlacement() public {
+        uint256 cap = book.MAX_MATCHES_PER_TX();
+        uint256 scan = book.MAX_INSERT_SCAN();
+        for (uint256 i = 0; i < scan; i++) {
+            _place(bob, BUY, 3e18, 1e18);
+        }
+        for (uint256 i = 0; i < (cap + 1) * cap; i++) {
+            _place(bob, BUY, (i + 4) * 1e18, 1e18);
+        }
+
+        for (uint256 i = 0; i <= cap; i++) {
+            address maker = makeAddr(string.concat("maker", vm.toString(i)));
+            base.mint(maker, (cap + 1) * 1e18);
+            vm.startPrank(maker);
+            base.approve(address(book), type(uint256).max);
+            book.placeLimitOrder(SELL, 2e18, (cap + 1) * 1e18);
+            quote.transfer(carol, quote.balanceOf(maker));
+            vm.stopPrank();
+        }
+        assertEq(book.getBook(BUY, type(uint256).max).length, scan);
+
+        address taker = makeAddr("taker");
+        quote.mint(taker, INITIAL_BALANCE);
+        vm.startPrank(taker);
+        quote.approve(address(book), type(uint256).max);
+        uint256 bid = book.placeLimitOrder(BUY, 3e18, (cap + 1) * 1e18);
+        vm.stopPrank();
+
+        assertEq(book.getOrder(bid).filled, cap * 1e18);
+        assertEq(book.bookNext(bid), 0);
+        assertEq(book.lastTradePrice(), 2e18);
+        _assertChecks();
+    }
+
     // Trade price and events
 
     function test_match_updatesLastTradePrice() public {

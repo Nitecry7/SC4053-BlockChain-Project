@@ -45,7 +45,7 @@ Non-custodial: no admin or owner role exists. Escrowed tokens leave the contract
 | Fee-on-transfer / rebasing tokens | Unsupported (documented limitation) |
 | Errors | Custom errors only |
 | Fees | None |
-| Constants | `MAX_MATCHES_PER_TX = 10`, `MAX_INSERT_SCAN = 100` (proposed; tuned with `forge test --gas-report` before the ABI freeze) |
+| Constants | `MAX_MATCHES_PER_TX = 10`, `MAX_INSERT_SCAN = 100` (kept after the gas report; see O2 in section 7) |
 
 ## 3. Accounting rules
 Notation: `cost(q, p) = q * p / PRICE_SCALE`.
@@ -175,7 +175,16 @@ There is no background execution on-chain.
 - **O1 (resolved 28 Oct).** Ties at equal price, and the maker rule in `matchOrders`, use the internal
   `bookSeq`, not the order ID. So a stop order that was placed early but triggered late queues
   behind orders that entered the book before it activated. The interface is unchanged.
-- **O2.** The numeric values of `MAX_MATCHES_PER_TX` and `MAX_INSERT_SCAN`, from the gas report.
+- **O2 (resolved 2 Nov).** `MAX_MATCHES_PER_TX = 10` and `MAX_INSERT_SCAN = 100` stay. Gas for one `placeLimitOrder`, from
+  `forge test --gas-report --isolate` on the test harness, which only adds test accessors:
+
+  | Scenario | Gas | Test |
+  |---|---|---|
+  | Insert at full scan depth, distinct prices | 795,030 | `test_gas_insertAtMaxScanDepth` |
+  | 10 fills with refunds, nothing rests | 1,007,730 | `test_gas_fullCapSweepWithRefunds` |
+  | Worst built: 10 fills with refunds, zero-to-nonzero balances, then a rest behind 100 equal-price orders | 1,778,221 | `test_gas_worstCasePlacement` |
+
+  The worst figure is the worst placement built so far, not a proven upper bound. It is well below Anvil's default 30M block gas limit.
 - **O3.** The Bonus 2 "multi-party" interpretation: confirm with the TA.
 - **O4 (resolved 2 Nov).** On a crossed book, section 5 step 4 (match the opposite head) takes precedence over section 2 (Priority). The behaviour is kept and listed in section 8.
 
