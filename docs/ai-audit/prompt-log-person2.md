@@ -46,8 +46,32 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 
 ---
 
+## 2026-11-05: P2-2, MarketFactory (token listing)
+
+**Prompt (summary):** Implement P2-2 from plan rev 3: a separate permissionless MarketFactory that deploys `new OrderBook(base, quote)` unmodified, with an on-chain registry, duplicate prevention including the reversed pair, pagination and events. Unit, fuzz and integration tests that show factory-created markets trade like directly deployed ones. Slither, an independent read-only Opus review, `docs/MARKET_FACTORY.md` and a proposal for Person 1. No staging or committing, no Person 1 file edits.
+
+**What the AI produced:**
+- `contracts/src/MarketFactory.sol` (unordered-pair key, `createMarket`, `getMarket`, `isMarket`, `getMarkets`, `marketCount`, `MarketCreated`, `MarketExists`).
+- `contracts/test/MarketFactory.t.sol` (25) and `contracts/test/MarketFactoryIntegration.t.sol` (14). 39 new tests (36 before review), 169 in total.
+- `docs/MARKET_FACTORY.md` with the interface, design rules, limitations and a review request for Person 1.
+
+**What the AI got wrong or left unclear:**
+1. **A wrong design claim in the approved plan.** Plan rev 3 said the OrderBook constructor's external calls to the tokens allowed reentrancy into `createMarket`, so it specified a `ReentrancyGuard`. While implementing, the AI checked the claim against the code and found it false: the constructor only calls `decimals()` through a `view` interface, which is a STATICCALL, so a token cannot run `createMarket`'s storage writes. The AI dropped the guard and replaced the claim with a test (`test_createMarket_tokenCannotReenterFromDecimals`) plus a control (`test_control_reenteringTokenSucceedsOutsideStaticContext`). The false claim was written by the AI and approved by the human before it was tested. It cost nothing because it was caught before any code shipped.
+2. **A flawed mutation script.** The first mutation run reported that mutant M3 (swapped constructor arguments) survived. The cause was the script, which replaced the first textual match, a doc comment, instead of the code line. Re-running against the code line killed M3 with 12 tests. Without the sanity check against an existing assertion, this would have been recorded as a test gap that did not exist.
+3. **Two test-quality gaps the review caught.** My differential test compared factory and direct markets only on an empty book, and the orientation limit was argued from arithmetic without a test. Both were fixed with new tests, and no assertion was weakened.
+4. **A wrong expectation in a new test.** `expectCall(..., 1)` failed with "called 2 times". The same calldata is sent by the outer call and by the token's nested attempt, so 2 is correct, and it is evidence that the nested attempt happened. It was not a contract bug.
+
+**Evidence:** `docs/ai-audit/test-evidence/person2/p2-2-listing.md`.
+
+**Independent review:** read-only Opus subagent, fresh context. No High or Medium defects, and the no-reentrancy-guard claim survived its attempt to falsify it. Two Low findings: orientation squatting (a permanent, first-come choice of base and quote that can make a pair unusable when the real price is below one tick) and the factory size growing with OrderBook's initcode. Both are documented limitations and not code changes. I added three tests it prompted: one that executes the orientation claim, a full-state replay of a trade on both a factory market and a direct deployment, and custom revert data passing through. No `docs/ai-audit/issues/` entry was written because there was no defect in shipped code. Details are in the evidence file.
+
+**Human decisions:** pending. Person 1 has not reviewed MarketFactory, and it is not wired into any deployment or UI.
+
+---
+
 ## Requirements traceability (R4 only, so far)
 | ID | Brief text | Design | Code | Tests | Evidence | Report § | Status |
 |---|---|---|---|---|---|---|---|
 | R4 | Asset Issuer: issue new asset tokens adhering strictly to ERC20 | plan rev 3 section 6, P2-1 | `contracts/src/DemoToken.sol`, `contracts/src/TokenFactory.sol` | `DemoToken.t.sol`, `TokenFactory.t.sol`, `TokenOrderBookIntegration.t.sol` | `test-evidence/person2/p2-1-issuance.md` | 1, 4, 6 | tested (Foundry only). Not demo-verified: no Anvil or UI run yet |
-Other rows (R2 listing, R3, R5, R6, B1 to B3, T1, T2) are not started by Person 2 and will be added in later phases.
+| R2 | Front end supports token listing (and order submission, execution, self-custody) | `docs/MARKET_FACTORY.md`, plan rev 3 section 3 | `contracts/src/MarketFactory.sol` | `MarketFactory.t.sol`, `MarketFactoryIntegration.t.sol` | `test-evidence/person2/p2-2-listing.md` | 1, 4, 6, 7 | tested (Foundry only), **draft: Person 1 has not reviewed it**. The front-end part of R2 is not built |
+Other rows (R3, R5, R6, B1 to B3, T1, T2) are not started by Person 2 and will be added in later phases.
