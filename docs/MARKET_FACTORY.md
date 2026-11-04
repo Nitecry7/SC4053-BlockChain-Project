@@ -1,6 +1,8 @@
 # MarketFactory (Person 2)
 
-**Status: DRAFT, pending Person 1's review.** It is not part of the frozen `CONTRACT_INTERFACE.md`, which is unchanged. Nothing is wired into a deploy script or the UI until Person 1 agrees (see "Review request for Person 1").
+**Status: DRAFT, pending Person 1's review.** It is not part of the frozen `CONTRACT_INTERFACE.md`, which is unchanged.
+
+**P2-3 integration decision (user-authorized, not reviewed by Person 1):** `contracts/script/Deploy.s.sol` now creates the seed NTU/SGDx market through this factory. The project owner authorized this for P2-3. Person 1 has not independently reviewed or approved it, so the "Review request for Person 1" below is still open.
 
 Brief reference: section 5.1 asks for a front end that supports *token listing*, order submission and execution, and self-custody. Token **issuance** (TokenFactory) and token **listing** (this contract) are separate steps: an issued token is not tradable until a market exists for it.
 
