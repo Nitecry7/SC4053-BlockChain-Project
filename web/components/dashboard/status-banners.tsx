@@ -25,7 +25,7 @@ function Banner({ tone, icon, title, children }: { tone: "warn" | "bad"; icon: R
 }
 
 /** Explains, in plain words, why live data is missing: node down, nothing deployed, or the wallet on another chain. */
-export function StatusBanners({ state }: { state: DashboardState }) {
+export function StatusBanners({ state }: { state: Pick<DashboardState, "deployment" | "network"> }) {
   const { deployment, network } = state;
   const { switchChain, isPending, reset } = useSwitchChain();
   const [switchError, setSwitchError] = useState<ReturnType<typeof describeError>>();

@@ -33,6 +33,11 @@ export function TokensView() {
         address.
       </PageHeader>
       <StatusBanners state={state} />
+      {reg.total !== undefined && reg.tokens && reg.total > BigInt(reg.tokens.length) && (
+        <p role="status" className="mb-4 text-[0.75rem] text-muted-foreground">
+          Showing the first {reg.tokens.length} of {reg.total.toString()} issued tokens (oldest first).
+        </p>
+      )}
       <Panel title={query ? `Results for “${query}”` : "All tokens"}>
         {!state.live ? (
           <EmptyState title="No live tokens">The registry is read once the deployment is found on this chain.</EmptyState>

@@ -1,6 +1,6 @@
 # Front end (Person 2): wallet, on-chain data and limit-order trading
 
-Status: **P2-5.** The app connects a wallet, reads the local deployment, and places **limit orders** (with the ERC20 approval they need) on any market listed through MarketFactory. Order cancellation, token issuance and market listing from the browser are not built: the engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` still revert, and issuance/listing forms are P2-6.
+Status: **P2-6.** The app connects a wallet, reads the local deployment, places **limit orders** (with the ERC20 approval they need) on any market listed through MarketFactory, issues new tokens through TokenFactory and lists new markets through MarketFactory. Order cancellation and the bonus orders are not built: the engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` still revert.
 
 ## Run it
 ```bash
@@ -68,7 +68,7 @@ web/
 - **Scope:** this app never uses x402 or the Base Account connector. The alias is Turbopack-only, so a `--webpack` build would need the same alias.
 
 ## Trading workflow (P2-5)
-**Where.** `/trade` (market picker from the on-chain registry, ticket, depth, book, My orders), the ticket on the dashboard (primary market), and `/tx/[hash]`. A market in `?market=` is accepted only if it is in the MarketFactory registry.
+**Where.** `/trade` (market picker from the on-chain registry, ticket, depth, book, My orders), the ticket on the dashboard (primary market), and `/tx/[hash]`. A market in `?market=` is accepted when the MarketFactory confirms `isMarket(address)` on-chain, so a market beyond the first registry page still opens.
 
 **What you do.** Choose a market, Buy or Sell, type a limit price and an amount, and press **Review order**. The review states the market, side, price, amount, the collateral the order book will escrow, and whether an approval is needed. Then:
 1. If the order book's allowance is short: **Approve exactly the collateral** (a buy approves `requiredQuote(amount, price)` of the quote token; a sell approves `amount` of the base token). The spender is the market (the OrderBook), never MarketFactory, and there is no unlimited option. If the allowance already covers it, no approval is requested.
@@ -97,6 +97,15 @@ A transaction hash is shown as "submitted", never as success. The order id comes
 
 **Waiting for the wallet.** While a connect, approval, order or network-switch request is pending, the app shows: "Waiting for MetaMask confirmation. Check the MetaMask icon in your browser toolbar. If no popup appears, open your browser's Extensions menu and look for a pending request." After 20 seconds it adds recovery steps and Try again. A web page cannot see whether the extension popup is open, so the notice only says where to look and never claims otherwise. Try again resets this app's pending state; a request that is still open inside MetaMask must be rejected there first. The connect notice floats above RainbowKit's dialog, which would otherwise cover it. Network switches made from the header's chain dialog are handled by RainbowKit itself and are not observable here.
 
+## Token issuance and market listing (P2-6)
+**Where.** `/create-token` and `/list-market` (nav entries "Create token" and "List market"; the dashboard's Create & list rows link to them). Both reuse the P2-5 lifecycle: validation, simulation, review, one wallet request, bounded receipt wait, event decoding, on-chain verification, stale/rejected/reverted handling and busy guards (`hooks/use-tx-flow.ts`, `lib/create-runner.ts`, the `lib/order-flow.ts` reducer). No contract, exporter or ABI change was needed.
+
+**Create token.** Name, symbol, total supply in whole tokens (parsed with bigint; decimals are fixed at 18). The review shows exactly what will be minted. The contract's rules are enforced on-chain (`EmptyName`, `EmptySymbol`, `ZeroSupply`, `SupplyTooLarge` at 1e27 raw = 1,000,000,000 tokens, read from the factory). The UI adds stricter, labelled guard rails: name up to 64 and symbol up to 16 characters, no control, bidirectional or zero-width characters, no leading or trailing spaces. A supply that is not a whole number of lots (1e-9) is allowed but flagged, because the remainder can never be sold. Success is shown only after the `TokenCreated` event (emitted by the factory, for the sending account) matches the request **and** independent reads agree: `isFactoryToken`, the token's own `name`/`symbol`/`decimals`/`totalSupply`, the creator's balance, `tokenCount` and registry membership. The card links to **List a market for this token** and **View on Tokens**. Names and symbols are not unique; the address is the identity.
+
+**List market.** Pick a base and a quote from the registry or paste an address. Base is the asset traded; quote is the asset prices are quoted in (NTU/SGDx means SGDx per NTU). Before any signature the form reads the chain: both tokens answer `decimals()` and have exactly 18, the tokens differ, and `getMarket(a, b)` (which the contract treats as unordered) finds no existing market. A duplicate in **either** orientation is shown as "This pair already has a market" with the existing base/quote and a link to Trade, and no transaction is offered. The contract also accepts external 18-decimal ERC-20s, so those are allowed and labelled "not issued by this app's TokenFactory"; "Issued by TokenFactory" means provenance, not safety. Orientation is permanent, so the review states both addresses, the price units and a warning, with a **Swap** control and an acknowledgement checkbox that gates the button. Success requires a matching `MarketCreated` event plus `getMarket` in both orders, `isMarket`, the market's own `baseToken`/`quoteToken` and `marketCount`. A new market starts with an honest empty book and no trades.
+
+**Failure handling.** Rejected, reverted (named by the contract: `MarketExists`, `InvalidTokens`, `UnsupportedDecimals`, the four token errors; a no-data revert is explained as "not an ERC-20"), replaced, timed out, RPC errors, wrong network, account or network change mid-request (stale, dismissable) and double clicks.
+
 ## Design system
 **Source of truth:** the approved Liquid Glass reference screenshot, which is dark-only.
 - **Ground and accents:** deep navy with layered radial lighting; violet accent `#7c5cf2` and lilac `#b49cff`, plus azure `#6aa4ff`.
@@ -108,15 +117,17 @@ A transaction hash is shown as "submitted", never as success. The order id comes
   - Holdings are shown in token units with share-of-supply bars, because there is no USD oracle.
   - The swap panel becomes a disabled limit-order ticket, because the exchange is an order book, not an AMM.
   - Market metrics come only from view calls and `Trade` logs, with no 24h change.
-  - Create & List are labelled "Coming soon".
+  - Create token and List market (P2-6) are working pages; the dashboard's Create & list panel links to them.
 
 ## Testing
 | Layer | Command | What it proves | What it does not |
 |---|---|---|---|
 | Unit (node) | `npm test` | validation, allowance step, execution estimate, lifecycle reducer, runner with a fake chain, receipt decoding with synthetic logs, error mapping, wallet copy | anything on a real chain |
-| Real chain | `E2E_RPC_URL=http://127.0.0.1:8546 E2E_ALLOW_MUTATE=1 npx vitest run lib/trading.integration.test.ts` | the same code against the deployed contracts on a scratch Anvil: SPEC example to the wei, resting, partial and immediate fills, multi-maker sweep, the fill cap, self trade, exact approvals, named reverts, estimate-vs-chain parity | MetaMask or any browser |
-| Browser (mock wallet) | see `web/e2e/trade.e2e.mjs` | the UI drives the whole flow in Chromium against the scratch chain, including pending-wallet guidance, rejection, double click, account switch and wrong network | **MetaMask.** The wallet is an injected stand-in |
+| Real chain | `E2E_RPC_URL=http://127.0.0.1:8546 E2E_ALLOW_MUTATE=1 npx vitest run --no-file-parallelism lib/trading.integration.test.ts lib/creation.integration.test.ts` (sequential: the files share one chain and its snapshots) | the same code against the deployed contracts on a scratch Anvil: SPEC example to the wei, resting, partial and immediate fills, multi-maker sweep, the fill cap, self trade, exact approvals, named reverts, estimate-vs-chain parity | MetaMask or any browser |
+| Browser (mock wallet) | see `web/e2e/trade.e2e.mjs` (trading, `npm run e2e`) and `web/e2e/create.e2e.mjs` (issuance and listing, `npm run e2e:create`) | the UI drives the whole flow in Chromium against the scratch chain, including pending-wallet guidance, rejection, double click, account switch and wrong network | **MetaMask.** The wallet is an injected stand-in |
 | Manual MetaMask | the checklist below | the real wallet prompts | not run by Claude |
+
+The real-chain suites also cover issuance and listing (`lib/creation.integration.test.ts`: exact supply and balances, every named revert, duplicate and reversed pairs, a 6-decimal and a non-token address, an external 18-decimal token, and real trading on a newly listed market).
 
 The real-chain suite refuses to run unless `E2E_RPC_URL` is set explicitly, refuses port 8545 (the developer's own chain) and a missing `E2E_ALLOW_MUTATE=1`, and wraps each test in `evm_snapshot`/`evm_revert`. Use a scratch chain:
 ```bash
@@ -173,7 +184,8 @@ Playwright's Chromium has no wallet extension, so none of this is covered by the
 - **No cancellation, no bonus orders:** `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` revert in the deployed engine, so the UI offers none of them. A remainder left crossed after the 10-fill cap cannot be cleared yet.
 - **Orders are per market** (each OrderBook has its own ids). My orders shows the selected market, the latest 50 orders.
 - **Leaving the page mid-signature is not blocked.** The market picker is disabled while a request is open, and an abandoned attempt sends no further request, but following another link while MetaMask is open leaves that request untracked. If you sign it, find it in the transaction list of the account.
-- **Registries are read one page (50 entries) at a time.** A market beyond the first 50 is not offered on the Trade page.
+- **Registries are read one page (50 entries, oldest first) at a time.** Tokens, Markets and the market picker say "Showing the first N of M" when there are more. The Trade page still opens any registered market given in `?market=` (checked with `isMarket`).
+- **Listing and issuing are permissionless and permanent.** Anyone can issue a token with any name or symbol and list any 18-decimal token; the UI labels provenance but cannot judge safety. A market's base/quote orientation can never be changed or undone with the current contracts.
 - **The wallet and the app can use different nodes.** Both must be the same chain-31337 node. If your wallet points at another 31337 node, the transaction goes there and this app, which reads its own RPC, will report it as not confirmed.
 - **Token movements are token-reported.** The escrow, refund and received amounts come from the tokens' own `Transfer` events (cross-checked with `getOrder`); a hostile token could emit consistent logs. Wallet balances on the result card are read from the chain separately. Symbols are chosen by whoever issues a token, so the review shows the contract addresses.
 - **MetaMask not exercised by automation.** The browser run uses a mock wallet; wallet behaviour is on the manual checklist (the owner has verified the SPEC example by hand).

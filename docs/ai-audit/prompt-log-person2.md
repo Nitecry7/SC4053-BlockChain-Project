@@ -218,6 +218,21 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 
 **Skills and MCPs:** none beyond ordinary file, shell, `cast`, `forge` and `playwright-core` use (Chromium for the alignment measurement). Context7, shadcn, design skills and `solidity-security` were not needed.
 
+## 2026-11-06: P2-6, token issuance and market listing
+
+**Prompt (summary):** Make Create token and List market work in the browser with the existing contracts, on the P2-5 lifecycle; duplicate and reversed-pair handling; integration with Trade; tests at every layer; one narrow review; docs.
+
+**What the AI got wrong:**
+1. Invisible-character lists, lone-surrogate handling, a stale hash after a speed-up and an unhandled `isMarket` error (reviewer findings; issue P2-010).
+2. Reused a full-width panel in a sidebar column, which squeezed it unreadably (found from a screenshot, fixed).
+3. Ran two real-chain suites in parallel, which interleaved snapshots and produced false failures; the command now uses `--no-file-parallelism`.
+4. Two test-code slips (address case, a strict selector matching two elements) were test errors, fixed in the tests, not the product.
+
+**What the human did:** approved the plan and the model choice. Still pending: the manual MetaMask cases in `docs/TESTING.md` Test 8.
+
+**Skills and MCPs:** `playwright-core`, `impeccable detect` (placeholder contrast fixed; other findings match the existing pages), Foundry, one Sonnet reviewer. Context7, shadcn and `solidity-security` were not needed (no Solidity change).
+
+
 ## Requirements traceability
 | ID | Brief text | Design | Code | Tests | Evidence | Report § | Status |
 |---|---|---|---|---|---|---|---|
@@ -231,3 +246,4 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 | B1 (cancel remainder), B2, B3 | Bonus: cancel, batched matching, conditional orders | n/a | none: the engine's `cancelOrder`, `matchOrders`, stop functions revert, so the UI has no control for them | n/a | `OrderBook.sol` lines 88-101 | n/a | **not implemented** (Person 1's engine); not presented as available |
 | T1 / T2 | Who triggers execution and how often; priority at equal price | `docs/FRONTEND.md` | the UI says matching only happens inside order transactions and that a crossed remainder cannot be cleared yet | `trading.integration.test.ts` (fill cap) | `p2-5-trading.md` | 4 | behaviour observed on a real chain; the priority rule itself is the engine's (Person 1) |
 Other rows are not started by Person 2.
+| R4 / R2 (browser) | Issue tokens and list markets from the front end | `docs/FRONTEND.md` "Token issuance and market listing" | `web/lib/create-*.ts`, `web/hooks/use-create-flow.ts`, `web/components/create/` | `create-*.test.ts`, `creation.integration.test.ts` (21), `e2e/create.e2e.mjs` (14) | `test-evidence/person2/p2-6-issuance-listing.md` | 7 | mock wallet and scratch chain only; MetaMask not yet performed |

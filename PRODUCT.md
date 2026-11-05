@@ -45,13 +45,15 @@ An exchange whose interface shows only what the chain says. Every figure is read
 - **Balances:** show wallet balance and escrowed amount as different quantities.
 - **Bonus engine features named in the brief** (cancelling the remainder of an order, batched multi-party matching, conditional stop-limit orders) are part of the course scope but are Person 1's engine work and are not yet working (see below).
 
-### Implemented today (through P2-5)
+### Implemented today (through P2-6)
 
 The web app can: connect a browser wallet through RainbowKit; show the connected account, network and live block; show wrong-network, no-deployment and node-unreachable states; list issued tokens and listed markets from the on-chain registries; show token balances; show a market's best bid and ask, last trade price, spread, live order book, a depth chart, and trade count and volume derived from `Trade` events; and format and validate amounts with bigint-exact helpers that mirror the engine.
 
 Since P2-5 it can also **place limit orders** on any market in the MarketFactory registry: validate the price and amount against the contract's lot and tick sizes, approve exactly the collateral for the order book when the allowance is short, simulate, sign through the wallet, and follow the transaction through the receipt to the decoded order id, fills, refund and remaining escrow. It lists the connected account's orders per market and decodes any transaction on a transaction page. While a wallet request is pending it explains where to look and how to recover.
 
-The web app **cannot yet**: cancel or match orders, place stop-limit orders, issue a token, or list a market. The deployed engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` revert, so the UI offers none of them. "Create token" and "List market" are visible but disabled and labelled as arriving in a later phase (P2-6). Do not describe any of these as functional until they are built and verified. Wallet behaviour is verified against a mock wallet and a scratch chain, and the SPEC worked example has been performed by the project owner with real MetaMask accounts (`docs/TESTING.md`); the other manual cases there are procedures not yet performed.
+Since P2-6 it can also **issue a token** (name, symbol, fixed supply through TokenFactory) and **list a market** (any two distinct 18-decimal tokens through MarketFactory, with duplicate and reversed-pair detection and a permanent-orientation acknowledgement), verify each result on-chain, and trade a newly listed market through registry discovery.
+
+The web app **cannot yet**: cancel or match orders or place stop-limit orders. The deployed engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` revert, so the UI offers none of them. Do not describe any of these as functional until they are built and verified. Wallet behaviour is verified against a mock wallet and a scratch chain, and the SPEC worked example has been performed by the project owner with real MetaMask accounts (`docs/TESTING.md`); the other manual cases there are procedures not yet performed.
 
 ### Contract facts the interface must respect
 

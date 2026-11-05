@@ -1,5 +1,5 @@
 import type { Abi, Address, Hex, PublicClient } from "viem";
-import { demoTokenAbi, orderBookAbi } from "./contracts/abis";
+import { demoTokenAbi, marketFactoryAbi, orderBookAbi, tokenFactoryAbi } from "./contracts/abis";
 import { describeTxError } from "./errors";
 import { decodeOrderReceipt, reconcileOrder, type OrderReceipt } from "./receipt";
 import { SIDE_INDEX, type ValidOrder } from "./order-input";
@@ -51,7 +51,7 @@ export type RunParams = {
 const DEFAULT_WINDOW_MS = 60_000;
 const DEFAULT_MAX_WINDOWS = 3;
 
-const fail = (dispatch: Dispatch, attempt: number, step: "approve" | "order", error: unknown, hash?: Hex) => {
+export const fail = <R>(dispatch: (event: FlowEvent<R>) => void, attempt: number, step: "approve" | "order", error: unknown, hash?: Hex) => {
   const described = describeTxError(error);
   // Once a hash exists the wallet has broadcast it. Unless the chain said it reverted, was cancelled or replaced, it may
   // still be mined, so say so before the user is offered another attempt.
@@ -69,7 +69,13 @@ const fail = (dispatch: Dispatch, attempt: number, step: "approve" | "order", er
  * Waits for a receipt in bounded windows. A timeout is not a failure: it marks the flow delayed and keeps waiting,
  * up to `maxWindows`. A re-priced (sped-up) transaction is followed to its new hash.
  */
-async function waitBounded(deps: RunnerDeps, hash: Hex, p: RunParams, dispatch: Dispatch, isCurrent: () => boolean): Promise<ReceiptLike> {
+export async function waitBounded<R>(
+  deps: Pick<RunnerDeps, "waitForReceipt">,
+  hash: Hex,
+  p: Pick<RunParams, "attempt" | "windowMs" | "maxWindows">,
+  dispatch: (event: FlowEvent<R>) => void,
+  isCurrent: () => boolean,
+): Promise<ReceiptLike> {
   const windowMs = p.windowMs ?? DEFAULT_WINDOW_MS;
   const maxWindows = p.maxWindows ?? DEFAULT_MAX_WINDOWS;
   let lastError: unknown;
@@ -222,11 +228,20 @@ export async function runOrder(deps: RunnerDeps, p: RunParams, dispatch: Dispatc
 }
 
 /**
- * The order book re-raises the tokens' own custom errors (`ERC20InsufficientAllowance`, `ERC20InsufficientBalance`)
- * through SafeERC20, so a simulation decoded against the order book's ABI alone cannot name them. Adding the token's
- * error definitions lets viem decode both. (Found by the real-chain integration test; see the issue log.)
+ * Revert reasons can come from a contract other than the one being called: the order book re-raises the tokens' own
+ * errors through SafeERC20, and the market factory re-raises the order book constructor's errors. viem names a revert
+ * only if its definition is in the ABI of the simulated call, so every project error definition is merged in (adds
+ * names only; it never changes which function is called). Found by the real-chain test (issue p2-001) and extended in
+ * P2-6 for `InvalidTokens` and `UnsupportedDecimals`.
  */
-const TOKEN_ERRORS = demoTokenAbi.filter((item) => item.type === "error");
+const ERROR_DEFINITIONS = (() => {
+  const seen = new Map<string, (typeof demoTokenAbi)[number]>();
+  for (const item of [...demoTokenAbi, ...orderBookAbi, ...tokenFactoryAbi, ...marketFactoryAbi]) {
+    if (item.type !== "error") continue;
+    seen.set(`${item.name}(${item.inputs.map((i) => i.type).join(",")})`, item as (typeof demoTokenAbi)[number]);
+  }
+  return [...seen.values()];
+})();
 
 /** Real chain operations over a viem public client, with the wallet's `writeContract` supplied by the caller. */
 export function viemDeps(
@@ -237,7 +252,7 @@ export function viemDeps(
     simulate: async (call, account, blockNumber) => {
       await publicClient.simulateContract({
         ...call,
-        abi: [...call.abi, ...TOKEN_ERRORS],
+        abi: [...call.abi, ...ERROR_DEFINITIONS],
         account,
         ...(blockNumber !== undefined ? { blockNumber } : {}),
       } as never);

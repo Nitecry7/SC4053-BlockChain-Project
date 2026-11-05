@@ -28,7 +28,7 @@ Its own run of the suite reported 131 passed (before the fixes). Result: no High
 - `testFuzz_getTokens_matchesRegistry` fuzzed `offset` over all of uint256, so most runs only hit the empty branch. `offset` is now bounded to `0..n+2`.
 - `test_getTokens_middlePage` did not check `page[1]`. It does now.
 - `test_createToken_failedAttemptWritesNothing` passed trivially, because the EVM rolls back state on any revert. It was deleted, not kept as evidence.
-Findings recorded, not changed: the TokenFactory ABI is not in CONTRACT_INTERFACE.md (needs both teammates); supplies that are not multiples of 1e9 leave untradable dust; `isFactoryToken` proves provenance, not identity, and names and symbols can be duplicated or spoofed, so the UI must identify tokens by address; the 1e27 cap does not bound the engine's inputs in general; `test_noMintOrBurnEntryPoint` and `test_hasNoOwner` probe only a few selectors, so the no-hidden-mint guarantee rests on reading the 7-line source.
+Findings recorded, not changed: the TokenFactory ABI is not in CONTRACT_INTERFACE.md (needs both teammates); supplies that are not multiples of 1e9 leave untradable dust; `isFactoryToken` proves provenance, not identity, and names and symbols can be duplicated or spoofed, so the UI must identify tokens by address; the 1e27 cap does not bound the engine's inputs in general; `test_noMintOrBurnEntryPoint` and `test_hasNoOwner` probe only a few selectors, so the no-hidden-mint guarantee rests on reading the 7-line  source.
 
 ## Limits
 - A green run proves only the scenarios listed, in this environment. There is no Anvil deployment, MetaMask or UI evidence for R4 yet.

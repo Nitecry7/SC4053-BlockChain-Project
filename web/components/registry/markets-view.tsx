@@ -73,6 +73,11 @@ export function MarketsView() {
         deployment. Prices are in the quote token per base token.
       </PageHeader>
       <StatusBanners state={state} />
+      {reg.total !== undefined && reg.markets && reg.total > BigInt(reg.markets.length) && (
+        <p role="status" className="mb-4 text-[0.75rem] text-muted-foreground">
+          Showing the first {reg.markets.length} of {reg.total.toString()} listed markets (oldest first). A newer market is still reachable by its address on the Trade page.
+        </p>
+      )}
       <Panel title={query ? `Results for “${query}”` : "All markets"}>
         {!state.live ? (
           <EmptyState title="No live markets">The registry is read once the deployment is found on this chain.</EmptyState>

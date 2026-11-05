@@ -307,6 +307,24 @@ Remember: an **ERC20 approval** and **placing the order** are two *different* bl
 
 After 7f or 7g you may need to reset MetaMask's cached nonce (Section E, item 1).
 
+## Test 8: create a token and list a market (P2-6)
+**Status: PROCEDURE ONLY. Not performed with MetaMask.** The same flows have passed an automated browser run with a **mock** wallet and a scratch-chain integration suite (see `ai-audit/test-evidence/person2/p2-6-issuance-listing.md`); neither is a MetaMask result. Use Alice (as in Tests 1 to 6) unless stated.
+
+| # | Do this | Expect |
+|---|---|---|
+| 8a | Open **Create token**. Enter name `Fizz Coin`, symbol `FIZZ`, supply `1000000`; press **Review token** | A review card repeats the three values and says 18 decimals and no owner or minting |
+| 8b | Press **Create token** and confirm the single MetaMask request | The waiting card, then a result card: token address, name, symbol, 18 decimals, total supply 1,000,000, your balance 1,000,000, "Issued by TokenFactory". Only one MetaMask request opened (no approval is needed) |
+| 8c | In a terminal: `cast call <token> "totalSupply()(uint256)" --rpc-url http://127.0.0.1:8545` and `balanceOf(<your address>)` | Both return `1000000000000000000000000` |
+| 8d | In MetaMask, Import tokens with the address from the card | FIZZ shows 1,000,000 (MetaMask wording unverified) |
+| 8e | Open **Tokens** (no reload) | FIZZ is listed |
+| 8f | From the result press **List a market for this token**; choose SGDx as quote | A review with the pair FIZZ / SGDx, both addresses, "quoted in SGDx per 1 FIZZ", an orientation warning and a checkbox; **List market** stays disabled until the box is ticked |
+| 8g | Tick the box, press **List market**, confirm in MetaMask | A result card naming the market address, base FIZZ and quote SGDx |
+| 8h | Open **Markets** | The FIZZ / SGDx market is listed |
+| 8i | Press **Trade this market** | The Trade page opens on FIZZ / SGDx with an empty book and no trades |
+| 8j | Sell 10 FIZZ at 2 (approval of exactly 10 FIZZ, then the order). Switch to Bob and buy 4 FIZZ with a limit of 2.2 | The same result as Test 4 on this market: trade at 2, refund 0.8 SGDx |
+| 8k | Go back to **List market** and choose SGDx as base and FIZZ as quote | "This pair already has a market" with a link to it, and no sign button; nothing is sent |
+| 8l | Press **Reject** on a create-token or list-market confirmation | "You rejected the request"; nothing is created; **Try again** works |
+
 ---
 
 # D. Screenshots

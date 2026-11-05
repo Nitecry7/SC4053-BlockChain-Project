@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
-import type { Address } from "viem";
+import { isAddress, type Address } from "viem";
 import { Panel } from "@/components/dashboard/panel";
 import { BookPanel, DepthPanel } from "@/components/dashboard/market-panels";
 import { StatusBanners } from "@/components/dashboard/status-banners";
 import { DEPLOYMENT, useDashboard } from "@/components/dashboard/use-dashboard";
 import { EmptyState } from "@/components/data/states";
 import { PageHeader } from "@/components/registry/page-header";
-import { useDeploymentCheck, useMarketRegistry } from "@/hooks/use-dex-data";
+import { useDeploymentCheck, useIsMarket, useMarketRegistry } from "@/hooks/use-dex-data";
 import { MarketPicker } from "./market-picker";
 import { MyOrders } from "./my-orders";
 import { OrderTicket } from "./order-ticket";
@@ -56,14 +56,22 @@ export function TradeView() {
   const live = deployment.status.kind === "ok";
   const reg = useMarketRegistry(live);
 
+  // A requested market is accepted if it is on the first registry page OR MarketFactory itself says it is a market. The
+  // on-chain check means a market listed beyond the first page (or just now) is still reachable by its link.
+  const requestedAddress = requested && isAddress(requested) ? (requested as Address) : undefined;
+  const onFirstPage = Boolean(requestedAddress && reg.markets?.some((m) => same(m.address, requestedAddress)));
+  const registered = useIsMarket(requestedAddress, live && !onFirstPage);
+
   const choice = useMemo(() => {
+    if (requestedAddress && !onFirstPage && registered.data === true) return requestedAddress;
     const markets = reg.markets;
     if (!markets || markets.length === 0) return undefined;
-    const asked = requested ? markets.find((m) => same(m.address, requested)) : undefined;
+    const asked = requestedAddress ? markets.find((m) => same(m.address, requestedAddress)) : undefined;
     return asked?.address ?? markets.find((m) => same(m.address, DEPLOYMENT.market))?.address ?? markets[0]!.address;
-  }, [reg.markets, requested]);
+  }, [reg.markets, requestedAddress, onFirstPage, registered.data]);
 
-  const unknownRequest = Boolean(requested) && reg.markets !== undefined && !reg.markets.some((m) => same(m.address, requested!));
+  // Only a request the chain has refused counts as unknown; while the check is still running nothing is claimed.
+  const unknownRequest = Boolean(requested) && reg.markets !== undefined && !onFirstPage && (requestedAddress === undefined || registered.data === false);
 
   if (!live || !choice) {
     // Not live (no deployment / node down) or no markets yet: show the same page chrome with an honest empty state.
@@ -76,13 +84,16 @@ export function TradeView() {
   }
   return (
     <>
+      {requestedAddress && !onFirstPage && registered.isError && (
+        <p role="status" className="mb-4 rounded-2xl border border-warn/35 bg-warn/[0.08] px-4 py-3 text-[0.8125rem]">
+          Could not check <span className="font-mono">{requested}</span> on-chain, so it is not offered here. Showing a listed market instead.{" "}
+          <Link href="/markets" className="text-lilac hover:text-white">All markets</Link>
+        </p>
+      )}
       {unknownRequest && (
         <p role="status" className="mb-4 rounded-2xl border border-warn/35 bg-warn/[0.08] px-4 py-3 text-[0.8125rem]">
-          <span className="font-mono">{requested}</span>{" "}
-          {reg.total !== undefined && reg.markets && reg.total > BigInt(reg.markets.length)
-            ? `is not among the first ${reg.markets.length} listed markets, which is all this page reads.`
-            : "is not a market listed through MarketFactory, so it is not offered here."}{" "}
-          Showing a listed market instead.{" "}
+          <span className="font-mono">{requested}</span> is not a market listed through MarketFactory (checked on-chain), so it is not offered here. Showing a listed market
+          instead.{" "}
           <Link href="/markets" className="text-lilac hover:text-white">All markets</Link>
         </p>
       )}

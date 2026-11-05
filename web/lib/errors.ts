@@ -77,6 +77,16 @@ const CONTRACT_ERROR_TEXT: Record<string, { title: string; detail: string }> = {
     detail: "The order book is not approved to move enough of this token. Approve the required amount first.",
   },
   ERC20InsufficientBalance: { title: "Balance is too low", detail: "Your wallet holds less of this token than the order escrows." },
+  EmptyName: { title: "The token name is empty", detail: "Enter a name." },
+  EmptySymbol: { title: "The token symbol is empty", detail: "Enter a symbol." },
+  ZeroSupply: { title: "The supply is zero", detail: "Enter a supply greater than zero." },
+  SupplyTooLarge: { title: "The supply is above the factory's cap", detail: "TokenFactory refuses a supply above its maximum (1,000,000,000 tokens)." },
+  MarketExists: {
+    title: "A market for this pair already exists",
+    detail: "A pair can be listed once, in either order. Open the existing market instead of creating another.",
+  },
+  InvalidTokens: { title: "The order book refused these tokens", detail: "Both tokens must be non-zero and different from each other." },
+  UnsupportedDecimals: { title: "A token does not have 18 decimals", detail: "The order book only supports 18-decimal tokens." },
 };
 
 /**

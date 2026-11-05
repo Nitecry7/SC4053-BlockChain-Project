@@ -7,7 +7,9 @@ import { useBlockNumber, usePublicClient, useReadContracts } from "wagmi";
 import { anvil } from "@/lib/chains";
 import { demoTokenAbi, marketFactoryAbi, orderBookAbi, tokenFactoryAbi } from "@/lib/contracts/abis";
 import { PRIMARY_DEPLOYMENT } from "@/lib/deployment";
+import type { ExistingMarket, TokenProbe } from "@/lib/create-plan";
 import { TICKET_BOOK_DEPTH } from "@/lib/order-plan";
+import { displayText } from "@/lib/safe-text";
 import type { OrderSnapshot } from "@/lib/order-status";
 import { classifyDeployment, type DeploymentStatus } from "@/lib/network-status";
 
@@ -95,8 +97,8 @@ export function useTokenDetails(tokens: readonly Address[], enabled = true) {
         const r = query.data.slice(i * 5, i * 5 + 5);
         return {
           address,
-          name: r[0] as string,
-          symbol: r[1] as string,
+          name: displayText(r[0] as string, 100),
+          symbol: displayText(r[1] as string, 32),
           decimals: Number(r[2]),
           totalSupply: r[3] as bigint,
           issuedByFactory: r[4] as boolean,
@@ -344,4 +346,93 @@ export function useTxReceipt(hash: Hex | undefined) {
       return { tx, receipt };
     },
   });
+}
+
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+/**
+ * What the chain says about one candidate token address, for the List market form. Each read may fail on its own (an
+ * arbitrary contract need not have name() or symbol()), so they are not batched as all-or-nothing: if `decimals()` cannot
+ * be read the address is reported as "not a token"; the other fields are optional. Strings are sanitised for display.
+ */
+export function useTokenProbe(address: Address | undefined, enabled = true): TokenProbe | undefined {
+  const query = useReadContracts({
+    allowFailure: true,
+    query: { enabled: enabled && Boolean(address) },
+    contracts: address
+      ? [
+          { chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "decimals" },
+          { chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "name" },
+          { chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "symbol" },
+          { chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "totalSupply" },
+          { chainId: CHAIN_ID, address: D.tokenFactory as Address, abi: tokenFactoryAbi, functionName: "isFactoryToken", args: [address] },
+        ]
+      : [],
+  });
+  if (!address) return undefined;
+  const data = query.data;
+  if (!data) return query.isError ? { status: "not-a-token" } : { status: "loading" };
+  const [decimals, name, symbol, supply, factory] = data;
+  if (!decimals || !name || !symbol || !supply || !factory) return { status: "loading" };
+  if (decimals.status !== "success") return { status: "not-a-token" };
+  return {
+    status: "ok",
+    decimals: Number(decimals.result),
+    name: name.status === "success" ? displayText(name.result as string, 100) : undefined,
+    symbol: symbol.status === "success" ? displayText(symbol.result as string, 32) : undefined,
+    totalSupply: supply.status === "success" ? (supply.result as bigint) : undefined,
+    issuedByFactory: factory.status === "success" && factory.result === true,
+  };
+}
+
+/**
+ * The market `MarketFactory.getMarket(a, b)` reports for the pair (order-insensitive), with its real base and quote read
+ * from the market itself so its orientation is known. `undefined` while loading, `null` when the pair has no market.
+ */
+export function useExistingMarket(a: Address | undefined, b: Address | undefined, enabled = true): ExistingMarket | null | undefined {
+  const active = enabled && Boolean(a) && Boolean(b);
+  const first = useReadContracts({
+    allowFailure: false,
+    query: { enabled: active },
+    contracts: [{ chainId: CHAIN_ID, address: D.marketFactory as Address, abi: marketFactoryAbi, functionName: "getMarket", args: [a as Address, b as Address] }],
+  });
+  const market = first.data?.[0] as Address | undefined;
+  const exists = market !== undefined && market.toLowerCase() !== ZERO_ADDRESS;
+  const tokens = useReadContracts({
+    allowFailure: false,
+    query: { enabled: active && exists },
+    contracts: exists
+      ? [
+          { chainId: CHAIN_ID, address: market, abi: orderBookAbi, functionName: "baseToken" },
+          { chainId: CHAIN_ID, address: market, abi: orderBookAbi, functionName: "quoteToken" },
+        ]
+      : [],
+  });
+  if (!active || !first.data) return undefined;
+  if (!exists) return null;
+  if (!tokens.data) return undefined;
+  return { market, base: tokens.data[0] as Address, quote: tokens.data[1] as Address };
+}
+
+/** Is this address a market registered by MarketFactory? An on-chain check, so it works beyond the first registry page. */
+export function useIsMarket(address: Address | undefined, enabled = true) {
+  const query = useReadContracts({
+    allowFailure: false,
+    query: { enabled: enabled && Boolean(address) },
+    contracts: address ? [{ chainId: CHAIN_ID, address: D.marketFactory as Address, abi: marketFactoryAbi, functionName: "isMarket", args: [address] }] : [],
+  });
+  return { data: query.data?.[0] as boolean | undefined, isPending: Boolean(address) && enabled && query.isPending, isError: query.isError };
+}
+
+/** `TokenFactory.MAX_SUPPLY()` and the engine's `LOT_SIZE()`, read from the chain (never assumed). */
+export function useCreateConstants(enabled = true) {
+  const query = useReadContracts({
+    allowFailure: false,
+    query: { enabled },
+    contracts: [
+      { chainId: CHAIN_ID, address: D.tokenFactory as Address, abi: tokenFactoryAbi, functionName: "MAX_SUPPLY" },
+      { chainId: CHAIN_ID, address: D.market as Address, abi: orderBookAbi, functionName: "LOT_SIZE" },
+    ],
+  });
+  return { ...query, data: query.data ? { maxSupply: query.data[0] as bigint, lotSize: query.data[1] as bigint } : undefined };
 }

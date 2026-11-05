@@ -1,5 +1,5 @@
 import { parseEventLogs, type Address, type Hex } from "viem";
-import { demoTokenAbi, orderBookAbi } from "./contracts/abis";
+import { demoTokenAbi, marketFactoryAbi, orderBookAbi, tokenFactoryAbi } from "./contracts/abis";
 import type { Side } from "./order-input";
 
 type RawLog = { address: Address; topics: readonly Hex[]; data: Hex; logIndex?: number | null };
@@ -28,7 +28,7 @@ type TokenEvent =
   | { eventName: string; args?: unknown };
 
 /** Decodes only logs emitted BY the given address, so another contract cannot spoof an order event. */
-function decodeFrom<E>(abi: typeof orderBookAbi | typeof demoTokenAbi, logs: readonly RawLog[], emitter: Address): E[] {
+function decodeFrom<E>(abi: typeof orderBookAbi | typeof demoTokenAbi | typeof tokenFactoryAbi | typeof marketFactoryAbi, logs: readonly RawLog[], emitter: Address): E[] {
   const own = logs.filter((l) => same(l.address, emitter));
   return parseEventLogs({ abi, logs: own as never }) as unknown as E[];
 }
@@ -197,4 +197,32 @@ export function decodeTxEvents(input: { logs: readonly (RawLog & { logIndex?: nu
   }
   events.sort((a, b) => a.logIndex - b.logIndex);
   return { events: events.map((e) => e.event), unrecognised: Math.max(input.logs.length - recognisedLogs, 0) };
+}
+
+export type TokenCreatedEvent = { token: Address; creator: Address; name: string; symbol: string; initialSupply: bigint };
+export type MarketCreatedEvent = { market: Address; base: Address; quote: Address; creator: Address };
+export type CreatedEventResult<E> = { ok: true; event: E } | { ok: false; reason: "none" | "multiple" };
+
+/**
+ * Reads the `TokenCreated` event of a `createToken` transaction. Only logs emitted BY the TokenFactory are decoded, and
+ * only an event whose `creator` is the sending account counts. Zero or more than one is refused: the new token's
+ * address is never guessed and never taken from the simulation.
+ */
+export function decodeTokenCreated(input: { logs: readonly RawLog[]; factory: Address; creator: Address }): CreatedEventResult<TokenCreatedEvent> {
+  const events = decodeFrom<{ eventName: string; args?: TokenCreatedEvent }>(tokenFactoryAbi, input.logs, input.factory).filter(
+    (e): e is { eventName: "TokenCreated"; args: TokenCreatedEvent } => e.eventName === "TokenCreated" && e.args !== undefined && same(e.args.creator, input.creator),
+  );
+  if (events.length === 0) return { ok: false, reason: "none" };
+  if (events.length > 1) return { ok: false, reason: "multiple" };
+  return { ok: true, event: events[0]!.args };
+}
+
+/** The same for `MarketCreated` from the MarketFactory. */
+export function decodeMarketCreated(input: { logs: readonly RawLog[]; factory: Address; creator: Address }): CreatedEventResult<MarketCreatedEvent> {
+  const events = decodeFrom<{ eventName: string; args?: MarketCreatedEvent }>(marketFactoryAbi, input.logs, input.factory).filter(
+    (e): e is { eventName: "MarketCreated"; args: MarketCreatedEvent } => e.eventName === "MarketCreated" && e.args !== undefined && same(e.args.creator, input.creator),
+  );
+  if (events.length === 0) return { ok: false, reason: "none" };
+  if (events.length > 1) return { ok: false, reason: "multiple" };
+  return { ok: true, event: events[0]!.args };
 }
