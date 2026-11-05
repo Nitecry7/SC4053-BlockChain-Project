@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "e2e": "node e2e/trade.e2e.mjs",
-    "e2e:create": "node e2e/create.e2e.mjs"
+    "e2e:create": "node e2e/create.e2e.mjs",
+    "e2e:dashboard": "node e2e/dashboard.e2e.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

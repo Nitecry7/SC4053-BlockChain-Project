@@ -4,7 +4,6 @@ import { ArrowLeftRight, BarChart3, Check, Copy, Info, Layers } from "lucide-rea
 import Link from "next/link";
 import { useState } from "react";
 import { Amount } from "@/components/data/amount";
-import { TokenMark } from "@/components/data/token-mark";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { ConnectControl } from "@/components/wallet/connect-control";
@@ -18,7 +17,7 @@ export function shareOf(part: bigint, whole: bigint): string {
   return `${bp / 100n}.${(bp % 100n).toString().padStart(2, "0")}`;
 }
 
-function WalletHint({ state }: { state: DashboardState }) {
+export function WalletHint({ state }: { state: DashboardState }) {
   if (!state.live) return <>Live data appears once the deployment is found on this chain.</>;
   if (state.network.kind === "wrong-network") return <>Switch your wallet to Anvil to see your balances.</>;
   if (state.network.kind === "connecting") return <>Connecting to your wallet…</>;
@@ -35,7 +34,7 @@ export function HoldingsPanel({ state }: { state: DashboardState }) {
   return (
     <Panel
       id="holdings"
-      title="Wallet holdings"
+      title={`${base.symbol} / ${quote.symbol} holdings`}
       className="relative min-h-[10.5rem]"
       action={
         <span className="inline-flex items-center gap-1.5 text-[0.6875rem] text-muted-foreground">
@@ -84,7 +83,7 @@ export function HoldingsPanel({ state }: { state: DashboardState }) {
             const pct = bal !== undefined && total ? shareOf(bal, total) : undefined;
             const width = pct ? Math.max(Number(pct), bal && bal > 0n ? 1.5 : 0) : 0;
             return (
-              <div key={t.symbol}>
+              <div key={i}>
                 <div className="mb-1.5 flex justify-between text-[0.6875rem] text-muted-foreground">
                   <span>{t.symbol} share of supply</span>
                   <span className="tabular text-foreground">{pct ? `${pct}%` : "—"}</span>
@@ -147,68 +146,6 @@ export function QuickActions({ state }: { state: DashboardState }) {
           Place Order
         </Link>
       </div>
-    </Panel>
-  );
-}
-
-/** Wallet balances per token, with provenance from the TokenFactory registry instead of invented % changes. */
-export function TokenBalances({ state }: { state: DashboardState }) {
-  const { tokens, balances, ready, live } = state;
-  const list = [state.pair.base, state.pair.quote];
-  return (
-    <Panel
-      id="token-balances"
-      title="Token balances"
-      action={
-        <Link href="/tokens" className="text-[0.75rem] font-medium text-lilac hover:text-white">
-          All tokens <span aria-hidden>→</span>
-        </Link>
-      }
-    >
-      <ul className="space-y-1.5">
-        {list.map((t, i) => {
-          const detail = tokens.data?.[i];
-          const bal = live && ready ? balances.data?.[i] : undefined;
-          return (
-            <li key={t.address} className="glass-inset flex min-h-[3.25rem] items-center gap-3 rounded-[0.875rem] px-3 py-2">
-              <TokenMark symbol={t.symbol} />
-              <div className="min-w-0">
-                <p className="text-[0.875rem] font-semibold">{t.symbol}</p>
-                <p className="truncate text-[0.6875rem] text-muted-foreground">{detail?.name ?? t.name}</p>
-              </div>
-              <div className="ml-auto text-right">
-                <p className="text-[0.8125rem] font-semibold">
-                  {bal !== undefined ? <Amount value={bal} visible={2} showTail={false} symbol={t.symbol} /> : <span className="text-muted-foreground">—</span>}
-                </p>
-                {detail ? (
-                  <p className={cn("text-[0.6875rem]", detail.issuedByFactory ? "text-buy" : "text-warn")}>
-                    {detail.issuedByFactory ? "Issued by TokenFactory" : "Not from TokenFactory"}
-                  </p>
-                ) : (
-                  <p className="text-[0.6875rem] text-subtle">{live ? "Reading…" : "Not deployed"}</p>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-      {!(live && ready) && (
-        <p className="mt-2.5 text-[0.6875rem] text-muted-foreground">
-          <WalletHint state={state} />
-        </p>
-      )}
-      {tokens.data && (
-        <dl className="glass-inset mt-3 grid grid-cols-2 gap-x-4 gap-y-2 rounded-[0.875rem] px-3.5 py-3" aria-label="Total supply">
-          {tokens.data.map((t) => (
-            <div key={t.address}>
-              <dt className="text-[0.6875rem] text-muted-foreground">{t.symbol} total supply</dt>
-              <dd className="tabular mt-0.5 text-[0.8125rem] font-semibold">
-                <Amount value={t.totalSupply} decimals={t.decimals} visible={0} showTail={false} />
-              </dd>
-            </div>
-          ))}
-        </dl>
-      )}
     </Panel>
   );
 }

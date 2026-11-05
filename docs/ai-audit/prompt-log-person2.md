@@ -233,6 +233,19 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 **Skills and MCPs:** `playwright-core`, `impeccable detect` (placeholder contrast fixed; other findings match the existing pages), Foundry, one Sonnet reviewer. Context7, shadcn and `solidity-security` were not needed (no Solidity change).
 
 
+## 2026-11-06: P2-6.1, Dashboard market selector and all-token wallet overview
+
+**Prompt (summary):** After P2-6 was manually verified in MetaMask, let the Dashboard show any registered market (selector, URL-based, validated) and add an all-token wallet overview with paginated registry discovery; no contract changes; stop for review.
+
+**What the AI got wrong:**
+1. Reused a panel keyed by token symbol for non-seed markets, which left a stale "ghost" row while token metadata loaded (found from a screenshot; issue P2-011, red then green in the browser run).
+2. Planned to carry `?market=` through the sidebar links, then found that needs `useSearchParams` in the layout shell (a Suspense boundary around everything); dropped it and linked Dashboard and Trade to each other instead.
+3. Test-code slips (a selector counting each holdings row twice, a label that matched a landmark too, a race on async titles), fixed in the tests.
+
+**What the human did:** approved the plan; reported the manual MetaMask results for P2-6. Still pending: `docs/TESTING.md` Test 9.
+
+**Skills and MCPs:** `playwright-core`, `impeccable detect`, Foundry. No reviewer, Context7, shadcn or `solidity-security` (no Solidity or signing-path change). Deviation from the brief: no "component" test harness was added (no jsdom dependency); logic is in pure tested modules and the components are covered by the browser run.
+
 ## Requirements traceability
 | ID | Brief text | Design | Code | Tests | Evidence | Report § | Status |
 |---|---|---|---|---|---|---|---|
@@ -245,5 +258,6 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 | G (UX): pending-wallet guidance | Sleek, usable UX | `docs/FRONTEND.md`, `DESIGN.md` "Wallet notices" | `web/components/wallet/wallet-pending-notice.tsx`, `web/lib/wallet-prompt.ts` | `wallet-prompt.test.ts`, browser steps "connect", "wrong network", "rejection" | `p2-5-screens/connect-pending-*.jpg`, `p2-5-trading.md` | 7 | wording, escalation after 20 s and position above RainbowKit's dialog verified with a mock wallet. **The owner has used the flow with real MetaMask; the pending-request guidance itself has not been separately recorded against a real popup** |
 | B1 (cancel remainder), B2, B3 | Bonus: cancel, batched matching, conditional orders | n/a | none: the engine's `cancelOrder`, `matchOrders`, stop functions revert, so the UI has no control for them | n/a | `OrderBook.sol` lines 88-101 | n/a | **not implemented** (Person 1's engine); not presented as available |
 | T1 / T2 | Who triggers execution and how often; priority at equal price | `docs/FRONTEND.md` | the UI says matching only happens inside order transactions and that a crossed remainder cannot be cleared yet | `trading.integration.test.ts` (fill cap) | `p2-5-trading.md` | 4 | behaviour observed on a real chain; the priority rule itself is the engine's (Person 1) |
+| R2 (front end) / G (UX) | Usable multi-market dashboard and wallet overview | `docs/FRONTEND.md` "Dashboard market selector" | `web/lib/market-select.ts`, `holdings.ts`, `registry-pages.ts`, `web/hooks/use-market-choice.ts`, `use-holdings.ts`, `web/components/dashboard/` | `market-select`, `holdings`, `registry-pages` unit tests; `e2e:dashboard` (mock wallet) | `test-evidence/person2/p2-6-1-dashboard.md`, issue P2-011 | n/a | Mock-wallet verified; MetaMask Test 9 pending |
 Other rows are not started by Person 2.
 | R4 / R2 (browser) | Issue tokens and list markets from the front end | `docs/FRONTEND.md` "Token issuance and market listing" | `web/lib/create-*.ts`, `web/hooks/use-create-flow.ts`, `web/components/create/` | `create-*.test.ts`, `creation.integration.test.ts` (21), `e2e/create.e2e.mjs` (14) | `test-evidence/person2/p2-6-issuance-listing.md` | 7 | mock wallet and scratch chain only; MetaMask not yet performed |

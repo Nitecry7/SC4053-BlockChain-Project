@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { Dashboard } from "@/components/dashboard/dashboard";
 
 export default function OverviewPage() {
-  return <Dashboard />;
+  return (
+    <Suspense>
+      <Dashboard />
+    </Suspense>
+  );
 }

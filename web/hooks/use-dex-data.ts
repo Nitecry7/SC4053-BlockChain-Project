@@ -10,6 +10,7 @@ import { PRIMARY_DEPLOYMENT } from "@/lib/deployment";
 import type { ExistingMarket, TokenProbe } from "@/lib/create-plan";
 import { TICKET_BOOK_DEPTH } from "@/lib/order-plan";
 import { displayText } from "@/lib/safe-text";
+import { pageRanges, REGISTRY_PAGE } from "@/lib/registry-pages";
 import type { OrderSnapshot } from "@/lib/order-status";
 import { classifyDeployment, type DeploymentStatus } from "@/lib/network-status";
 
@@ -209,17 +210,21 @@ export function useTradeStats(market: Address, enabled = true) {
 
 export type RegisteredMarket = { address: Address; base: Address; quote: Address };
 
-/** The MarketFactory registry (first page), with each market's tokens read from the market itself. */
-export function useMarketRegistry(enabled = true, pageSize = 50) {
-  const page = useReadContracts({
+/** The MarketFactory registry, every page up to `REGISTRY_CAP`, with each market's tokens read from the market itself. */
+export function useMarketRegistry(enabled = true, pageSize = REGISTRY_PAGE) {
+  const count = useReadContracts({
     allowFailure: false,
     query: { enabled },
-    contracts: [
-      { chainId: CHAIN_ID, address: D.marketFactory as Address, abi: marketFactoryAbi, functionName: "marketCount" },
-      { chainId: CHAIN_ID, address: D.marketFactory as Address, abi: marketFactoryAbi, functionName: "getMarkets", args: [0n, BigInt(pageSize)] },
-    ],
+    contracts: [{ chainId: CHAIN_ID, address: D.marketFactory as Address, abi: marketFactoryAbi, functionName: "marketCount" }],
   });
-  const addresses = (page.data?.[1] ?? []) as readonly Address[];
+  const total = count.data?.[0] as bigint | undefined;
+  const { pages, truncated } = total === undefined ? { pages: [], truncated: false } : pageRanges(total, pageSize);
+  const lists = useReadContracts({
+    allowFailure: false,
+    query: { enabled: enabled && pages.length > 0 },
+    contracts: pages.map((p) => ({ chainId: CHAIN_ID, address: D.marketFactory as Address, abi: marketFactoryAbi, functionName: "getMarkets", args: [p.offset, p.limit] }) as const),
+  });
+  const addresses = ((lists.data ?? []) as readonly (readonly Address[])[]).flat();
   const pairs = useReadContracts({
     allowFailure: false,
     query: { enabled: enabled && addresses.length > 0 },
@@ -228,29 +233,36 @@ export function useMarketRegistry(enabled = true, pageSize = 50) {
       { chainId: CHAIN_ID, address, abi: orderBookAbi, functionName: "quoteToken" } as const,
     ]),
   });
-  const markets: RegisteredMarket[] | undefined =
-    page.data && (addresses.length === 0 || pairs.data)
-      ? addresses.map((address, i) => ({ address, base: pairs.data![i * 2] as Address, quote: pairs.data![i * 2 + 1] as Address }))
-      : undefined;
+  const ready = total !== undefined && (pages.length === 0 || lists.data !== undefined) && (addresses.length === 0 || pairs.data !== undefined);
+  const markets: RegisteredMarket[] | undefined = ready
+    ? addresses.map((address, i) => ({ address, base: pairs.data![i * 2] as Address, quote: pairs.data![i * 2 + 1] as Address }))
+    : undefined;
   return {
-    total: page.data?.[0] as bigint | undefined,
+    total,
     markets,
-    isPending: page.isPending || (addresses.length > 0 && pairs.isPending),
-    isError: page.isError || pairs.isError,
+    truncated,
+    isPending: count.isPending || (pages.length > 0 && lists.isPending) || (addresses.length > 0 && pairs.isPending),
+    isError: count.isError || lists.isError || pairs.isError,
   };
 }
 
-/** The TokenFactory registry (first page). */
-export function useTokenRegistry(enabled = true, pageSize = 50) {
-  const page = useReadContracts({
+/** The TokenFactory registry, every page up to `REGISTRY_CAP`. */
+export function useTokenRegistry(enabled = true, pageSize = REGISTRY_PAGE) {
+  const count = useReadContracts({
     allowFailure: false,
     query: { enabled },
-    contracts: [
-      { chainId: CHAIN_ID, address: D.tokenFactory as Address, abi: tokenFactoryAbi, functionName: "tokenCount" },
-      { chainId: CHAIN_ID, address: D.tokenFactory as Address, abi: tokenFactoryAbi, functionName: "getTokens", args: [0n, BigInt(pageSize)] },
-    ],
+    contracts: [{ chainId: CHAIN_ID, address: D.tokenFactory as Address, abi: tokenFactoryAbi, functionName: "tokenCount" }],
   });
-  return { total: page.data?.[0] as bigint | undefined, tokens: page.data?.[1] as readonly Address[] | undefined, isPending: page.isPending, isError: page.isError };
+  const total = count.data?.[0] as bigint | undefined;
+  const { pages, truncated } = total === undefined ? { pages: [], truncated: false } : pageRanges(total, pageSize);
+  const lists = useReadContracts({
+    allowFailure: false,
+    query: { enabled: enabled && pages.length > 0 },
+    contracts: pages.map((p) => ({ chainId: CHAIN_ID, address: D.tokenFactory as Address, abi: tokenFactoryAbi, functionName: "getTokens", args: [p.offset, p.limit] }) as const),
+  });
+  const tokens: readonly Address[] | undefined =
+    total === undefined ? undefined : pages.length === 0 ? [] : lists.data ? ((lists.data as readonly (readonly Address[])[]).flat() as readonly Address[]) : undefined;
+  return { total, tokens, truncated, isPending: count.isPending || (pages.length > 0 && lists.isPending), isError: count.isError || lists.isError };
 }
 
 /** The two tokens of any market, read from the market itself (so every registered market works, not only the first). */

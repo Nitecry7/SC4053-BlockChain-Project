@@ -53,6 +53,8 @@ Since P2-5 it can also **place limit orders** on any market in the MarketFactory
 
 Since P2-6 it can also **issue a token** (name, symbol, fixed supply through TokenFactory) and **list a market** (any two distinct 18-decimal tokens through MarketFactory, with duplicate and reversed-pair detection and a permanent-orientation acknowledgement), verify each result on-chain, and trade a newly listed market through registry discovery.
 
+Since P2-6.1 the Dashboard also has a **market selector** (any market in the MarketFactory registry, carried in `?market=`; the seed NTU/SGDx market is the fallback for a missing or invalid value) that switches the pair panels, depth, book, summary, ticket and Trade link together, and an **All token holdings** panel: the connected wallet's balance in every token found through the TokenFactory registry and the tokens of every listed market (deduplicated, nonzero by default, labelled issued by TokenFactory or listed externally, never added together, no prices). Registry reads now cover every page up to 500 entries.
+
 The web app **cannot yet**: cancel or match orders or place stop-limit orders. The deployed engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` revert, so the UI offers none of them. Do not describe any of these as functional until they are built and verified. Wallet behaviour is verified against a mock wallet and a scratch chain, and the SPEC worked example has been performed by the project owner with real MetaMask accounts (`docs/TESTING.md`); the other manual cases there are procedures not yet performed.
 
 ### Contract facts the interface must respect

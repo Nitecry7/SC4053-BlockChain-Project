@@ -325,6 +325,19 @@ After 7f or 7g you may need to reset MetaMask's cached nonce (Section E, item 1)
 | 8k | Go back to **List market** and choose SGDx as base and FIZZ as quote | "This pair already has a market" with a link to it, and no sign button; nothing is sent |
 | 8l | Press **Reject** on a create-token or list-market confirmation | "You rejected the request"; nothing is created; **Try again** works |
 
+## Test 9: Dashboard market selector and all-token holdings (P2-6.1)
+**Status: PROCEDURE ONLY. Not performed with MetaMask.** The same behaviour passed an automated browser run with a **mock** wallet on a scratch chain (see `ai-audit/test-evidence/person2/p2-6-1-dashboard.md`); that is not a MetaMask result. Use the DTT/SGDx market from Test 8 (or your own token and market).
+
+| # | Do this | Expect |
+|---|---|---|
+| 9a | Open the Dashboard (`/`) with Alice connected | The Market panel shows NTU / SGDx; "All token holdings" lists Alice's nonzero tokens, each labelled "Issued by TokenFactory" or "Listed externally" |
+| 9b | In the Market panel choose DTT / SGDx | The URL gains `?market=<address>`; the pair holdings, depth, book, summary and limit-order ticket all switch to DTT; **MetaMask shows no request** |
+| 9c | Reload the page | The same market stays selected |
+| 9d | Press **Open Trade view**, then **Dashboard view** | Both pages keep DTT / SGDx |
+| 9e | Edit the URL to `/?market=DTT` and to a token's address | A notice says the value is not a valid address / not a listed market; NTU / SGDx is shown |
+| 9f | Switch MetaMask to Bob | The holdings panel shows only Bob's balances (no Alice tokens); tick **Show zero balances** and DTT appears with 0 |
+| 9g | As Bob, buy 4 DTT on the dashboard ticket (limit 2.2) | The order goes to the DTT / SGDx book; Bob's holdings then show 4 DTT without a reload |
+
 ---
 
 # D. Screenshots

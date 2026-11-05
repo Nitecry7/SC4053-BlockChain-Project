@@ -39,12 +39,16 @@ export function MarketPicker({ live, value, onChange }: { live: boolean; value: 
             {symbol(m.base)} / {symbol(m.quote)} · {shortAddress(m.address)}
           </option>
         ))}
-        {reg.markets && !reg.markets.some((m) => m.address.toLowerCase() === value.toLowerCase()) && <option value={value}>Market {shortAddress(value)} (not on the first page)</option>}
+        {reg.markets && !reg.markets.some((m) => m.address.toLowerCase() === value.toLowerCase()) && <option value={value}>Market {shortAddress(value)} (not in the loaded list)</option>}
       </select>
       {requestOpen ? (
         <span className="text-[0.6875rem] text-warn" role="status">A request is open in your wallet: finish or dismiss it before switching market.</span>
       ) : (
-        reg.total !== undefined && <span className="text-[0.6875rem] text-subtle">{reg.total.toString()} listed</span>
+        reg.total !== undefined && (
+          <span className="text-[0.6875rem] text-subtle">
+            {reg.truncated ? `first ${reg.markets?.length ?? 0} of ${reg.total.toString()} listed` : `${reg.total.toString()} listed`}
+          </span>
+        )
       )}
     </div>
   );
