@@ -140,7 +140,9 @@ E2E_RPC_URL=http://127.0.0.1:8546 E2E_ALLOW_MUTATE=1 BASE_URL=http://localhost:3
 ### Scratch deployments
 `forge script --broadcast` overwrites `contracts/broadcast/Deploy.s.sol/31337/run-latest.json`, which `export-web.mjs` compares with your chain's block hash. Deploying to a scratch chain without redirecting the output made `export-web.mjs --check` report your own chain as stale (found during P2-5, repaired by restoring the matching timestamped run). Setting `FOUNDRY_BROADCAST` and `FOUNDRY_CACHE_PATH` as above avoids it.
 
-## Manual MetaMask checklist (for you; not verified by Claude)
+## Manual MetaMask checklist
+The project owner has performed the SPEC worked example (steps 6 to 10 below) with real MetaMask accounts in Windows Brave; the rest of this checklist, including the rejection, wrong-network and account-switch cases, has not been performed manually. A fuller illustrated version, with expected values and a status table, is in [`TESTING.md`](TESTING.md).
+
 Playwright's Chromium has no wallet extension, so none of this is covered by the automated runs. Use **two MetaMask development accounts** in Windows Brave (import Anvil accounts 1 and 2 locally; never paste keys into chat, files or this repo). Account A sells, account B buys.
 
 **Setup and network**
@@ -174,7 +176,7 @@ Playwright's Chromium has no wallet extension, so none of this is covered by the
 - **Registries are read one page (50 entries) at a time.** A market beyond the first 50 is not offered on the Trade page.
 - **The wallet and the app can use different nodes.** Both must be the same chain-31337 node. If your wallet points at another 31337 node, the transaction goes there and this app, which reads its own RPC, will report it as not confirmed.
 - **Token movements are token-reported.** The escrow, refund and received amounts come from the tokens' own `Transfer` events (cross-checked with `getOrder`); a hostile token could emit consistent logs. Wallet balances on the result card are read from the chain separately. Symbols are chosen by whoever issues a token, so the review shows the contract addresses.
-- **MetaMask not exercised by automation.** The browser run uses a mock wallet; wallet behaviour is on the manual checklist.
+- **MetaMask not exercised by automation.** The browser run uses a mock wallet; wallet behaviour is on the manual checklist (the owner has verified the SPEC example by hand).
 - **Deployment check is not a bytecode check.** It establishes code presence and the market's token addresses. A different deployment that reuses the same deterministic addresses and tokens would pass. The exporter's bytecode check is the stronger guard.
 - **Reads are not atomic.** There is no Multicall3 on Anvil, so a snapshot's reads can come from adjacent blocks for a moment.
 - **Trade-log rescan.** Trade stats rescan the market's `Trade` logs from the deploy block on each new block. That is fine locally, but it needs an incremental cache before any long-lived chain.

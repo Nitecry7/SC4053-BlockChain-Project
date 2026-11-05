@@ -10,9 +10,40 @@ Date: 2026-11-05. Branch `faheem` at `3aba573` plus uncommitted P2-5 files.
 | Unit tests (node, no chain) | validation, allowance step, execution estimate, lifecycle reducer, runner with a **fake** chain and wallet, receipt decoding with **synthetic** logs, error mapping, wallet copy | anything on a real chain |
 | Real chain: scratch Anvil, port 8546 | the same code against the deployed contracts, signing with Anvil's **unlocked dev accounts through viem** | MetaMask, a browser |
 | Browser: Chromium against a production build on port 3100 | the UI end to end, with a **mock wallet** (`web/e2e/mock-wallet.mjs`) that forwards to the scratch chain | **MetaMask.** A screenshot or a pass here is not a MetaMask approval or trade |
-| Manual MetaMask (Windows Brave, two accounts) | checklist written in `docs/FRONTEND.md` | **not run** |
+| Manual MetaMask (Windows Brave, real accounts, the owner's local Anvil on 8545) | **The SPEC worked example, performed by the project owner** (see the next section) | The negative and recovery cases and the on-screen steps that the owner did not separately report: procedures only, see `docs/TESTING.md` |
 
 Your Anvil on 8545 and your `next dev` on 3000 were never written to or restarted: block 11 before and after, the same PIDs, HTTP 200 on 3000, and `export-web.mjs --check` against 8545 passes. The scratch Anvil (8546) and the scratch server (3100) were mine and are stopped.
+
+## Manual MetaMask verification (project owner, reported 2026-11-06)
+**This is user-performed verification with real MetaMask accounts in Windows Brave on the owner's own Anvil (port 8545). It is separate from the automated mock-wallet run, the real-chain suite on a scratch Anvil, and the independent AI review.** It is recorded here strictly as the owner reported it; no further manual test is claimed.
+
+Reported by the owner:
+1. Alice, Anvil account 0 (`0xf39F…92266`), approved 10 NTU and placed a sell limit order for 10 NTU at 2 SGDx. **Order #1 rested** on the order book.
+2. Bob, Anvil account 1 (`0x709979…79C8`), connected through MetaMask, approved 8.8 SGDx and placed a buy limit order for 4 NTU at 2.2 SGDx.
+3. The interface showed **Order #2 as Filled**, matched against Alice's order at the maker's price of 2 SGDx.
+4. Bob received 4 NTU and paid 8 SGDx net, and the result displayed a 0.8 SGDx price-improvement refund.
+5. Bob's final displayed balances were **10,004 NTU and 9,992 SGDx**.
+6. Alice's remaining sell order showed **6 NTU** resting on the book.
+
+**What I checked afterwards, read-only, on the owner's chain (no transaction sent, block 7 unchanged):**
+- `getOrder(1)`: trader `0xf39F…`, side Sell, price 2e18, amount 10e18, filled 4e18, status PartiallyFilled. `getOrder(2)`: trader `0x7099…`, side Buy, price 2.2e18, amount 4e18, filled 4e18, locked quote 0, status Filled.
+- Balances: Alice 969,990 NTU and 970,008 SGDx; Bob 10,004 NTU and 9,992 SGDx; the market holds 6 NTU. Both approvals were consumed (allowance 0 for each).
+- Bob's order transaction (receipt status 1) has six events in this order: SGDx transfer 8.8 (Bob to market), `OrderPlaced` #2, `Trade` (maker #1, taker #2, price 2, 4 NTU for 8 SGDx), NTU transfer 4 (market to Bob), SGDx transfer 8 (market to Alice), SGDx transfer 0.8 (market to Bob). Alice's order transaction has two events (an NTU transfer of 10 into the market and `OrderPlaced` #1).
+- Order timestamps: #1 at 2026-11-05 15:00:21 UTC and #2 at 15:29:48 UTC (block timestamps).
+
+These chain facts agree with every figure the owner reported and with the automated runs, and they confirm that the exact-amount approvals behaved as designed on a real wallet.
+
+**Not verified by this manual run:** what each MetaMask window looked like (no MetaMask screenshots were available in the workspace, so none are included and none were recreated), the on-screen steps the owner did not separately report (switching back to Alice, My orders, the transaction page), and every negative and recovery case (rejection, wrong network, account switch during a request, double click, missing deployment, unavailable RPC, hidden extension request). Those are procedures in `docs/TESTING.md`, marked as not yet performed.
+
+## Quick Actions alignment correction (small UI defect, Haiku 5.5)
+The owner noticed that the dashboard's Place order tile looked misaligned next to the other Quick Actions tiles.
+- **Cause (measured in Chromium on a production build, not assumed):** the tiles centred their whole icon-and-label group vertically and left text alignment to the element's default. "Copy address" and "Place order" wrap to two lines at 1586, 1024 and 375 px wide, while "Markets" and "Tokens" stay on one line, so their icons sat **10 px** from the tile top against **19 px**. Separately, the three link tiles (`<a>`) had `text-align: start` while the button tile had `center`, so the wrapped "Place / order" was left-aligned.
+- **Fix:** one class change on the shared tile style in `web/components/dashboard/wallet-panels.tsx`: `justify-center` became `justify-start pt-[1.125rem]` and `text-center` was added. Colours, shadows, sizes (tile height stays 84 px) and hover behaviour are unchanged.
+- **Verification:** after the fix every tile has `text-align: center` and its icon at 19 px at 1586, 1024, 768 and 375 px wide (at 768 all labels are one line and were already aligned). Before and after crops: `p2-5-screens/quick-actions-before-1586.png`, `quick-actions-after-1586.png`, `quick-actions-before-375.png`, `quick-actions-after-375.png`. `npm run lint`, `npm run typecheck` and `npm test` (207 passed, 18 skipped) are unchanged. There are no component tests in this node-only suite, so the browser measurement is the component check. Chromium launched normally on the system libraries the owner installed (no `LD_LIBRARY_PATH` workaround needed); the "before" measurements had been taken a little earlier with the temporary library workaround, the "after" measurements on the system libraries.
+- Recorded here and in the prompt log as a cosmetic correction, not as an issue report.
+
+## Documentation added in the wrap-up
+`README.md` (developer quickstart), `scripts/check-local.sh` (read-only environment check, exercised against the owner's chain, a stopped node, a stale export record, an empty chain and a wrong chain id) and `docs/TESTING.md` (illustrated manual guide with a status table and troubleshooting). The one-line numbering fix in `docs/DEPLOYMENT.md` and two status corrections (`PRODUCT.md`, `docs/FRONTEND.md`) keep these consistent.
 
 ## Final gate results
 | Command | Result |
@@ -104,4 +135,4 @@ It read the code and ran `tsc` only; it did not run tests or any chain. Its repo
 - Orders are per market; My orders shows the selected market's latest 50. Registries are read one page (50) at a time.
 - Chromium needs `libnss3` and `libnspr4`, which are not installed system-wide here; the browser run used copies unpacked in a scratch folder with `LD_LIBRARY_PATH`. A rerun on your machine needs `sudo apt-get install libnss3 libnspr4` (not done for you).
 - The estimate is a preview from the book as read; the contract decides at mining time.
-- Nothing here was run against a real MetaMask.
+- The automated runs used no MetaMask. Only the SPEC worked example has been performed with real MetaMask accounts, by the project owner (section above); every other manual case is a procedure that has not been performed.

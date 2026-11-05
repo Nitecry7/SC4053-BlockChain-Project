@@ -51,7 +51,7 @@ The web app can: connect a browser wallet through RainbowKit; show the connected
 
 Since P2-5 it can also **place limit orders** on any market in the MarketFactory registry: validate the price and amount against the contract's lot and tick sizes, approve exactly the collateral for the order book when the allowance is short, simulate, sign through the wallet, and follow the transaction through the receipt to the decoded order id, fills, refund and remaining escrow. It lists the connected account's orders per market and decodes any transaction on a transaction page. While a wallet request is pending it explains where to look and how to recover.
 
-The web app **cannot yet**: cancel or match orders, place stop-limit orders, issue a token, or list a market. The deployed engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` revert, so the UI offers none of them. "Create token" and "List market" are visible but disabled and labelled as arriving in a later phase (P2-6). Do not describe any of these as functional until they are built and verified. Wallet behaviour is verified against a mock wallet and a scratch chain; verification with a real MetaMask is a manual checklist the developer runs (`docs/FRONTEND.md`).
+The web app **cannot yet**: cancel or match orders, place stop-limit orders, issue a token, or list a market. The deployed engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` revert, so the UI offers none of them. "Create token" and "List market" are visible but disabled and labelled as arriving in a later phase (P2-6). Do not describe any of these as functional until they are built and verified. Wallet behaviour is verified against a mock wallet and a scratch chain, and the SPEC worked example has been performed by the project owner with real MetaMask accounts (`docs/TESTING.md`); the other manual cases there are procedures not yet performed.
 
 ### Contract facts the interface must respect
 
@@ -76,7 +76,7 @@ The web app **cannot yet**: cancel or match orders, place stop-limit orders, iss
 ### Explicitly open
 
 - Person 1 has not reviewed the factory-created NTU/SGDx market that the app reads.
-- The manual MetaMask checklist in `docs/FRONTEND.md` has not been run by the assistant; the approval and order flows are verified against a mock wallet and a real scratch chain, but not against a real wallet.
+- Only the SPEC worked example has been performed with real MetaMask accounts (by the project owner). The negative and recovery cases in `docs/TESTING.md` have not been performed manually.
 - The course brief does not state a deadline or a testnet requirement; the team's 8 November date is an internal plan.
 - Which team member leads each AI Audit Report section is not confirmed.
 
