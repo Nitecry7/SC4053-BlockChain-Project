@@ -105,7 +105,7 @@ export function HoldingsPanel({ state }: { state: DashboardState }) {
 }
 
 const actionBase =
-  "flex h-[5.25rem] min-w-0 flex-col items-center justify-center gap-2 rounded-[0.875rem] border px-1 text-[0.75rem] font-medium transition-[background,box-shadow,transform] duration-150";
+  "flex h-[5.25rem] min-w-0 flex-col items-center justify-start gap-2 rounded-[0.875rem] border px-1 pt-[1.125rem] text-center text-[0.75rem] font-medium transition-[background,box-shadow,transform] duration-150";
 const actionIdle = "border-white/[0.09] bg-[linear-gradient(150deg,rgb(55_63_91/0.72),rgb(25_33_57/0.9))] hover:border-white/20 hover:bg-[linear-gradient(150deg,rgb(66_75_108/0.8),rgb(30_39_66/0.92))]";
 
 /** Every action here works: Markets, Tokens, Copy address and Place order (opens the Trade page). */
@@ -140,11 +140,11 @@ export function QuickActions({ state }: { state: DashboardState }) {
           aria-label={address ? "Copy wallet address" : "Copy wallet address (connect a wallet first)"}
         >
           {copied ? <Check className="size-5 text-buy" aria-hidden /> : <Copy className="size-5" aria-hidden />}
-          {copied ? "Copied" : "Copy address"}
+          {copied ? "Copied" : "Copy Address"}
         </button>
         <Link href={`/trade?market=${state.marketAddress}`} className={cn(actionBase, actionIdle)}>
           <ArrowLeftRight className="size-5" aria-hidden />
-          Place order
+          Place Order
         </Link>
       </div>
     </Panel>
