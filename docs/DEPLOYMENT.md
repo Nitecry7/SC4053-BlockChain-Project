@@ -68,8 +68,8 @@ How it stays honest:
 4. The **deployed bytecode must equal the current build artifacts** (`contracts/out`) for both factories, the market and both tokens, with `OrderBook`'s immutable slots masked because they hold the token addresses. So if the contracts change and are rebuilt without a redeploy, the exporter refuses instead of pairing a new ABI with old addresses.
 5. The market must be the **seed market**: built from the first two tokens issued by the `TokenFactory`, base first. A market someone else listed first (for example the opposite orientation) is refused even though it is registered. It also checks that both tokens came from the `TokenFactory`, that both have 18 decimals, and that `MarketFactory.getMarket(base, quote)` returns the market.
 6. Every check happens before anything is written. A failure writes nothing.
-4. Output has no timestamps, so re-running without a redeployment changes nothing.
-5. `--check` writes nothing and exits non-zero if the files differ from what the exporter would generate.
+7. Output has no timestamps, so re-running without a redeployment changes nothing.
+8. `--check` writes nothing and exits non-zero if the files differ from what the exporter would generate.
 
 ### Redeployment and stale addresses
 - After a redeploy, run the exporter again. The broadcast file is overwritten, and the exporter reads the latest deployment.
