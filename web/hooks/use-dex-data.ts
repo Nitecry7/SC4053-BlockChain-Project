@@ -1,0 +1,250 @@
+"use client";
+
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
+import type { Address } from "viem";
+import { useBlockNumber, usePublicClient, useReadContracts } from "wagmi";
+import { anvil } from "@/lib/chains";
+import { demoTokenAbi, marketFactoryAbi, orderBookAbi, tokenFactoryAbi } from "@/lib/contracts/abis";
+import { PRIMARY_DEPLOYMENT } from "@/lib/deployment";
+import { classifyDeployment, type DeploymentStatus } from "@/lib/network-status";
+
+const CHAIN_ID = anvil.id;
+const D = PRIMARY_DEPLOYMENT;
+
+/** Watches the Anvil head and refreshes every other on-chain read when a new block arrives. Mount once. */
+export function useLiveBlock() {
+  const queryClient = useQueryClient();
+  const block = useBlockNumber({ chainId: CHAIN_ID, watch: true });
+  useEffect(() => {
+    if (block.data === undefined) return;
+    void queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] !== "blockNumber" });
+  }, [block.data, queryClient]);
+  return block;
+}
+
+export type DeploymentCheck = { status: DeploymentStatus; refetch: () => void };
+
+/** Is the exported deployment really on this chain? Contract code at every address, and the market's own tokens. */
+export function useDeploymentCheck(): DeploymentCheck {
+  const client = usePublicClient({ chainId: CHAIN_ID });
+  const targets = useMemo(
+    () => [
+      { name: "TokenFactory", address: D.tokenFactory as Address },
+      { name: "MarketFactory", address: D.marketFactory as Address },
+      { name: `${D.baseToken.symbol}/${D.quoteToken.symbol} market`, address: D.market as Address },
+      { name: D.baseToken.symbol, address: D.baseToken.address as Address },
+      { name: D.quoteToken.symbol, address: D.quoteToken.address as Address },
+    ],
+    [],
+  );
+
+  const codes = useQuery({
+    queryKey: ["deployment-code", CHAIN_ID, ...targets.map((t) => t.address)],
+    enabled: Boolean(client),
+    queryFn: async () => Promise.all(targets.map((t) => client!.getCode({ address: t.address }))),
+  });
+
+  const allHaveCode = Boolean(codes.data?.every((c) => c && c !== "0x"));
+  const tokens = useReadContracts({
+    allowFailure: false,
+    query: { enabled: allHaveCode },
+    contracts: [
+      { chainId: CHAIN_ID, address: D.market as Address, abi: orderBookAbi, functionName: "baseToken" },
+      { chainId: CHAIN_ID, address: D.market as Address, abi: orderBookAbi, functionName: "quoteToken" },
+    ],
+  });
+
+  const status = classifyDeployment({
+    loading: codes.isPending,
+    failed: codes.isError,
+    marketReadFailed: tokens.isError,
+    checks: targets.map((t, i) => ({ name: t.name, address: t.address, code: codes.data?.[i] })),
+    marketBase: tokens.data?.[0],
+    marketQuote: tokens.data?.[1],
+    expectedBase: D.baseToken.address,
+    expectedQuote: D.quoteToken.address,
+  });
+
+  return { status, refetch: () => void codes.refetch() };
+}
+
+export type TokenDetails = {
+  address: Address;
+  name: string;
+  symbol: string;
+  decimals: number;
+  totalSupply: bigint;
+  issuedByFactory: boolean;
+};
+
+/** Token metadata read from the chain, never from the export alone. */
+export function useTokenDetails(tokens: readonly Address[], enabled = true) {
+  const contracts = tokens.flatMap((address) => [
+    { chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "name" } as const,
+    { chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "symbol" } as const,
+    { chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "decimals" } as const,
+    { chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "totalSupply" } as const,
+    { chainId: CHAIN_ID, address: D.tokenFactory as Address, abi: tokenFactoryAbi, functionName: "isFactoryToken", args: [address] } as const,
+  ]);
+  const query = useReadContracts({ contracts, allowFailure: false, query: { enabled: enabled && tokens.length > 0 } });
+  const data: TokenDetails[] | undefined = query.data
+    ? tokens.map((address, i) => {
+        const r = query.data.slice(i * 5, i * 5 + 5);
+        return {
+          address,
+          name: r[0] as string,
+          symbol: r[1] as string,
+          decimals: Number(r[2]),
+          totalSupply: r[3] as bigint,
+          issuedByFactory: r[4] as boolean,
+        };
+      })
+    : undefined;
+  return { ...query, data };
+}
+
+/** Wallet (not escrow) balances of the connected account. Escrow is a trading concept and arrives with order placement. */
+export function useWalletBalances(account: Address | undefined, tokens: readonly Address[]) {
+  const query = useReadContracts({
+    allowFailure: false,
+    query: { enabled: Boolean(account) && tokens.length > 0 },
+    contracts: tokens.map(
+      (address) => ({ chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "balanceOf", args: [account!] }) as const,
+    ),
+  });
+  return { ...query, data: query.data as bigint[] | undefined };
+}
+
+export type BookLevel = { id: bigint; trader: Address; price: bigint; remaining: bigint };
+
+export type MarketSnapshot = {
+  priceScale: bigint;
+  lotSize: bigint;
+  tickSize: bigint;
+  maxMatchesPerTx: bigint;
+  maxInsertScan: bigint;
+  bestBid: { id: bigint; price: bigint };
+  bestAsk: { id: bigint; price: bigint };
+  lastTradePrice: bigint;
+  hasTradePrice: boolean;
+  bids: BookLevel[];
+  asks: BookLevel[];
+};
+
+/** Everything a read-only market view needs, from `view` functions only. */
+export function useMarketSnapshot(market: Address, enabled = true, depth = 10) {
+  const base = { chainId: CHAIN_ID, address: market, abi: orderBookAbi } as const;
+  const query = useReadContracts({
+    allowFailure: false,
+    query: { enabled },
+    contracts: [
+      { ...base, functionName: "PRICE_SCALE" },
+      { ...base, functionName: "LOT_SIZE" },
+      { ...base, functionName: "TICK_SIZE" },
+      { ...base, functionName: "MAX_MATCHES_PER_TX" },
+      { ...base, functionName: "MAX_INSERT_SCAN" },
+      { ...base, functionName: "getBestBid" },
+      { ...base, functionName: "getBestAsk" },
+      { ...base, functionName: "lastTradePrice" },
+      { ...base, functionName: "hasTradePrice" },
+      { ...base, functionName: "getBook", args: [0, BigInt(depth)] },
+      { ...base, functionName: "getBook", args: [1, BigInt(depth)] },
+    ],
+  });
+
+  const data: MarketSnapshot | undefined = useMemo(() => {
+    if (!query.data) return undefined;
+    const [priceScale, lotSize, tickSize, maxMatches, maxScan, bid, ask, last, hasLast, bids, asks] = query.data;
+    const toLevels = (orders: readonly { id: bigint; trader: Address; price: bigint; amount: bigint; filled: bigint }[]) =>
+      orders.map((o) => ({ id: o.id, trader: o.trader, price: o.price, remaining: o.amount - o.filled }));
+    return {
+      priceScale,
+      lotSize,
+      tickSize,
+      maxMatchesPerTx: maxMatches,
+      maxInsertScan: maxScan,
+      bestBid: { id: bid[0], price: bid[1] },
+      bestAsk: { id: ask[0], price: ask[1] },
+      lastTradePrice: last,
+      hasTradePrice: hasLast,
+      bids: toLevels(bids),
+      asks: toLevels(asks),
+    };
+  }, [query.data]);
+
+  return { ...query, data };
+}
+
+export type TradeStats = { count: number; baseVolume: bigint; quoteVolume: bigint };
+
+/** Trade count and volume since deployment, from the market's own `Trade` event logs (no indexer, no estimates). */
+export function useTradeStats(market: Address, enabled = true) {
+  const client = usePublicClient({ chainId: CHAIN_ID });
+  return useQuery({
+    queryKey: ["trade-stats", CHAIN_ID, market],
+    enabled: enabled && Boolean(client),
+    queryFn: async (): Promise<TradeStats> => {
+      const logs = await client!.getContractEvents({
+        address: market,
+        abi: orderBookAbi,
+        eventName: "Trade",
+        fromBlock: BigInt(D.deployBlock),
+        toBlock: "latest",
+      });
+      let baseVolume = 0n;
+      let quoteVolume = 0n;
+      for (const log of logs) {
+        baseVolume += log.args.baseAmount ?? 0n;
+        quoteVolume += log.args.quoteAmount ?? 0n;
+      }
+      return { count: logs.length, baseVolume, quoteVolume };
+    },
+  });
+}
+
+export type RegisteredMarket = { address: Address; base: Address; quote: Address };
+
+/** The MarketFactory registry (first page), with each market's tokens read from the market itself. */
+export function useMarketRegistry(enabled = true, pageSize = 50) {
+  const page = useReadContracts({
+    allowFailure: false,
+    query: { enabled },
+    contracts: [
+      { chainId: CHAIN_ID, address: D.marketFactory as Address, abi: marketFactoryAbi, functionName: "marketCount" },
+      { chainId: CHAIN_ID, address: D.marketFactory as Address, abi: marketFactoryAbi, functionName: "getMarkets", args: [0n, BigInt(pageSize)] },
+    ],
+  });
+  const addresses = (page.data?.[1] ?? []) as readonly Address[];
+  const pairs = useReadContracts({
+    allowFailure: false,
+    query: { enabled: enabled && addresses.length > 0 },
+    contracts: addresses.flatMap((address) => [
+      { chainId: CHAIN_ID, address, abi: orderBookAbi, functionName: "baseToken" } as const,
+      { chainId: CHAIN_ID, address, abi: orderBookAbi, functionName: "quoteToken" } as const,
+    ]),
+  });
+  const markets: RegisteredMarket[] | undefined =
+    page.data && (addresses.length === 0 || pairs.data)
+      ? addresses.map((address, i) => ({ address, base: pairs.data![i * 2] as Address, quote: pairs.data![i * 2 + 1] as Address }))
+      : undefined;
+  return {
+    total: page.data?.[0] as bigint | undefined,
+    markets,
+    isPending: page.isPending || (addresses.length > 0 && pairs.isPending),
+    isError: page.isError || pairs.isError,
+  };
+}
+
+/** The TokenFactory registry (first page). */
+export function useTokenRegistry(enabled = true, pageSize = 50) {
+  const page = useReadContracts({
+    allowFailure: false,
+    query: { enabled },
+    contracts: [
+      { chainId: CHAIN_ID, address: D.tokenFactory as Address, abi: tokenFactoryAbi, functionName: "tokenCount" },
+      { chainId: CHAIN_ID, address: D.tokenFactory as Address, abi: tokenFactoryAbi, functionName: "getTokens", args: [0n, BigInt(pageSize)] },
+    ],
+  });
+  return { total: page.data?.[0] as bigint | undefined, tokens: page.data?.[1] as readonly Address[] | undefined, isPending: page.isPending, isError: page.isError };
+}

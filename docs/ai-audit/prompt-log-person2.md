@@ -111,10 +111,78 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 
 ---
 
+## 2026-11-05: P2-4, Next.js foundation, wallet integration and design system
+
+**Model record:** planning (plan revisions, compatibility checks, tool research) was done by **Sonnet 5.5**. After the owner switched with `/model opus`, design and implementation were done by **Opus 5.5 (Medium)**. One targeted **Sonnet** read-only reviewer was used; no Opus subagents.
+
+**Prompt (summary):** Build the P2-4 front end in the RainbowKit 2 + wagmi 2 + viem 2 stack:
+- the app shell, sidebar and top navigation, wallet and network display, token balances, market discovery and summary cards;
+- correct wallet and network states, on-chain reads and bigint utilities;
+- visual fidelity to the owner's approved Liquid Glass screenshot as an explicit acceptance criterion: render with Playwright Chromium at desktop, tablet and mobile, compare against the reference and iterate;
+- no AMM features presented as real and no fabricated data; read-only (no transactions until P2-5);
+- deliberate use of the design skills and MCPs.
+
+**What the AI produced:**
+- **App:** `web/`, Next 16 App Router (root layout, no `src/`, because the exporter fixes `web/lib/contracts`) with Tailwind v4 and shadcn `base-nova`.
+- **Wallet:** RainbowKit 2.2.11 + wagmi 2.19.5 + viem 2.57, injected wallet only unless a WalletConnect id is set.
+- **Hooks:** read-only `hooks/use-dex-data.ts`, every read pinned to 31337 and refreshed per block.
+- **Logic modules:** `lib/units.ts` (bigint), `config`, `network-status`, `errors`, `depth`, and the x402 build stub, with 69 vitest tests.
+- **Design:** a liquid-glass design system in `app/globals.css`.
+- **Pages:** dashboard, Markets and Tokens.
+- **Docs and evidence:** `docs/FRONTEND.md`, `test-evidence/person2/p2-4-frontend.md`, and screenshots.
+
+**What the AI got wrong or left unclear:**
+1. **A design direction that the brief then replaced.** The first plan proposed a monochrome "ledger" identity, following `frontend-design`'s warnings about dark-plus-accent defaults. The owner's screenshot pinned a liquid-glass look instead, so the brief won and the earlier direction was withdrawn. This is recorded as a planning revision, not a defect.
+2. **The build broke on transitive optional peers, found only by running it.** Turbopack could not resolve `@x402/*` modules deep under wagmi's connectors. The dependency chain was traced and the optional-peer status confirmed. Exactly five specifiers were aliased to a stub that throws only when called; no unused payment SDK was installed.
+3. **A wrong expected value in my own unit test** (the dimmed tail of 1e9 base units). The function was right and the test was corrected, not weakened.
+4. **Visible defects in my first render, caught only by looking.**
+   - Desktop: depth drawn as diagonals instead of steps; the Market board's Trades column clipped by my minimum widths; order fields overflowing because a `fieldset` takes min-content width.
+   - Mobile: the hero wave stretched through the text, and a 1px overflow from the header button.
+   All were fixed over four Playwright passes.
+5. **A false claim in a no-data state.** The depth panel said "No trades yet" when it simply had no data (unknown chain or node down). It now shows a dash.
+6. **A craft-floor ban I had copied from the reference.** The "Welcome" eyebrow above the h1. Impeccable's craft floor bans eyebrows outright, even when a brief has one, so it was removed.
+7. **Security-relevant gaps found by the Sonnet review, all fixed with regression tests:**
+   - `requiredQuote` and `quoteCost` returned impossible bigints where the contract's `mulDiv` reverts;
+   - a reverting market read was blamed on the RPC;
+   - an empty check list would classify as "ok".
+8. **Assumptions about tools that did not hold.**
+   - The plan expected the Playwright MCP to run once Chromium was installed, but the MCP is configured for the Google Chrome channel, which needs root. It was driven through the MCP's bundled Playwright library and the approved Chromium instead. Missing NSS libraries came from user-space `.deb` extraction, with no sudo.
+   - A WalletConnect dashboard URL was written from memory and corrected to the one RainbowKit's docs give.
+   - `shadcn init` ran its own `npm install` (with lifecycle scripts) after my `--ignore-scripts` install. Only three optional native add-ons have install scripts, and all have JavaScript fallbacks.
+9. **Housekeeping I created.** A stray `tsconfig.tsbuildinfo` (moved into the ignored `.next/cache`) and 30 MB of intermediate screenshots (pruned to 12 MB of before, final and state evidence).
+
+**Skills and MCPs actually invoked, and what they contributed:**
+- **Context7:** RainbowKit (install, `ConnectButton.Custom`), wagmi (the `readContracts` multicall fallback), shadcn (CLI flags). All accepted.
+- **`frontend-design`:** process and the list of AI-default clichés. The ledger concept was withdrawn once the brief was pinned; its copy rules were kept.
+- **`ui-ux-pro-max`:** 6 searches.
+  - Accepted: Swiss-minimal at density 8, skeletons with `aria-busy`, Server Components by default.
+  - Rejected: its landing-page pattern and its gold/purple palette.
+  - Its IBM Plex pairing was replaced by Inter (closer to the reference), keeping Plex Mono for addresses.
+- **Awwwards MCP:** 2 searches and 1 detail fetch. The results were unrelated marketing dashboards with no extractable design data, so rejected.
+- **shadcn MCP:** `get_project_registries` and `get_add_command_for_items`. Its command installed 10 components.
+- **`impeccable`:** context loader; critique in degraded single-context mode (owner's no-extra-agents rule); detector with 0 findings. Applied: the eyebrow ban and themed browser surfaces.
+- **`taste-skill`:** the app-screen rules and `inspect.mjs --app`.
+  - 4 FAILs, all the pinned liquid-glass brief: kept and documented.
+  - 6 WARNs: one fixed (`panel-void`), five defended.
+  - Applied: one finding stated (the spread), an 11px text floor, chips that never wrap, numbers that add up across panels.
+- **Playwright** (the MCP's bundled library and Chromium): every render, overflow probe and console check.
+- **Not invoked:** `solidity-security` (no Solidity changed), backend skills (no backend).
+
+**Evidence:** `docs/ai-audit/test-evidence/person2/p2-4-frontend.md` and `p2-4-screens/`.
+
+**Human decisions:**
+- The owner chose RainbowKit 2, approved the Chromium install and switched the model to Opus.
+- The owner provided the Liquid Glass reference as the visual source of truth.
+- Pending: the owner's manual MetaMask checklist in `docs/FRONTEND.md`, and approval for P2-5.
+
+---
+
 ## Requirements traceability (R4 only, so far)
 | ID | Brief text | Design | Code | Tests | Evidence | Report § | Status |
 |---|---|---|---|---|---|---|---|
 | R4 | Asset Issuer: issue new asset tokens adhering strictly to ERC20 | plan rev 3 section 6, P2-1 | `contracts/src/DemoToken.sol`, `contracts/src/TokenFactory.sol` | `DemoToken.t.sol`, `TokenFactory.t.sol`, `TokenOrderBookIntegration.t.sol` | `test-evidence/person2/p2-1-issuance.md` | 1, 4, 6 | tested (Foundry). Deployed and exercised on a scratch Anvil by script and `cast` (P2-3). **Not wallet- or UI-verified** |
 | R2 | Front end supports token listing (and order submission, execution, self-custody) | `docs/MARKET_FACTORY.md`, plan rev 3 section 3 | `contracts/src/MarketFactory.sol` | `MarketFactory.t.sol`, `MarketFactoryIntegration.t.sol` | `test-evidence/person2/p2-2-listing.md` | 1, 4, 6, 7 | tested (Foundry). The seed market is created through it by `Deploy.s.sol` on a scratch Anvil (P2-3, user-authorized). **Draft: Person 1 has not reviewed it.** Not wallet- or UI-verified. The front-end part of R2 is not built |
 | R3 (partly) / R5 / R6 | non-custodial, limit orders, automatic matching and partial fills | `docs/DEPLOYMENT.md` | `contracts/script/Deploy.s.sol` (deployment only; the engine is Person 1's) | `Deploy.t.sol` trade test | `test-evidence/person2/p2-3-deployment.md` item 6: a real approval and trade (SPEC section 3 example) on a scratch Anvil | 6 | executed on a deployed market by `cast`. **Not wallet- or UI-verified** |
+| R2 (front end) / R3 (UI) | Front end supports token listing and self-custody | `docs/FRONTEND.md` | `web/` (markets and tokens registries, wallet connect through RainbowKit; no signing outside the wallet) | `web/lib/*.test.ts` (69) | `test-evidence/person2/p2-4-frontend.md`, `p2-4-screens/` | 4, 6, 7 | **read-only listing and discovery built and browser-rendered** with real chain data. Issuing and listing from the browser is P2-6. **Wallet flows not yet verified with MetaMask** |
+| G (UX) | Sleek UX, comprehensive docs | `docs/FRONTEND.md` design system | `web/app/globals.css`, `web/components/` | Playwright renders at 3 widths, impeccable detector, taste inspector | `p2-4-screens/` before and after | 7 | rendered and iterated against the owner's reference. Visual judgement by eye, no pixel diff |
 Other rows (B1 to B3, T1, T2) are not started by Person 2 and will be added in later phases.
