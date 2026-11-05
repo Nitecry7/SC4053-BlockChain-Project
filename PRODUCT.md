@@ -45,11 +45,13 @@ An exchange whose interface shows only what the chain says. Every figure is read
 - **Balances:** show wallet balance and escrowed amount as different quantities.
 - **Bonus engine features named in the brief** (cancelling the remainder of an order, batched multi-party matching, conditional stop-limit orders) are part of the course scope but are Person 1's engine work and are not yet working (see below).
 
-### Implemented today (P2-4, read-only front end)
+### Implemented today (through P2-5)
 
-The web app can: connect a browser wallet through RainbowKit; show the connected account, network and live block; show wrong-network, no-deployment and node-unreachable states; list issued tokens and listed markets from the on-chain registries; show token balances; show the market's best bid and ask, last trade price, spread, live order book, a depth chart, and trade count and volume derived from `Trade` events; and format and validate amounts with bigint-exact helpers that mirror the engine.
+The web app can: connect a browser wallet through RainbowKit; show the connected account, network and live block; show wrong-network, no-deployment and node-unreachable states; list issued tokens and listed markets from the on-chain registries; show token balances; show a market's best bid and ask, last trade price, spread, live order book, a depth chart, and trade count and volume derived from `Trade` events; and format and validate amounts with bigint-exact helpers that mirror the engine.
 
-The web app **cannot yet**: place, approve, cancel or match any order, issue a token, list a market, or send any transaction. The only wallet request it can make is a user-triggered chain switch. The order ticket, "Trade", "Create token" and "List market" entries are visible but disabled and labelled as arriving in a later phase. Order placement is the next phase (P2-5); issuance and listing forms come after it. Do not describe any of these as functional until they are built and verified.
+Since P2-5 it can also **place limit orders** on any market in the MarketFactory registry: validate the price and amount against the contract's lot and tick sizes, approve exactly the collateral for the order book when the allowance is short, simulate, sign through the wallet, and follow the transaction through the receipt to the decoded order id, fills, refund and remaining escrow. It lists the connected account's orders per market and decodes any transaction on a transaction page. While a wallet request is pending it explains where to look and how to recover.
+
+The web app **cannot yet**: cancel or match orders, place stop-limit orders, issue a token, or list a market. The deployed engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` revert, so the UI offers none of them. "Create token" and "List market" are visible but disabled and labelled as arriving in a later phase (P2-6). Do not describe any of these as functional until they are built and verified. Wallet behaviour is verified against a mock wallet and a scratch chain; verification with a real MetaMask is a manual checklist the developer runs (`docs/FRONTEND.md`).
 
 ### Contract facts the interface must respect
 
@@ -74,7 +76,7 @@ The web app **cannot yet**: place, approve, cancel or match any order, issue a t
 ### Explicitly open
 
 - Person 1 has not reviewed the factory-created NTU/SGDx market that the app reads.
-- The manual MetaMask checklist in `docs/FRONTEND.md` has not been run by the assistant; wallet flows are unverified against a real wallet.
+- The manual MetaMask checklist in `docs/FRONTEND.md` has not been run by the assistant; the approval and order flows are verified against a mock wallet and a real scratch chain, but not against a real wallet.
 - The course brief does not state a deadline or a testnet requirement; the team's 8 November date is an internal plan.
 - Which team member leads each AI Audit Report section is not confirmed.
 
@@ -88,6 +90,7 @@ The web app **cannot yet**: place, approve, cancel or match any order, issue a t
 
 - A passing contract suite and a working local deployment with seeded market data used for the P2-4 renders (`docs/ai-audit/test-evidence/person2/`).
 - Approved Playwright renders of Overview, Markets and Tokens at desktop, tablet and mobile in `docs/ai-audit/test-evidence/person2/p2-4-screens/`. These are renders of the interface, not proof of a MetaMask approval or a trade.
+- Real-chain integration tests and a mock-wallet browser run for the trading flow, with evidence in `docs/ai-audit/test-evidence/person2/p2-5-trading.md`. These are not MetaMask results.
 - **Absent, and not to be fabricated:** real MetaMask transaction hashes from the UI, any public-network deployment, USD pricing, historical price data, user testimonials or usage statistics.
 
 ## Product Principles

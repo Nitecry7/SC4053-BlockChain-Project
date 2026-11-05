@@ -2,7 +2,9 @@
 
 import { Hero } from "./hero";
 import { BookPanel, DepthPanel, MarketBoard } from "./market-panels";
-import { CreateListPanel, OrderPanel, RoadmapStrip } from "./side-panels";
+import Link from "next/link";
+import { OrderTicket } from "@/components/trade/order-ticket";
+import { CreateListPanel, RoadmapStrip } from "./side-panels";
 import { StatusBanners } from "./status-banners";
 import { useDashboard } from "./use-dashboard";
 import { HoldingsPanel, QuickActions, TokenBalances } from "./wallet-panels";
@@ -29,7 +31,14 @@ export function Dashboard() {
           </div>
         </div>
         <div className="grid content-start gap-4 md:grid-cols-2 xl:grid-cols-1">
-          <OrderPanel state={state} />
+          <OrderTicket
+            state={state}
+            action={
+              <Link href={`/trade?market=${state.marketAddress}`} className="text-[0.75rem] font-medium text-lilac hover:text-white">
+                Open Trade view <span aria-hidden>→</span>
+              </Link>
+            }
+          />
           <CreateListPanel state={state} />
         </div>
       </div>

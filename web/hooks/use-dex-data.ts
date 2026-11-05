@@ -2,11 +2,13 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
-import type { Address } from "viem";
+import type { Address, Hex } from "viem";
 import { useBlockNumber, usePublicClient, useReadContracts } from "wagmi";
 import { anvil } from "@/lib/chains";
 import { demoTokenAbi, marketFactoryAbi, orderBookAbi, tokenFactoryAbi } from "@/lib/contracts/abis";
 import { PRIMARY_DEPLOYMENT } from "@/lib/deployment";
+import { TICKET_BOOK_DEPTH } from "@/lib/order-plan";
+import type { OrderSnapshot } from "@/lib/order-status";
 import { classifyDeployment, type DeploymentStatus } from "@/lib/network-status";
 
 const CHAIN_ID = anvil.id;
@@ -133,7 +135,7 @@ export type MarketSnapshot = {
 };
 
 /** Everything a read-only market view needs, from `view` functions only. */
-export function useMarketSnapshot(market: Address, enabled = true, depth = 10) {
+export function useMarketSnapshot(market: Address, enabled = true, depth: number = TICKET_BOOK_DEPTH) {
   const base = { chainId: CHAIN_ID, address: market, abi: orderBookAbi } as const;
   const query = useReadContracts({
     allowFailure: false,
@@ -247,4 +249,99 @@ export function useTokenRegistry(enabled = true, pageSize = 50) {
     ],
   });
   return { total: page.data?.[0] as bigint | undefined, tokens: page.data?.[1] as readonly Address[] | undefined, isPending: page.isPending, isError: page.isError };
+}
+
+/** The two tokens of any market, read from the market itself (so every registered market works, not only the first). */
+export function useMarketTokens(market: Address, enabled = true) {
+  const base = { chainId: CHAIN_ID, address: market, abi: orderBookAbi } as const;
+  const query = useReadContracts({
+    allowFailure: false,
+    query: { enabled },
+    contracts: [
+      { ...base, functionName: "baseToken" },
+      { ...base, functionName: "quoteToken" },
+    ],
+  });
+  return { ...query, data: query.data ? ([query.data[0], query.data[1]] as [Address, Address]) : undefined };
+}
+
+/** The order book's allowance from `owner` for one token. The query key includes owner, token and spender. */
+export function useAllowance(token: Address | undefined, owner: Address | undefined, spender: Address | undefined) {
+  const enabled = Boolean(token && owner && spender);
+  const query = useReadContracts({
+    allowFailure: false,
+    query: { enabled },
+    contracts: [{ chainId: CHAIN_ID, address: token as Address, abi: demoTokenAbi, functionName: "allowance", args: [owner as Address, spender as Address] }],
+  });
+  return { ...query, data: query.data?.[0] as bigint | undefined };
+}
+
+export type MyOrderTrade = { makerOrderId: bigint; takerOrderId: bigint; price: bigint; baseAmount: bigint; quoteAmount: bigint; transactionHash: Hex };
+export type MyOrder = { order: OrderSnapshot; placedTx: Hex | undefined; trades: MyOrderTrade[] };
+export const MY_ORDERS_LIMIT = 50;
+
+/**
+ * The account's orders on one market: ids from `getUserOrderIds`, each order from `getOrder`, the creating transaction
+ * from `OrderPlaced` and the fills from `Trade` logs. Only the latest `MY_ORDERS_LIMIT` orders are read. The query key
+ * includes the account, so one wallet's orders are never shown for another.
+ */
+export function useMyOrders(market: Address, account: Address | undefined, enabled = true) {
+  const client = usePublicClient({ chainId: CHAIN_ID });
+  return useQuery({
+    queryKey: ["my-orders", CHAIN_ID, market, account],
+    enabled: enabled && Boolean(client) && Boolean(account),
+    queryFn: async (): Promise<{ rows: MyOrder[]; totalIds: number }> => {
+      const ids = (await client!.readContract({ address: market, abi: orderBookAbi, functionName: "getUserOrderIds", args: [account!] })) as bigint[];
+      const latest = ids.slice(-MY_ORDERS_LIMIT);
+      if (latest.length === 0) return { rows: [], totalIds: ids.length };
+      const [orders, placed, asMaker, asTaker] = await Promise.all([
+        Promise.all(latest.map((id) => client!.readContract({ address: market, abi: orderBookAbi, functionName: "getOrder", args: [id] }) as Promise<OrderSnapshot>)),
+        client!.getContractEvents({ address: market, abi: orderBookAbi, eventName: "OrderPlaced", args: { trader: account! }, fromBlock: BigInt(D.deployBlock), toBlock: "latest" }),
+        client!.getContractEvents({ address: market, abi: orderBookAbi, eventName: "Trade", args: { makerOrderId: latest }, fromBlock: BigInt(D.deployBlock), toBlock: "latest" }),
+        client!.getContractEvents({ address: market, abi: orderBookAbi, eventName: "Trade", args: { takerOrderId: latest }, fromBlock: BigInt(D.deployBlock), toBlock: "latest" }),
+      ]);
+      const placedTx = new Map(placed.map((l) => [l.args.orderId as bigint, l.transactionHash as Hex]));
+      const seen = new Set<string>();
+      const trades: MyOrderTrade[] = [];
+      for (const l of [...asMaker, ...asTaker]) {
+        const key = `${l.transactionHash}:${l.logIndex}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const a = l.args;
+        trades.push({
+          makerOrderId: a.makerOrderId as bigint,
+          takerOrderId: a.takerOrderId as bigint,
+          price: a.price as bigint,
+          baseAmount: a.baseAmount as bigint,
+          quoteAmount: a.quoteAmount as bigint,
+          transactionHash: l.transactionHash as Hex,
+        });
+      }
+      const rows = orders
+        .map((order) => ({
+          order,
+          placedTx: placedTx.get(order.id),
+          trades: trades.filter((t) => t.makerOrderId === order.id || t.takerOrderId === order.id),
+        }))
+        .reverse();
+      return { rows, totalIds: ids.length };
+    },
+  });
+}
+
+/** A transaction's receipt and details, for the transaction page. A missing receipt means pending or unknown. */
+export function useTxReceipt(hash: Hex | undefined) {
+  const client = usePublicClient({ chainId: CHAIN_ID });
+  return useQuery({
+    queryKey: ["tx", CHAIN_ID, hash],
+    enabled: Boolean(client) && Boolean(hash),
+    retry: false,
+    queryFn: async () => {
+      const [tx, receipt] = await Promise.all([
+        client!.getTransaction({ hash: hash! }).catch(() => null),
+        client!.getTransactionReceipt({ hash: hash! }).catch(() => null),
+      ]);
+      return { tx, receipt };
+    },
+  });
 }

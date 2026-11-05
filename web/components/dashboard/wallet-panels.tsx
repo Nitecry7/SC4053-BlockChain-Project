@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { ConnectControl } from "@/components/wallet/connect-control";
 import { Panel } from "./panel";
-import { DEPLOYMENT, type DashboardState } from "./use-dashboard";
+import type { DashboardState } from "./use-dashboard";
 
 /** Basis points of `part` over `whole`, as a percentage string with two decimals, computed in bigint. */
 export function shareOf(part: bigint, whole: bigint): string {
@@ -29,7 +29,7 @@ function WalletHint({ state }: { state: DashboardState }) {
 export function HoldingsPanel({ state }: { state: DashboardState }) {
   const { balances, tokens, ready, live } = state;
   const showing = live && ready;
-  const [base, quote] = [DEPLOYMENT.baseToken, DEPLOYMENT.quoteToken];
+  const [base, quote] = [state.pair.base, state.pair.quote];
   const supply = tokens.data;
 
   return (
@@ -108,7 +108,7 @@ const actionBase =
   "flex h-[5.25rem] min-w-0 flex-col items-center justify-center gap-2 rounded-[0.875rem] border px-1 text-[0.75rem] font-medium transition-[background,box-shadow,transform] duration-150";
 const actionIdle = "border-white/[0.09] bg-[linear-gradient(150deg,rgb(55_63_91/0.72),rgb(25_33_57/0.9))] hover:border-white/20 hover:bg-[linear-gradient(150deg,rgb(66_75_108/0.8),rgb(30_39_66/0.92))]";
 
-/** Actions that work now are real; the order action is visibly unavailable until the next phase. */
+/** Every action here works: Markets, Tokens, Copy address and Place order (opens the Trade page). */
 export function QuickActions({ state }: { state: DashboardState }) {
   const [copied, setCopied] = useState(false);
   const address = state.account.address;
@@ -142,13 +142,10 @@ export function QuickActions({ state }: { state: DashboardState }) {
           {copied ? <Check className="size-5 text-buy" aria-hidden /> : <Copy className="size-5" aria-hidden />}
           {copied ? "Copied" : "Copy address"}
         </button>
-        <div aria-disabled="true" className={cn(actionBase, "cursor-not-allowed border-dashed border-white/12 bg-white/[0.02] text-muted-foreground")} title="Order placement arrives in the next phase">
+        <Link href={`/trade?market=${state.marketAddress}`} className={cn(actionBase, actionIdle)}>
           <ArrowLeftRight className="size-5" aria-hidden />
-          <span className="text-center leading-tight">
-            Place order
-            <span className="mt-0.5 block text-[0.6875rem] text-subtle">Soon</span>
-          </span>
-        </div>
+          Place order
+        </Link>
       </div>
     </Panel>
   );
@@ -157,7 +154,7 @@ export function QuickActions({ state }: { state: DashboardState }) {
 /** Wallet balances per token, with provenance from the TokenFactory registry instead of invented % changes. */
 export function TokenBalances({ state }: { state: DashboardState }) {
   const { tokens, balances, ready, live } = state;
-  const list = [DEPLOYMENT.baseToken, DEPLOYMENT.quoteToken];
+  const list = [state.pair.base, state.pair.quote];
   return (
     <Panel
       id="token-balances"

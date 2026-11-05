@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AddressChip } from "@/components/data/address-chip";
 import { Amount } from "@/components/data/amount";
@@ -31,7 +32,7 @@ function MarketRowData({ market, query }: { market: RegisteredMarket; query: str
       <td className="py-3 pr-3 max-md:col-span-2 max-md:py-0">
         <span className="flex items-center gap-2.5 font-semibold">
           {b && q ? <PairMark base={b.symbol} quote={q.symbol} size="md" /> : <Skeleton className="size-8 rounded-full bg-white/8" />}
-          {pair ?? <Skeleton className="h-4 w-24 bg-white/8" />}
+          {pair ? <Link href={`/trade?market=${market.address}`} className="hover:text-lilac">{pair}</Link> : <Skeleton className="h-4 w-24 bg-white/8" />}
         </span>
       </td>
       <td className="py-3 pr-3 max-md:col-span-2 max-md:py-0">

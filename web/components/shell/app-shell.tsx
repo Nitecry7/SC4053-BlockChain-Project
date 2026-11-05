@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useLiveBlock } from "@/hooks/use-dex-data";
 import { cn } from "@/lib/utils";
 import { ConnectControl } from "@/components/wallet/connect-control";
+import { ConnectingNotice } from "@/components/wallet/wallet-pending-notice";
 import { Brand } from "./brand";
 import { NAV_ITEMS, TOP_NAV, isActive, type NavItem } from "./nav-items";
 import { SearchBox } from "./search-box";
@@ -151,6 +152,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </aside>
         <main id="main" className="min-w-0">
+          <ConnectingNotice />
           {children}
         </main>
       </div>

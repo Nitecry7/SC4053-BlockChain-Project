@@ -6,6 +6,7 @@ import { useSwitchChain } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { anvil, RPC_URL } from "@/lib/chains";
 import { describeError } from "@/lib/errors";
+import { WalletOutcome, WalletWaiting } from "@/components/wallet/wallet-pending-notice";
 import type { DashboardState } from "./use-dashboard";
 
 function Banner({ tone, icon, title, children }: { tone: "warn" | "bad"; icon: React.ReactNode; title: string; children: React.ReactNode }) {
@@ -26,8 +27,8 @@ function Banner({ tone, icon, title, children }: { tone: "warn" | "bad"; icon: R
 /** Explains, in plain words, why live data is missing: node down, nothing deployed, or the wallet on another chain. */
 export function StatusBanners({ state }: { state: DashboardState }) {
   const { deployment, network } = state;
-  const { switchChain, isPending } = useSwitchChain();
-  const [switchError, setSwitchError] = useState<string>();
+  const { switchChain, isPending, reset } = useSwitchChain();
+  const [switchError, setSwitchError] = useState<ReturnType<typeof describeError>>();
 
   const s = deployment.status;
   return (
@@ -55,13 +56,33 @@ export function StatusBanners({ state }: { state: DashboardState }) {
               disabled={isPending}
               onClick={() => {
                 setSwitchError(undefined);
-                switchChain({ chainId: anvil.id }, { onError: (e) => setSwitchError(describeError(e).title) });
+                switchChain({ chainId: anvil.id }, { onError: (e) => setSwitchError(describeError(e)) });
               }}
             >
-              {isPending ? "Confirm in your wallet…" : "Switch to Anvil"}
+              {isPending ? "Waiting for your wallet…" : "Switch to Anvil"}
             </Button>
-            {switchError && <span className="text-sell">{switchError}</span>}
           </span>
+          {isPending && (
+            <WalletWaiting
+              kind="switch"
+              className="mt-3"
+              onRetry={() => {
+                reset();
+                setSwitchError(undefined);
+              }}
+            />
+          )}
+          {switchError && !isPending && (
+            <WalletOutcome
+              kind="switch"
+              error={switchError}
+              className="mt-3"
+              onRetry={() => {
+                reset();
+                setSwitchError(undefined);
+              }}
+            />
+          )}
         </Banner>
       )}
     </>

@@ -1,7 +1,8 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { AlertTriangle, ChevronDown, Wallet } from "lucide-react";
+import { AlertTriangle, ChevronDown, LoaderCircle, Wallet } from "lucide-react";
+import { useAccount } from "wagmi";
 import { AccountAvatar } from "@/components/data/account-avatar";
 import { shortAddress } from "@/components/data/address-chip";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,8 @@ const chip =
 
 /** The header wallet control. RainbowKit owns the modals; this only renders the three states in the design system. */
 export function ConnectControl({ className }: { className?: string }) {
+  // `connecting` is a request waiting for the user to answer in the wallet (not the background `reconnecting`).
+  const connecting = useAccount().status === "connecting";
   return (
     <ConnectButton.Custom>
       {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
@@ -20,9 +23,9 @@ export function ConnectControl({ className }: { className?: string }) {
         if (!account || !chain) {
           return (
             <button type="button" onClick={openConnectModal} className={cn(chip, "glass-active pl-3.5 text-white", className)}>
-              <Wallet className="size-4" aria-hidden />
-              <span className="hidden sm:inline">Connect wallet</span>
-              <span className="sm:hidden">Connect</span>
+              {connecting ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <Wallet className="size-4" aria-hidden />}
+              <span className="hidden sm:inline">{connecting ? "Waiting for wallet…" : "Connect wallet"}</span>
+              <span className="sm:hidden">{connecting ? "Waiting…" : "Connect"}</span>
             </button>
           );
         }

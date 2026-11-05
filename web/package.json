@@ -12,7 +12,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "e2e": "node e2e/trade.e2e.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -36,6 +37,7 @@
     "@types/react-dom": "^19.3.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "16.4.5",
+    "playwright-core": "1.64.1",
     "tailwindcss": "4.3.4",
     "typescript": "~5.9.3",
     "vite": "^8.3.5",

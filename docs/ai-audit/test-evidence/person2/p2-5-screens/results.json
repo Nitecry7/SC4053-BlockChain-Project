@@ -1,0 +1,75 @@
+{
+  "wallet": "MOCK (not MetaMask)",
+  "rpc": "http://127.0.0.1:8546",
+  "base": "http://localhost:3100",
+  "passed": 13,
+  "failed": 0,
+  "results": [
+    {
+      "name": "trade page renders, reads the registry market and asks the visitor to connect",
+      "status": "pass",
+      "ms": 423
+    },
+    {
+      "name": "connect: the pending-wallet guidance sits above the RainbowKit dialog, escalates after 20 s, then connects",
+      "status": "pass",
+      "ms": 23989
+    },
+    {
+      "name": "validation: malformed, zero, lot, tick and insufficient-balance inputs show messages and never open the wallet",
+      "status": "pass",
+      "ms": 112
+    },
+    {
+      "name": "Alice sells 10 NTU @ 2: exact approval to the order book, wallet-waiting guidance, then a resting order",
+      "status": "pass",
+      "ms": 6001
+    },
+    {
+      "name": "account switch: Bob sees none of Alice's orders and the ticket is reset",
+      "status": "pass",
+      "ms": 32
+    },
+    {
+      "name": "SPEC example through the UI: Bob buys 4 NTU @ limit 2.2: approval of 8.8 SGDx, trade at 2, refund 0.8, Alice paid 8",
+      "status": "pass",
+      "ms": 464
+    },
+    {
+      "name": "My orders and the transaction page show the same facts as the chain",
+      "status": "pass",
+      "ms": 187
+    },
+    {
+      "name": "switching back to Alice shows her partly-filled order with 6 NTU still locked",
+      "status": "pass",
+      "ms": 81
+    },
+    {
+      "name": "a rejection in the wallet is reported as a rejection, nothing is sent, and Try again recovers",
+      "status": "pass",
+      "ms": 631
+    },
+    {
+      "name": "a double click sends exactly one wallet request",
+      "status": "pass",
+      "ms": 3767
+    },
+    {
+      "name": "account change while the wallet request is open: dropped, flagged as stale, and nothing is attributed to the new account",
+      "status": "pass",
+      "ms": 3968
+    },
+    {
+      "name": "wrong network: the banner and the ticket offer Switch to Anvil, with the pending-wallet guidance and recovery",
+      "status": "pass",
+      "ms": 2587
+    },
+    {
+      "name": "layout at desktop, tablet and mobile: no horizontal overflow and no console errors",
+      "status": "pass",
+      "ms": 12227
+    }
+  ],
+  "consoleErrors": []
+}

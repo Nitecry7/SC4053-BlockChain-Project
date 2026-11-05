@@ -11,7 +11,7 @@ import { buildDepth, position } from "@/lib/depth";
 import { quoteCost } from "@/lib/units";
 import { cn } from "@/lib/utils";
 import { Panel } from "./panel";
-import { DEPLOYMENT, type DashboardState } from "./use-dashboard";
+import type { DashboardState } from "./use-dashboard";
 
 const cols =
   "grid grid-cols-[minmax(6.5rem,1.5fr)_repeat(2,minmax(3.75rem,1fr))] items-center gap-2 sm:grid-cols-[minmax(6.5rem,1.4fr)_repeat(3,minmax(3.75rem,1fr))_minmax(2.75rem,0.55fr)]";
@@ -52,8 +52,8 @@ function MarketSummary({ state }: { state: DashboardState }) {
   const snap = state.market.data;
   const trades = state.trades.data;
   const spread = spreadOf(snap);
-  const b = DEPLOYMENT.baseToken.symbol;
-  const q = DEPLOYMENT.quoteToken.symbol;
+  const b = state.pair.base.symbol;
+  const q = state.pair.quote.symbol;
   const cells = [
     { label: "Spread", value: spread !== undefined ? <Amount value={spread} visible={4} showTail={false} symbol={q} /> : "—" },
     { label: "Trades", value: trades ? trades.count.toString() : "…" },
@@ -130,7 +130,7 @@ function spreadOf(snap: { bestBid: { price: bigint }; bestAsk: { price: bigint }
 export function DepthPanel({ state }: { state: DashboardState }) {
   const snap = state.market.data;
   const depth = snap ? buildDepth(snap.bids, snap.asks) : undefined;
-  const pair = `${DEPLOYMENT.baseToken.symbol} / ${DEPLOYMENT.quoteToken.symbol}`;
+  const pair = `${state.pair.base.symbol} / ${state.pair.quote.symbol}`;
   const W = 460;
   const H = 150;
   const pad = 10;
@@ -162,7 +162,7 @@ export function DepthPanel({ state }: { state: DashboardState }) {
             {snap?.hasTradePrice ? (
               <>
                 <Amount value={snap.lastTradePrice} visible={4} showTail={false} />
-                <span className="ml-1.5 text-sm font-medium text-muted-foreground">{DEPLOYMENT.quoteToken.symbol}</span>
+                <span className="ml-1.5 text-sm font-medium text-muted-foreground">{state.pair.quote.symbol}</span>
               </>
             ) : snap ? (
               <span className="text-base text-muted-foreground">No trades yet</span>
@@ -176,7 +176,7 @@ export function DepthPanel({ state }: { state: DashboardState }) {
           <div className="text-right">
             <p className="tabular text-[0.9375rem] font-semibold">
               <Amount value={spreadOf(snap)!} visible={4} showTail={false} />
-              <span className="ml-1 text-xs font-medium text-muted-foreground">{DEPLOYMENT.quoteToken.symbol}</span>
+              <span className="ml-1 text-xs font-medium text-muted-foreground">{state.pair.quote.symbol}</span>
             </p>
             <p className="text-[0.6875rem] text-muted-foreground">Spread (best ask − best bid)</p>
           </div>
@@ -185,7 +185,7 @@ export function DepthPanel({ state }: { state: DashboardState }) {
       {depth ? (
         <>
           <p className="tabular mt-3 text-[0.6875rem] text-subtle">
-            Max depth <Amount value={depth.maxCumulative} visible={2} showTail={false} symbol={DEPLOYMENT.baseToken.symbol} />
+            Max depth <Amount value={depth.maxCumulative} visible={2} showTail={false} symbol={state.pair.base.symbol} />
           </p>
           <svg viewBox={`0 0 ${W} ${H}`} className="h-36 w-full" role="img" aria-label={`Cumulative depth: ${depth.bids.length} bid levels, ${depth.asks.length} ask levels`}>
             <defs>
@@ -212,7 +212,7 @@ export function DepthPanel({ state }: { state: DashboardState }) {
             <span>
               <Amount value={depth.minPrice} visible={4} showTail={false} />
             </span>
-            <span>Price ({DEPLOYMENT.quoteToken.symbol})</span>
+            <span>Price ({state.pair.quote.symbol})</span>
             <span>
               <Amount value={depth.maxPrice} visible={4} showTail={false} />
             </span>
@@ -259,13 +259,13 @@ function BookRow({ level, side }: { level: BookLevel; side: "Buy" | "Sell" }) {
 }
 
 /** The top of the live book: asks above, bids below, from `getBook`. Read-only. */
-export function BookPanel({ state }: { state: DashboardState }) {
+export function BookPanel({ state, levels = 4 }: { state: DashboardState; levels?: number }) {
   const snap = state.market.data;
-  const asks = snap ? [...snap.asks].slice(0, 4).reverse() : [];
-  const bids = snap ? snap.bids.slice(0, 4) : [];
+  const asks = snap ? [...snap.asks].slice(0, levels).reverse() : [];
+  const bids = snap ? snap.bids.slice(0, levels) : [];
   const empty = snap && asks.length === 0 && bids.length === 0;
   return (
-    <Panel id="book" title={`Buyers / sellers (${DEPLOYMENT.baseToken.symbol} / ${DEPLOYMENT.quoteToken.symbol})`} className="min-h-[16rem]">
+    <Panel id="book" title={`Buyers / sellers (${state.pair.base.symbol} / ${state.pair.quote.symbol})`} className="min-h-[16rem]">
       {!state.live ? (
         <EmptyState title="Order book unavailable" className="py-8">
           The book is read from the market contract once the deployment is found.
@@ -286,9 +286,9 @@ export function BookPanel({ state }: { state: DashboardState }) {
           <thead>
             <tr className="text-[0.6875rem] text-muted-foreground">
               <th scope="col" className="pb-2 text-left font-medium">Side</th>
-              <th scope="col" className="pb-2 text-right font-medium">Price ({DEPLOYMENT.quoteToken.symbol})</th>
-              <th scope="col" className="pb-2 text-right font-medium">Amount ({DEPLOYMENT.baseToken.symbol})</th>
-              <th scope="col" className="pb-2 text-right font-medium">Total ({DEPLOYMENT.quoteToken.symbol})</th>
+              <th scope="col" className="pb-2 text-right font-medium">Price ({state.pair.quote.symbol})</th>
+              <th scope="col" className="pb-2 text-right font-medium">Amount ({state.pair.base.symbol})</th>
+              <th scope="col" className="pb-2 text-right font-medium">Total ({state.pair.quote.symbol})</th>
             </tr>
           </thead>
           <tbody>

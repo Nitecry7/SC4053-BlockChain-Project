@@ -7,12 +7,12 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Overview", topLabel: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Markets", href: "/markets", icon: BarChart3 },
   { label: "Tokens", href: "/tokens", icon: Layers },
-  { label: "Trade", icon: ArrowLeftRight, note: "Order placement arrives in the next phase" },
+  { label: "Trade", href: "/trade", icon: ArrowLeftRight },
   { label: "Create token", icon: SquarePlus, note: "Token issuance from the browser arrives in a later phase" },
   { label: "List market", icon: Store, note: "Market listing from the browser arrives in a later phase" },
 ];
 
-export const TOP_NAV = NAV_ITEMS.filter((i) => i.href || i.label === "Trade");
+export const TOP_NAV = NAV_ITEMS.filter((i) => i.href);
 
 export function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);

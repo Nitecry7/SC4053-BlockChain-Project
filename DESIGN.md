@@ -198,7 +198,7 @@ Five chart tokens exist (`--chart-1` #9c80fb, `--chart-2` #6aa4ff, `--chart-3` #
 - **Figure** (600, 1.375rem, tabular): large entered or displayed values, such as the order ticket's price and amount fields.
 - **Panel title** (600, 0.9375rem, -0.02em): every panel heading.
 - **Body** (400, 0.8125rem, relaxed 1.625, -0.011em body tracking): supporting copy and table text. Hero and header paragraphs are capped near 60ch to 62ch.
-- **Label** (500, 0.6875rem): field labels, captions, "Soon" and "Next phase" markers. This is the size floor.
+- **Label** (500, 0.6875rem): field labels, captions, "Soon" and "Coming soon" markers. This is the size floor.
 - **Mono** (400, 0.8125rem): addresses (shortened in chips, full in tooltips and accessible names).
 
 ### Named Rules
@@ -293,8 +293,16 @@ Centred, with an optional 40px `glass-inset` icon well in lilac, a one-line titl
 
 ### Placeholders for unbuilt features
 - **"Coming soon" chip:** `white/12` border, `white/5` fill, Mist 0.6875rem text, never wrapping.
-- **Order ticket (P2-4):** the same field styling as the eventual form (rounded tiles, 1.375rem figures, token chips), wrapped in a disabled `fieldset` with a "Next phase" lock label. The submit button is a muted violet gradient at 75% text opacity with `cursor-not-allowed`.
 - **Roadmap tiles:** 14px-radius tiles with a violet-tinted gradient and a 40px icon tile.
+
+### Order ticket
+The ticket is a `glass` panel titled "Limit order" (the trade page and the dashboard use the same component). Buy and Sell are a two-segment control in a `#10162a` track, the active segment using `glass-active`, labelled "Buy NTU" and "Sell NTU" from the pair. Price and amount are `glass-inset` fields at 14px radius with 1.375rem tabular figures and a token chip on the right; an invalid field gets a `sell/50` border and a 0.6875rem message in Sell Rose. Below sit small label and value rows, then an order summary and an "Estimate against the current book" block inside a `glass-inset` panel. The review step is a 14px-radius card with a lilac border (`lilac/30` over `#161d36`). The primary action is one full-width 44px button using the violet gradient of the active controls; when disabled it drops to 40% fill and 70% text, with `cursor-not-allowed`. Its label always says what the click will do ("Review order", "Approve 8.8 SGDx", "Place buy order", "Switch to Anvil", "Connect wallet").
+
+### Wallet notices and step list
+Every wallet request, from connecting to approving, placing and switching network, uses one notice: a `glass-inset` card at 14px radius with a coloured 1px border, a 20px status icon and a title with a short body, announced politely (`role="status"`). It has four states, never conveyed by colour alone (each has its own icon and title): waiting (lilac border, spinning loader; after 20 seconds it adds a numbered recovery list and a "Try again" outline button), rejected (amber), error (Sell Rose), success (Buy Mint). The connect notice floats at the bottom centre above everything, because RainbowKit's dialog covers the page. The lifecycle step list is a `glass-inset` ordered list with a 20px icon per step (empty dot, spinning loader, mint check, rose cross) and the transaction hash as a mono link.
+
+### Result card and tables
+After a confirmed order, the ticket shows a mint-tinted confirmation strip, then labelled groups in `glass-inset` boxes (executed, still locked, in your wallet), so these four quantities are never merged. The trade list, My orders and transaction page reuse the existing table and chip patterns: pill side badges that always carry the word Buy or Sell, a neutral status pill (Resting, Partly filled, Filled), mono hash links in lilac, and the same `Amount` pattern for every figure.
 
 ### Brand mark
 Two interlocking ribbons in a lilac to azure gradient (#dccbff, #8a6cf5, #5f8dff and #7aa8ff, #7c5cf2) with a violet drop shadow (`0 2px 10px rgb(146 107 255 / 0.6)`), followed by the wordmark "SC4053 DEX" in Brand type with "DEX" in lilac.
@@ -310,13 +318,15 @@ Motion is minimal and functional: colour and background transitions on interacti
 - **Do** show amounts through the `Amount` pattern (tabular, exact, dimmed tail) and prices with the contract's real precision.
 - **Do** pair buy and sell colours with the words Buy and Sell.
 - **Do** keep the focus-visible ring (2px Focus Lilac, 2px offset) and the 11px text floor.
-- **Do** mark unbuilt features as disabled with a plain "Soon", "Next phase" or "Coming soon" label, and say what is true in empty and error states.
+- **Do** mark unbuilt features as disabled with a plain "Soon" or "Coming soon" label, and say what is true in empty and error states.
+- **Do** give every wallet request the one pending notice, with its recovery steps after 20 seconds, and word it as "where to look", never as something the page can detect.
+- **Do** label a primary button with the action it will perform, and keep each wallet request a separate explicit click.
 - **Do** use IBM Plex Mono for addresses and hashes only.
 
 ### Don't:
 - **Don't** redesign, re-theme or add a light mode; the approved design is dark-only.
 - **Don't** show a USD value, a 24h change, a price history or any figure the contracts and `Trade` events cannot produce.
-- **Don't** make a disabled or unbuilt control look functional.
+- **Don't** make a disabled or unbuilt control look functional, and do not add a cancel control while the engine's `cancelOrder` reverts.
 - **Don't** convey buy or sell, or any status, by colour alone.
 - **Don't** round chain values for display or use floating-point arithmetic for token amounts.
 - **Don't** add tracked uppercase eyebrow labels above headings.
