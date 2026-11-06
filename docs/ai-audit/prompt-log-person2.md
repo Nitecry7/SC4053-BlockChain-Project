@@ -308,6 +308,69 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 
 **Evidence:** link check, a table column check, `git diff --check` and protected-path diffs, reported in the completion report.
 
+## 2026-11-06: P2-8A, final pre-integration audit (model: Sonnet 5.5 Medium, audit only)
+
+**Model:** Sonnet 5.5 (Medium), as the owner asked. No subagent and no independent reviewer: this phase changed no code, and claims were traced by script (link and anchor check, grep checks on tool statuses).
+
+**Prompt (summary):** Audit Person 2's work against the official brief before the bonus integration: a requirements coverage matrix, architecture and integration checks, a bonus-integration checklist, a React, Next.js and accessibility review, a security and test baseline on scratch environments, and a preliminary AI Audit Report in the brief's eight sections. Owner refinements after the plan: a temporary pinned axe-core is allowed (not a dependency), defects are reported and not fixed, and the owner's Anvil on 8545 and `next dev` on 3000 are preserved.
+
+**What the AI got wrong (caught during this phase, before reporting):**
+1. The RPC-counting script first matched `request.url() === RPC`. Playwright reports `http://127.0.0.1:8546/` with a trailing slash, so every count was 0. Zero requests was implausible, so it was investigated and fixed (compare origins) before any figure was used.
+2. The first JavaScript figure (identical 523 KB on every route) included Next's link prefetch. It was split into "at load" and "after idle prefetch".
+3. A `forge lint` summary was first parsed wrongly and printed nothing; the raw output was read before any lint finding was reported.
+4. Two drafted numbers were wrong against the raw output and were corrected: the colour-contrast range (22 to 141 nodes, not 36 to 141) and "12 of 12 page views" for the amount violation (12 of 18).
+5. The browser suites write screenshots into tracked evidence folders by default. This was noticed before running them, and `SCREENSHOT_DIR` was pointed at the scratchpad, so no recorded evidence was overwritten.
+
+**What the human did:** approved the plan, allowed the temporary axe-core, and set the audit-only rule. Still needed from the owner: the manual MetaMask evidence, screenshots, screen-reader and contrast checks, and the decisions listed in the evidence file.
+
+**Findings (reported, not fixed):** two accessibility violation types (R6, R7); read-volume and bundle recommendations (R1 to R5); contrast not determined (R8); the brief PDF is tracked while `SPEC.md` and `CLAUDE.md` say it is untracked (I-1); Person 1's log ends on 2026-11-02 (I-2); the two Medium P2-3 findings have no issue file (I-5). No Solidity, `web/`, test, interface or Person 1 file was changed.
+
+**Skills and MCPs actually invoked:** `react-best-practices` (discoverable; invoked once, bundle, re-render and client-fetch rules applied); `solidity-security` (invoked once; grounded the bonus checklist; produced no finding of its own; not a review of `OrderBook.sol`); Slither 0.11.6 re-run on `DemoToken.sol`, `TokenFactory.sol`, `MarketFactory.sol` and `Deploy.s.sol` (not on `OrderBook.sol`); `forge lint` (first use, 7 warnings); `impeccable detect` (0 findings, regex only); axe-core 4.14.0 (temporary, pinned); the Playwright library, not the MCP; Foundry. Not used: Context7, shadcn and Awwwards MCPs, the Playwright MCP, the design skills.
+
+**Evidence:** [`test-evidence/person2/p2-8a-audit.md`](test-evidence/person2/p2-8a-audit.md); the draft [`ai-audit-report-draft.md`](ai-audit-report-draft.md); the checklist in [`../BONUS_INTEGRATION.md`](../BONUS_INTEGRATION.md). Baseline re-run: `forge test` 185, exporter 21, unit 368 and 48 gated skipped, typecheck and lint clean, real chain 48, browser 13, 14, 13 and 9. All of the owner's processes were checked unchanged at the end.
+
+## 2026-11-06: P2-8A.1, accessibility, RPC cost and audit-evidence fixes
+
+**Model:** Sonnet 5.5 (Medium). **Prompt (summary):** fix the confirmed P2-8A findings: R6 (`aria-label` on spans), R7 (accessible names), R1/R2 (per-block RPC cost), record I-5 (missing P2-3 issue files) and I-1; recheck accessibility and contrast; report, do not fix, anything else. Refinements: keep the chain watcher unchanged unless same-height hash changes stay provably detected; prove `meta` survives wagmi at the real query-cache level and that stale data is not shown as current when the RPC is down; report HTTP requests and JSON-RPC operations separately and prove batching parity. No staging, committing or pushing; 8545 and 3000 untouched.
+
+**What the AI produced:** `lib/query-scope.ts` (static-read tag and the two refresh predicates), static/dynamic splits in `useTokenDetails` and `useMarketSnapshot`, static tags on market tokens, `Amount` and `AddressChip` semantics, wallet-control accessible names, `role="group"` on one labelled div, `http(RPC_URL, { batch: true })`, 15 new unit tests, one new browser test, issues P2-013 and P2-014, and [`p2-8a1-fixes.md`](test-evidence/person2/p2-8a1-fixes.md). Unit 383 passed (368 before), browser 13 / 14 / 14 / 9, real chain 48, `forge test` 185, exporter 21, axe 0 violations on 18 views (before: 12 and 6).
+
+**What the AI got wrong (all caught before being reported):**
+1. My first query-scope test contained leftover junk code that failed; removed.
+2. A batching test expected `ok:16n`; `String(16n)` is `16`.
+3. The accessible-name change broke the existing browser suites, which located the wallet button by its old name or an `aria-label^="Wallet"` selector, and one assertion matched text that now included the hidden values. The selectors and the text helper were adapted; no assertion about what is shown was loosened.
+4. A `Copy Address` selector matched two buttons (substring match) until `exact: true`.
+5. The first cache comparison paired queries by array index and reported 6 of 16 dynamic reads unchanged; matching by query hash showed the two unchanged ones were disabled queries that never ran.
+6. The contrast script kept only the six worst runs per view, so the mobile result is incomplete; this is stated, not hidden.
+7. **A real gap found by testing, not by the plan:** after the scratch node was stopped, the page kept showing "Read from chain, refreshed every block" and old balances. It predates this change (inferred from the code) and is reported as R9 with a proposed fix, not implemented.
+
+**What the human did:** approved the plan and set the refinements above. Still needed: manual screen-reader and contrast checks, the decision on R9, the R6b and badge-contrast fixes, and Person 1's decision on the `SPEC.md`/`CLAUDE.md` wording (I-1).
+
+**Skills and MCPs actually invoked:** `react-best-practices` (invoked; rules applied are listed in the evidence file, section 7). axe-core 4.14.0 loaded transiently from jsDelivr, not a dependency. Not invoked: `solidity-security`, Slither (no Solidity changed), Context7, Playwright MCP, design skills.
+
+**Evidence:** [`test-evidence/person2/p2-8a1-fixes.md`](test-evidence/person2/p2-8a1-fixes.md); issues [P2-013](issues/p2-013-chain-id-guard-bypassed-by-forge-chain-override.md) and [P2-014](issues/p2-014-exporter-accepted-a-partial-broadcast.md).
+
+## 2026-11-06: P2-8A.2, RPC liveness, recovery verification, R6b and R8
+
+**Model:** Sonnet 5.5 (Medium requested; the session effort setting could not be read). **Prompt (summary):** reproduce R9 (stale balances when the RPC dies), add a minimal liveness mechanism with a recovery-verification state that reuses the P2-7 chain-reset assessment, never re-enable transactions on a heartbeat alone, coordinate with the existing watcher, handle initial-load failures, fix confirmed R6b ARIA containers and R8 contrast failures, measure RPC cost, run the full regression, update the audit evidence. Scratch Anvil 8546 and app 3100 only; no stage, commit or push.
+
+**What the AI produced:** `rpc-health.ts` (state machine and scheduler), `use-rpc-health.tsx` (provider, probe, recovery verification, settle check), `deployment-targets.ts`, the outage and verification banner, a "Last known" chip on panels, a single reset notice, truthful trade empty state, `e2e/liveness.e2e.mjs` (11), 16 + 6 + 2 + 1 new unit tests, ARIA fixes in `tx-status` and three review boxes, contrast changes (token badge letters, primary gradient, two text tokens), [`p2-8a2-liveness.md`](test-evidence/person2/p2-8a2-liveness.md) and issue [P2-015](issues/p2-015-stale-data-shown-as-live-after-the-rpc-died.md).
+
+**What the AI got wrong (all caught before being reported):**
+1. The first browser run failed 6 of 11: I had assumed the order ticket stays on screen with a disabled button during an outage. In fact the whole terminal is replaced by an empty state that said "No live deployment... Trading needs the deployed contracts", which was untrue during an outage. I changed that text and rewrote the assertions to "no usable ticket" (the ticket is absent or its button is disabled).
+2. My first unit tests had two mistaken expectations (the state list repeated on every probe, and an alternating-probe test that began before the page had ever been online). The probe's `lastOkAt` was changed so it no longer re-renders consumers on every probe.
+3. The first draft of the recovery check treated query invalidation as enough. The owner's refinement ("do not treat invalidation as proof") led to the settle check and mutation M1.
+4. A first build of the old (HEAD) comparison failed (Turbopack refuses a symlinked `node_modules`); the fix was a real copy in the scratchpad.
+5. I created a stray `anvil.pid` in the repository root through a mis-scoped shell command; found by `git status` and removed.
+6. axe reported the four R6b containers only as "needs review", not violations; I treated them as defects because the ARIA rule is clear, and said so, rather than claiming axe found violations.
+7. Two contrast runs remain in the script's output (the dimmed placeholders and a likely measurement artifact); they are reported as not fixed.
+
+**What the human did:** approved the plan and the two binding refinements (recovery verification; coordination with the watcher). Still needed: the manual MetaMask and screen-reader checks, DevTools contrast checks of the remaining cases, and decisions listed in the evidence file (section 12).
+
+**Skills and MCPs actually invoked:** `react-best-practices` (earlier in the session; applied as listed in the evidence file, section 11). axe-core 4.14.0 transiently from jsDelivr. Not invoked: Context7, Playwright MCP, `solidity-security`, Slither, the design skills.
+
+**Evidence:** [`test-evidence/person2/p2-8a2-liveness.md`](test-evidence/person2/p2-8a2-liveness.md); issue [P2-015](issues/p2-015-stale-data-shown-as-live-after-the-rpc-died.md).
+
 ## Requirements traceability
 Current status through P2-7 (2026-11-06). Earlier statuses are in the phase entries above.
 
@@ -325,5 +388,8 @@ Current status through P2-7 (2026-11-06). Earlier statuses are in the phase entr
 | R2 (front end) / G (UX) | Usable multi-market dashboard and wallet overview | `docs/FRONTEND.md` "Dashboard market selector" | `web/lib/market-select.ts`, `holdings.ts`, `registry-pages.ts`, `web/hooks/use-market-choice.ts`, `use-holdings.ts`, `web/components/dashboard/` | `market-select`, `holdings`, `registry-pages` unit tests; `e2e:dashboard` (13, mock wallet) | `test-evidence/person2/p2-6-1-dashboard.md` (and its 2026-11-06 follow-up), issue P2-011 | n/a | Mock-wallet verified (P2-6.1). MetaMask Test 9 pending |
 | R5 / R6 / G (UX): reliable order and creation lifecycle | Orders and token/market creation report what actually happened despite speed-ups, cancels, replacements, restarts | `docs/FRONTEND.md` "Transaction lifecycle hardening", `docs/BONUS_INTEGRATION.md` | `web/lib/order-runner.ts`, `chain-reset.ts`, `create-runner.ts`, `web/hooks/use-chain-watch.ts`, `web/components/shell/chain-reset-notice.tsx` | `chain-reset.test.ts`, `order-runner.hardening.test.ts`, `hardening.integration.test.ts`, `e2e/hardening.e2e.mjs` (9, mock wallet) | `test-evidence/person2/p2-7-hardening.md`, issue P2-012 | n/a | Implemented; mock-wallet verified (P2-7). MetaMask Test 10 pending. Limits: a speed-up landing before the first lookup cannot be followed; chain-reset detection needs a block seen first |
 | R4 / R2 (browser) | Issue tokens and list markets from the front end | `docs/FRONTEND.md` "Token issuance and market listing" | `web/lib/create-*.ts`, `web/hooks/use-create-flow.ts`, `web/components/create/` | `create-*.test.ts`, `creation.integration.test.ts` (21), `e2e/create.e2e.mjs` (14) | `test-evidence/person2/p2-6-issuance-listing.md` | 7 | Mock wallet and scratch chain verified. MetaMask: the owner reported DTT creation and listing; steps 8a to 8l were not confirmed one by one |
+| D (report evidence): AI Audit Report and validation | Eight-section report, four-part issue format, validation evidence | `ai-audit-report-draft.md`, `tooling-and-methodology.md` | n/a (documentation) | P2-8A baseline re-run: `forge test` 185, unit 368, real chain 48, browser 13 / 14 / 13 / 9 (mock wallet); Slither re-run on Person 2 files | `test-evidence/person2/p2-8a-audit.md` | 1 to 8 | Person 2 side audited and drafted. Outstanding: the invariant suite and engine static analysis (Person 1), the bonus functions (Person 1), manual MetaMask evidence and screenshots (owner), the P2-3 issue entries |
+| D2 (P2-8A.1 fixes): accessibility semantics, per-block RPC cost, P2-3 issue records | `PRODUCT.md` accessibility; no unnecessary refetch; four-part issue format | `web/components/data/amount.tsx`, `address-chip.tsx`, `wallet/connect-control.tsx`, `dashboard/wallet-panels.tsx`, `hooks/use-dex-data.ts`, `lib/query-scope.ts`, `lib/wagmi.ts` | `amount.test.ts` (6), `query-scope.test.ts` (7), `rpc-batching.test.ts` (2), `e2e:dashboard` wallet-control test | unit 383, browser 13 / 14 / 14 / 9, real chain 48, axe 0 violations on 18 views; overview per-block 65 to 45 operations, HTTP 65 to 9 with batching | `test-evidence/person2/p2-8a1-fixes.md` | 1 to 8 | R6, R7, R1, R2, I-5 fixed. Open: R3 to R5, R6b, R8 (partly measured), R9 (RPC outage shows stale data), manual screen-reader and contrast checks (R6b and R9 closed in D3 below) |
 
+| D3 (P2-8A.2): RPC liveness, verified recovery, R6b, R8 | no stale data shown as current; transactions only against a verified chain; accessibility | `web/lib/rpc-health.ts`, `web/hooks/use-rpc-health.tsx`, `web/components/shell/rpc-health-banner.tsx`, `panel.tsx`, `chain-reset-notice.tsx`, `order-ticket.tsx`, `tx-status.tsx`, `token-mark.tsx`, `globals.css` | `rpc-health.test.ts` (17), `rpc-health-banner.test.ts` (7), `tx-status.test.ts` (2), `e2e:liveness` (11) | unit 410, real chain 48, browser 13 / 14 / 14 / 9 / 11, axe 0 on 18 views, 4 mutation checks plus 1 in the final review; idle RPC 55 to 67 per minute | `test-evidence/person2/p2-8a2-liveness.md`, issue P2-015 | 1 to 8 | R9, R6b fixed; R8 fixed for badges, primary button and captions, two items left; MetaMask, screen-reader and DevTools checks pending |
 Other rows are not started by Person 2.

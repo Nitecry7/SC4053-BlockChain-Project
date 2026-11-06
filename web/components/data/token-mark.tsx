@@ -1,10 +1,13 @@
 import { cn } from "@/lib/utils";
 
+// The letter colour is part of each palette so that it keeps at least 4.5:1 across the letter (P2-8A.2, R8; measured in
+// docs/ai-audit/test-evidence/person2/p2-8a2-liveness.md): white on the purple (start stop darkened a little), dark navy on
+// the three light palettes, where white measured 2.0 to 3.4.
 const PALETTES = [
-  "from-[#a07bff] to-[#5b3ad8] shadow-[0_4px_14px_-2px_rgb(124_92_242/0.55)]",
-  "from-[#7ec1ff] to-[#2f74ee] shadow-[0_4px_14px_-2px_rgb(76_140_255/0.5)]",
-  "from-[#5fe0b8] to-[#1f9c86] shadow-[0_4px_14px_-2px_rgb(52_200_160/0.45)]",
-  "from-[#ff9ec2] to-[#d9467b] shadow-[0_4px_14px_-2px_rgb(230_90_140/0.45)]",
+  "from-[#8860f2] to-[#5b3ad8] text-white shadow-[0_4px_14px_-2px_rgb(124_92_242/0.55)]",
+  "from-[#7ec1ff] to-[#2f74ee] text-[#0a0f24] shadow-[0_4px_14px_-2px_rgb(76_140_255/0.5)]",
+  "from-[#5fe0b8] to-[#1f9c86] text-[#0a0f24] shadow-[0_4px_14px_-2px_rgb(52_200_160/0.45)]",
+  "from-[#ff9ec2] to-[#d9467b] text-[#0a0f24] shadow-[0_4px_14px_-2px_rgb(230_90_140/0.45)]",
 ];
 
 function paletteFor(seed: string) {
@@ -21,7 +24,7 @@ export function TokenMark({ symbol, size = "md", className }: { symbol: string; 
     <span
       aria-hidden="true"
       className={cn(
-        "inline-grid shrink-0 place-items-center rounded-full bg-linear-to-br font-bold text-white ring-1 ring-white/20",
+        "inline-grid shrink-0 place-items-center rounded-full bg-linear-to-br font-bold ring-1 ring-white/20",
         sizes[size],
         fixed[symbol.toUpperCase()] ?? paletteFor(symbol),
         className,

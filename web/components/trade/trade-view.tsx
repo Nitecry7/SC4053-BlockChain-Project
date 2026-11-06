@@ -79,12 +79,17 @@ export function TradeView() {
 
 function TradeUnavailable() {
   const state = useDashboard();
+  const unreachable = state.deployment.status.kind === "unreachable";
   return (
     <>
       <StatusBanners state={state} />
       <Panel title="Market">
-        <EmptyState title={state.live ? "No markets listed yet" : "No live deployment"}>
-          {state.live ? "List a market through MarketFactory to trade." : "Trading needs the deployed contracts on this chain."}
+        <EmptyState title={state.live ? "No markets listed yet" : unreachable ? "Node unreachable" : "No live deployment"}>
+          {state.live
+            ? "List a market through MarketFactory to trade."
+            : unreachable
+              ? "Trading is paused until the node answers again and the chain has been verified."
+              : "Trading needs the deployed contracts on this chain."}
         </EmptyState>
       </Panel>
     </>

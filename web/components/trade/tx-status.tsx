@@ -28,8 +28,8 @@ export function TxStatus({ state, kind }: { state: FlowState; kind: "order" | "a
       ? { hash: failure.hash, label: failure.kind === "cancelled" ? "Cancelled by" : "Replaced by" }
       : undefined;
   return (
-    <div className="glass-inset rounded-[0.875rem] px-3.5 py-3" aria-label={kind === "order" ? "Order progress" : "Approval progress"}>
-      <ol className="space-y-1.5">
+    <div className="glass-inset rounded-[0.875rem] px-3.5 py-3">
+      <ol className="space-y-1.5" aria-label={kind === "order" ? "Order progress" : "Approval progress"}>
         {steps.map((s) => (
           <li key={s.label} className={cn("flex items-center gap-2.5 text-[0.75rem]", s.status === "todo" ? "text-subtle" : "text-[#dfe4f5]")}>
             <span className="grid size-5 place-items-center">{icon[s.status]}</span>

@@ -74,7 +74,7 @@ const sent = () => mock(() => window.__mock.sentCount());
 async function connect() {
   await page.getByRole("button", { name: /Connect wallet/ }).first().click();
   await page.getByRole("button", { name: /Browser Wallet/ }).click();
-  await page.getByRole("button", { name: /Wallet 0x/ }).waitFor({ timeout: 15000 });
+  await page.getByRole("button", { name: /open account menu/ }).waitFor({ timeout: 15000 });
 }
 async function fillToken(name, symbol, supply) {
   await page.getByLabel("Name", { exact: true }).fill(name);

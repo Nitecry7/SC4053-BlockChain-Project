@@ -53,7 +53,7 @@ export function MarketResult({ outcome }: { outcome: MarketOutcome }) {
       <div className="flex flex-wrap gap-2">
         <Link
           href={`/trade?market=${outcome.market}`}
-          className="inline-flex h-10 items-center rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(152_128_246/0.9)_49%,rgb(120_98_220/0.9))] px-4 text-[0.8125rem] font-semibold text-white hover:brightness-110"
+          className="inline-flex h-10 items-center rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] px-4 text-[0.8125rem] font-semibold text-white hover:brightness-110"
         >
           Trade this market
         </Link>

@@ -172,7 +172,7 @@ export function MarketForm() {
                   </p>
                   <Link
                     href={`/trade?market=${pair.market}`}
-                    className="inline-flex h-9 items-center rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(152_128_246/0.9)_49%,rgb(120_98_220/0.9))] px-3.5 text-[0.8125rem] font-semibold text-white hover:brightness-110"
+                    className="inline-flex h-9 items-center rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] px-3.5 text-[0.8125rem] font-semibold text-white hover:brightness-110"
                   >
                     Open the existing market
                   </Link>
@@ -180,8 +180,8 @@ export function MarketForm() {
               )}
 
               {canList(pair) && base && quote && (
-                <div className="mt-3 space-y-2 rounded-[0.875rem] border border-lilac/30 bg-[#161d36]/70 px-3.5 py-3 text-[0.75rem]" aria-label="Review market" data-testid="review">
-                  <p className="flex items-center gap-1.5 text-[0.8125rem] font-semibold">
+                <div className="mt-3 space-y-2 rounded-[0.875rem] border border-lilac/30 bg-[#161d36]/70 px-3.5 py-3 text-[0.75rem]" role="group" aria-labelledby="market-review-title" data-testid="review">
+                  <p id="market-review-title" className="flex items-center gap-1.5 text-[0.8125rem] font-semibold">
                     <ShieldCheck className="size-4 text-lilac" aria-hidden /> Review before you sign
                   </p>
                   <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1">

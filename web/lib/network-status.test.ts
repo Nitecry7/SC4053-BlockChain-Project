@@ -75,3 +75,20 @@ describe("classifyDeployment", () => {
     expect(classifyDeployment({ ...ok, marketQuote: base }).kind).toBe("mismatch");
   });
 });
+
+describe("classifyDeployment: rpcOffline (P2-8A.2)", () => {
+  const ok = {
+    loading: false,
+    failed: false,
+    checks: [{ name: "TokenFactory", address: "0x1", code: "0x60" }],
+    marketBase: "0xa",
+    marketQuote: "0xb",
+    expectedBase: "0xa",
+    expectedQuote: "0xb",
+  };
+  it("an offline or unverified RPC is unreachable even if every cached read says ok", () => {
+    expect(classifyDeployment({ ...ok })).toEqual({ kind: "ok" });
+    expect(classifyDeployment({ ...ok, rpcOffline: true })).toEqual({ kind: "unreachable" });
+    expect(classifyDeployment({ ...ok, rpcOffline: false })).toEqual({ kind: "ok" });
+  });
+});

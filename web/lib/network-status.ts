@@ -45,8 +45,10 @@ export function classifyDeployment(input: {
   marketQuote: string | undefined;
   expectedBase: string;
   expectedQuote: string;
+  /** The RPC health monitor says the node is unreachable or unverified after an outage (appended, optional). */
+  rpcOffline?: boolean;
 }): DeploymentStatus {
-  if (input.failed) return { kind: "unreachable" };
+  if (input.failed || input.rpcOffline) return { kind: "unreachable" };
   if (input.loading || input.checks.length === 0) return { kind: "checking" };
   const missing = input.checks.filter((c) => !c.code || c.code === "0x").map((c) => c.name);
   if (missing.length > 0) return { kind: "missing", missing };

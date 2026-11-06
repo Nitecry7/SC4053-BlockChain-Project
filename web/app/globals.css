@@ -78,7 +78,7 @@
   --secondary: #1c2540;
   --secondary-foreground: #e6e8f7;
   --muted: #1a2238;
-  --muted-foreground: #a8b0cb;
+  --muted-foreground: #b6bed8;
   --accent: #232c4a;
   --accent-foreground: #f4f5ff;
   --destructive: #f06a8e;
@@ -105,7 +105,7 @@
   --buy: #3ddc9e;
   --sell: #f37aa3;
   --warn: #f2c14e;
-  --subtle: #8a94b3;
+  --subtle: #96a0be;
 
   /* Glass recipe. */
   --glass-fill:

@@ -24,11 +24,11 @@ These are different kinds of evidence. An automated pass says nothing about Meta
 
 | Layer | Recorded result (AI-run, P2-7 evidence, 2026-11-06) | Where |
 |---|---|---|
-| Unit tests (`npm test`) | 368 passed, 48 gated suites skipped | `web/` |
+| Unit tests (`npm test`) | 410 passed, 48 gated suites skipped (P2-8A.2; 383 in P2-8A.1, 368 in P2-7) | `web/` |
 | Contracts (`forge test`) | 185 passed | `contracts/` |
 | Exporter (`node --test contracts/script/export-web.test.mjs`) | 21 passed | repo root |
 | Real chain, unlocked Anvil dev accounts, scratch Anvil 8546 | 48 passed (trading, creation, hardening) | `docs/ai-audit/test-evidence/person2/p2-7-hardening.md` |
-| Browser, **mock wallet**, scratch server 3100 | `e2e` 13, `e2e:create` 14, `e2e:dashboard` 13, `e2e:hardening` 9 passed | same file |
+| Browser, **mock wallet**, scratch server 3100 | `e2e` 13, `e2e:create` 14, `e2e:dashboard` 14, `e2e:hardening` 9 and `e2e:liveness` 11 passed (P2-8A.2; `e2e:liveness` is new; outages are simulated by blocking browser requests) | `p2-8a1-fixes.md`, `p2-8a2-liveness.md` |
 | **Manual MetaMask (Windows Brave)** | SPEC worked example: Tests 1 to 4 reported by the owner (Tests 5 and 6 not separately reported). DTT creation, listing and a trade, reported by the owner (Section F) | Section F |
 
 The automated rows were run in this repository's WSL environment. They are not a deployment check, and they do not prove any MetaMask behaviour.
@@ -393,6 +393,16 @@ After 7f or 7g you may need to reset MetaMask's cached nonce (Section E, item 1)
 | `18-dex-tx-page-bob.png` | The transaction page for Bob's order |
 | `19-metamask-extensions-pending-request.png` | Brave's Extensions menu with a pending MetaMask request |
 
+## Test 11: the node stops and comes back (P2-8A.2)
+
+**Status: PROCEDURE ONLY. Not performed with MetaMask.** The same behaviour passed a mock-wallet browser run and a scripted stop and restart of a scratch Anvil (see `ai-audit/test-evidence/person2/p2-8a2-liveness.md`). Use your own chain only if you accept stopping it; otherwise use the scratch chain on 8546.
+
+1. With the app open on `/trade` and MetaMask connected, stop Anvil with Ctrl+C in its terminal.
+2. **Expected within about 10 s:** a red banner "Cannot reach the local Anvil node" that calls the data "last known, not current", "Last known, not current" chips on the panels, and the trade area saying the node is unreachable. No order or create button is usable.
+3. Restart Anvil **with the same state** (`anvil --state <file>`): **expected within about 10 to 20 s:** a short "The node is answering again. Verifying the chain." message, then the banners clear, with no "chain changed" notice, and the ticket works again.
+4. Instead restart a **fresh** `anvil` (a different chain with the same chain ID): **expected:** the verification message, then one "The local chain changed" notice, and either "No SC4053 DEX deployment on this chain" (until you redeploy) or live data again. The ticket must stay unavailable until the notice and the verification are done.
+5. Record what you saw. Screenshots still needed: the outage banner, the verification message and the chain-changed notice.
+
 ---
 
 # E. Troubleshooting and FAQ
@@ -481,7 +491,7 @@ There is no background process. Matching happens **inside the transaction of a n
 | 6. My orders and transaction details | **Not separately reported** | Decoded events verified read-only against the owner's receipt |
 | 7a to 7h. Negative and recovery cases | **No** | Procedures only |
 | 8. Create a token and list a market (Test 8 steps) | **Partly.** The owner reported creating **DTT** and listing **DTT / SGDx** in the app. The individual steps 8a to 8l were not confirmed one by one | Owner report. Chain, read by the AI (read-only, 2026-11-06): the second registered market has base `DTT` (`0xeEBe00Ac0756308ac4AaBfD76c05c4F3088B8883`) and quote SGDx (`0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968`); its `lastTradePrice()` is 2e18, i.e. a trade at 2 SGDx per DTT has happened |
-| 8j. DTT trade (partial sell fill, maker-price settlement) | **Reported by the owner**, not checked step by step against 8j | Owner report of a partially filled sell at the maker's price. The chain reads above are consistent with a trade at 2 but do not by themselves show the fill amounts. No transaction hashes or screenshots are recorded in this repository |
+| 8j. DTT trade (partial sell fill, maker-price settlement) | **Reported by the owner**, not checked step by step against 8j | Owner report of a partially filled sell at the maker's price. The chain reads above are consistent with a trade at 2 but do not by themselves show the fill amounts. No transaction hashes or screenshots are recorded in this repository. **Update, 2026-11-06 (P2-8A):** a later read-only audit read both orders and the `Trade` log from the owner's chain: order 1 a sell of 10 at 2 (4 filled, PartiallyFilled), order 2 a buy of 4 at a limit of 2.2 (Filled), and one trade of 4 at 2 for 8 quote. See [`p2-8a-audit.md`](ai-audit/test-evidence/person2/p2-8a-audit.md) section 5.5. The MetaMask prompts and any screenshots are still not recorded |
 | 9 and 10. Dashboard selector, speed-up and cancel | **No** | Procedures only |
 
 The orders were created on-chain at 2026-11-05 15:00:21 UTC (order 1) and 15:29:48 UTC (order 2); the owner reported the result on 2026-11-06. The same SPEC example also passed in the automated mock-wallet browser run and in the real-chain suite on a scratch Anvil: see [`ai-audit/test-evidence/person2/p2-5-trading.md`](ai-audit/test-evidence/person2/p2-5-trading.md).

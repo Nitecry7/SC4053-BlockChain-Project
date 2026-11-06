@@ -76,7 +76,7 @@ export function HoldingsPanel({ state }: { state: DashboardState }) {
           )}
         </div>
 
-        <div className="space-y-3" aria-label="Share of total supply held by this wallet">
+        <div className="space-y-3" role="group" aria-label="Share of total supply held by this wallet">
           {[base, quote].map((t, i) => {
             const bal = showing ? balances.data?.[i] : undefined;
             const total = supply?.[i]?.totalSupply;
@@ -136,7 +136,7 @@ export function QuickActions({ state }: { state: DashboardState }) {
             }
           }}
           className={cn(actionBase, actionIdle, "disabled:cursor-not-allowed disabled:opacity-45")}
-          aria-label={address ? "Copy wallet address" : "Copy wallet address (connect a wallet first)"}
+          aria-label={address ? undefined : "Copy Address (connect a wallet first)"}
         >
           {copied ? <Check className="size-5 text-buy" aria-hidden /> : <Copy className="size-5" aria-hidden />}
           {copied ? "Copied" : "Copy Address"}

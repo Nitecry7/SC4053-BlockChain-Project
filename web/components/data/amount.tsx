@@ -3,7 +3,8 @@ import { formatExact, splitAmount, TOKEN_DECIMALS } from "@/lib/units";
 
 /**
  * An exact on-chain amount. The integer and the first `visible` decimals are shown; the remaining digits are dimmed,
- * never rounded away. The full decimal value is in the accessible name and the native tooltip.
+ * never rounded away. The full decimal value is in visually hidden text (read by assistive technology) and the native
+ * tooltip; the visible digits are hidden from assistive technology so the value is announced once.
  */
 export function Amount({
   value,
@@ -24,7 +25,8 @@ export function Amount({
   const exact = formatExact(value, decimals);
   const label = symbol ? `${exact} ${symbol}` : exact;
   return (
-    <span className={cn("tabular whitespace-nowrap", className)} title={label} aria-label={label}>
+    <span className={cn("tabular whitespace-nowrap", className)} title={label}>
+      <span className="sr-only">{label}</span>
       <span aria-hidden="true">
         {integer}
         {fraction && <span>.{fraction}</span>}

@@ -21,7 +21,7 @@ const connectors = connectorsForWallets(
 export const wagmiConfig = createConfig({
   chains: [anvil],
   connectors,
-  transports: { [anvil.id]: http(RPC_URL) },
+  transports: { [anvil.id]: http(RPC_URL, { batch: true }) },
   ssr: true,
 });
 

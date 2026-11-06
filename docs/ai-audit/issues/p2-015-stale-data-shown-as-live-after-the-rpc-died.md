@@ -1,0 +1,23 @@
+# Issue P2-015: the page kept showing old balances as live after the RPC node stopped
+
+- **Date found:** 2026-11-06 (P2-8A.1 observed it during a scratch test; P2-8A.2 reproduced it with a controlled script and fixed it, the same day).
+- **Phase:** P2-4 introduced the refresh model; P2-7 added the chain watcher; P2-8A.2 fixed it. **Model that wrote the original code:** the P2-4 and P2-7 sessions' models are not individually recorded in the log; the fix was written by Sonnet 5.5.
+- **Found by:** testing (P2-8A.1 noticed it while stopping a scratch Anvil; P2-8A.2 reproduced it). Severity: **Medium** (a user could read old balances and the line "Read from chain, refreshed every block" as current and then sign a transaction against a node that was not answering, or against a replaced chain).
+
+## 1. Why the AI made the mistake
+The AI designed freshness around events: the page refreshed when a new block arrived or when the user acted. It treated "the node is down" as an error that the data queries would report. But a dead node produces no new block and triggers no query, so nothing ever errored. The chain watcher (P2-7) that does poll every 3 s was written to avoid false reset claims, so it swallows its own errors by design. Each part was reasonable alone; nobody owned the case "nothing is happening at all". The tests used a healthy node, or failed requests in a unit fake, never a real node that stops.
+
+## 2. Why it is problematic
+On the HEAD build (P2-8A.1), after the scratch Anvil was stopped, a 22 s observation showed no alert and no status region; the overview still said "Read from chain, refreshed every block" and showed block 11 and the same balances, while 46 requests had failed in the browser. If the node had come back as a different chain with the same chain id and addresses, the page would also have kept showing the old chain's data until a new block arrived. A trading UI must not present last-known values as current.
+
+## 3. How it was fixed
+A small health monitor (`web/lib/rpc-health.ts`, provided by `web/hooks/use-rpc-health.tsx`) probes the node every 5 s with one `eth_getBlockByNumber("latest")` request (3 s deadline, no transport retries, no overlap, back-off to 10 s while unhealthy), goes offline after two consecutive failures, labels every panel "Last known, not current", shows a `role="alert"` banner, and disables the order ticket and the create forms. After an outage a successful probe is **not** enough: the monitor verifies chain identity with the existing P2-7 `assessChain` (the watcher is unchanged), re-reads the deployment code and the market's tokens, invalidates the right caches, and returns to `online` only when every active read has succeeded again (an invalidated or failed read keeps it in a verifying or unverified state). The chain watcher and the monitor can both prove one reset; one notice component shows it once.
+
+## 4. Evidence the fix works
+- **Before (HEAD build, scratch Anvil stopped by pid):** no alert, still "refreshed every block", block 11; 46 failed requests, none surfaced. Script `r9.mjs` (scratchpad), recorded in `test-evidence/person2/p2-8a2-liveness.md` section 2.
+- **After (same script, new build):** the alert appears with "last known" wording, 9 panels carry the "Last known, not current" chip, the ticket says "Node unreachable"; real restart on the same chain: banner at 9.8 s, verification 7.1 s after the node answers, cleared 0.8 s later, no reset notice; real fresh chain: one chain-changed notice, "No deployment" shown, live again after redeploy.
+- **Tests:** `rpc-health.test.ts` (17), `rpc-health-banner.test.ts` (7), `network-status.test.ts` (rpcOffline), `e2e/liveness.e2e.mjs` (11, mock wallet). Mutation checks: skipping the settle step fails 1 test, allowing transactions while refreshing fails 1, one-failure-is-offline fails 2, not invalidating everything on a reset fails 2.
+- **Full regression:** unit 410 passed (383 before), real chain 48, browser 13 / 14 / 14 / 9 / 11, `forge test` 185, exporter 21, axe 0 violations on 18 views, all on scratch 8546 and 3100.
+- **Cost:** +12 JSON-RPC requests per minute (55 to 67 idle).
+- **Limits:** the fix proves reachability and identity, not that blocks are being produced; only a local Anvil was tested; no MetaMask run; whether the behaviour predates P2-8A.1 is inferred from the code (the parent commit was not run).
+- **Found in the final review and fixed:** the first version let transactions through in the `unknown` state (before the first probe and the genesis anchor). Reproduced with the genesis read blocked, fixed by allowing transactions only in `online`; see `p2-8a2-liveness.md` section 13.

@@ -120,7 +120,7 @@ async function main() {
     await page.goto(`${BASE}/trade`, { waitUntil: "domcontentloaded" });
     await page.getByRole("button", { name: /Connect wallet/ }).first().click();
     await page.getByRole("button", { name: /Browser Wallet/ }).click();
-    await page.getByRole("button", { name: /Wallet 0x/ }).waitFor({ timeout: 15000 });
+    await page.getByRole("button", { name: /open account menu/ }).waitFor({ timeout: 15000 });
   });
 
   await test("a sped-up order that stays pending is followed to its new hash and confirmed, once", async () => {
@@ -188,10 +188,10 @@ async function main() {
 
   await test("a local chain reset is detected from block identity: a notice with the evidence, everything re-read, no success claim", async () => {
     await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: /Wallet 0x/ }).waitFor({ timeout: 15000 }).catch(async () => {
+    await page.getByRole("button", { name: /open account menu/ }).waitFor({ timeout: 15000 }).catch(async () => {
       await page.getByRole("button", { name: /Connect wallet/ }).first().click();
       await page.getByRole("button", { name: /Browser Wallet/ }).click();
-      await page.getByRole("button", { name: /Wallet 0x/ }).waitFor({ timeout: 15000 });
+      await page.getByRole("button", { name: /open account menu/ }).waitFor({ timeout: 15000 });
     });
     const before = await rpc("evm_snapshot");
     await rpc("evm_mine");
@@ -223,7 +223,7 @@ async function main() {
       await page.setViewportSize({ width, height: 900 });
       await page.waitForTimeout(400);
       const m = await page.evaluate(() => {
-        const wallet = document.querySelector('header button[aria-label^="Wallet"]').getBoundingClientRect();
+        const wallet = document.querySelector('header button[aria-label$="open account menu"]').getBoundingClientRect();
         const menu = document.querySelector('header button[aria-label="Open navigation"]')?.getBoundingClientRect();
         return { overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth, right: wallet.right, menuWidth: menu?.width ?? 0 };
       });
