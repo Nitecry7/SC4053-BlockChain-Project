@@ -108,5 +108,6 @@ error SafeERC20FailedOperation(address token); // a token transfer returned fals
 | Documented inherited `ReentrancyGuardReentrantCall` and `SafeERC20FailedOperation` | They are in the compiled ABI, so the frontend can decode them |
 
 ## Deployment handoff (agree with Person 2)
-- `contracts/script/Deploy.s.sol` (Person 2) deploys the tokens, then `OrderBook(base, quote)`. Person 1 reviews the OrderBook part.
+- `contracts/script/Deploy.s.sol` (Person 2) deploys `TokenFactory` and `MarketFactory`, provisions the seed tokens (NTU, SGDx), and creates the NTU/SGDx market by calling `MarketFactory.createMarket(NTU, SGDx)`. `MarketFactory` deploys `new OrderBook(base, quote)`. The OrderBook implementation remains Person 1's; the factories, deployment orchestration, exporter and frontend integration remain Person 2's. Creating a market through the factory is the accepted architecture (see `docs/MARKET_FACTORY.md`); it does not change any function, event or error in this interface.
+- Any future change to OrderBook bytecode needs a rebuild and a new `MarketFactory` deployment (the factory embeds the OrderBook creation code), regenerated ABIs and deployment records, and the integration tests. Existing markets keep their deployed bytecode.
 - The ABI and addresses go to `web/lib/contracts/`. The deploy flow copies them from `contracts/out/`.
