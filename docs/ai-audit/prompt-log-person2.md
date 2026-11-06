@@ -278,6 +278,21 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 
 **Evidence:** this was a docs-only change, so no test suite was run. Checks actually run: all three Mermaid diagrams parsed with mermaid 12.2.0 in headless Chromium; a relative-link and anchor check over 12 edited files (one reported item is a documented image-syntax example, not a broken link); read-only `cast` and `scripts/check-local.sh` reads on 8545 (chain 31337, block 13, `marketCount` 2, DTT base, SGDx quote, `lastTradePrice` 2e18). Nothing was marked passed that was not run.
 
+## 2026-11-06: documentation of the AI-assisted workflow (model: Haiku 5.5, docs only)
+
+**Model:** requested Haiku 5.5. The session reported Haiku 5.5 at execution, so the work is attributed to Haiku 5.5.
+
+**Prompt (summary):** Document the AI skills, MCPs, development tools, security tools and verification methods that contributed to the project, using only what the repository records. Add one concise README section and a detailed methodology file, `docs/ai-audit/tooling-and-methodology.md`. Record Playwright MCP separately from the `playwright-core` library, record React Best Practices as installed and not invoked, and do not claim SkillSpector. Keep static-analysis and independent-review findings separate. Add future Person 1 checks as unchecked items. No Solidity, frontend, test, dependency or shared-file changes. No commit.
+
+**What the AI got wrong (caught before the work was reported):**
+1. The first plan assumed the earlier documentation changes were still uncommitted. `git status` was clean: the owner had committed them (`5430504`) and the PDF (`9d147d4`). The plan was corrected to measure this task against `9d147d4`.
+2. The first README wording said every phase had an independent review. The log shows that P2-5 wrap-up, P2-6.1 and P2-7 had none. The wording was narrowed to what the records show.
+3. The React Best Practices skill is installed globally, and a references-only copy is tracked in `.claude/` since `d2be460`. The record states both facts and does not assign any phase use. The two copies are an open point for the owner.
+
+**What the human did:** asked for the documentation, approved the plan, and set Haiku 5.5 as the model. The owner had committed the previous documentation work before this task began.
+
+**Evidence:** the methodology file is written from `prompt-log-person2.md` and the per-phase evidence files, with the source of each claim cited there. Link and diff checks are reported in the completion report.
+
 ## Requirements traceability
 | ID | Brief text | Design | Code | Tests | Evidence | Report § | Status |
 |---|---|---|---|---|---|---|---|

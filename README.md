@@ -167,6 +167,24 @@ Versions are pinned in `web/package.json` and `web/package-lock.json`. The Solid
 
 ---
 
+<a id="ai-assisted-development-and-verification"></a>
+
+## 🤖 AI-Assisted Development and Verification
+
+AI assistance was used across the project for planning, coding, design exploration, independent review, testing and documentation. The phases were checked with the tools below, and each claim in the audit files is tied to a recorded test, reproduction or review. Not every phase had an independent review. AI tools supplement contract tests, real-chain tests, manual wallet checks and human review; they do not replace them.
+
+| Category | Tools and models | Recorded status |
+|---|---|---|
+| Claude Code and model roles | Claude Code; Opus 5.5, Sonnet 5.5 and Haiku 5.5 in different phases | Used in every phase; the model per phase is recorded |
+| Context7 and MCPs | Context7 (library documentation); shadcn and Awwwards MCPs (P2-4); Playwright MCP | Context7 accepted in P2-3 to P2-5. The Playwright MCP was attempted and did not launch. Awwwards results were rejected |
+| Solidity Security skill and Slither | `solidity-security` skill (P2-3); Slither 0.11.6 on the Person 2 contracts and deployment script | Slither: 0 results (P2-1), 5 accepted notes (P2-2), 6 accepted notes (P2-3). The skill was not invoked after P2-3 |
+| Foundry and contract testing | `forge` (185 tests, including fuzz), `anvil` and `cast` on scratch chains | Invariant tests are planned but not yet present |
+| Playwright and browser testing | `playwright-core` 1.64.1 with Chromium, and a mock wallet | Mock-wallet suites pass. These are not MetaMask results |
+| Frontend design and quality | `frontend-design`, `ui-ux-pro-max`, `impeccable`, `taste-skill` (P2-4); `impeccable detect` later | Design work in P2-4. The detector runs regex rules only, so its zero results are an undercount |
+| Independent reviews and AI audit evidence | Read-only reviewers in P2-1 to P2-6; prompt logs; issue reports; test evidence | P2-3 reproduced two Medium defects, which were fixed. Other reviews found no High or Medium contract defects |
+
+Full methodology, including each tool's status (invoked, attempted, or only installed), the model per phase, the static-analysis and review findings, and the checks still owed for future engine changes, is in [docs/ai-audit/tooling-and-methodology.md](docs/ai-audit/tooling-and-methodology.md).
+
 ## 🗂️ Project structure
 
 ```
@@ -398,6 +416,7 @@ More detail, with diagnosis steps, is in [docs/TESTING.md](docs/TESTING.md#e-tro
 | [DESIGN.md](DESIGN.md) | The approved visual system for the web app |
 | [CONTRACT_INTERFACE.md](CONTRACT_INTERFACE.md) | The frozen contract interface shared between the engine and the front end |
 | [docs/ai-audit/](docs/ai-audit/) | The AI audit report: prompt logs, issue reports and test evidence |
+| [docs/ai-audit/tooling-and-methodology.md](docs/ai-audit/tooling-and-methodology.md) | How AI tools, models and reviews were used, with each tool's recorded status |
 
 ---
 
