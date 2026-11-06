@@ -22,8 +22,9 @@ export function AddressChip({ address, className, copy = true }: { address: stri
   };
   return (
     <span className={cn("inline-flex items-center gap-1.5 font-mono text-[0.8125rem]", className)}>
-      <span title={address} aria-label={address}>
-        {shortAddress(address)}
+      <span title={address}>
+        <span className="sr-only">{address}</span>
+        <span aria-hidden="true">{shortAddress(address)}</span>
       </span>
       {copy && (
         <button

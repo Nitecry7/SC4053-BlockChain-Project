@@ -24,11 +24,11 @@ These are different kinds of evidence. An automated pass says nothing about Meta
 
 | Layer | Recorded result (AI-run, P2-7 evidence, 2026-11-06) | Where |
 |---|---|---|
-| Unit tests (`npm test`) | 368 passed, 48 gated suites skipped | `web/` |
+| Unit tests (`npm test`) | 383 passed, 48 gated suites skipped (P2-8A.1; was 368 in P2-7) | `web/` |
 | Contracts (`forge test`) | 185 passed | `contracts/` |
 | Exporter (`node --test contracts/script/export-web.test.mjs`) | 21 passed | repo root |
 | Real chain, unlocked Anvil dev accounts, scratch Anvil 8546 | 48 passed (trading, creation, hardening) | `docs/ai-audit/test-evidence/person2/p2-7-hardening.md` |
-| Browser, **mock wallet**, scratch server 3100 | `e2e` 13, `e2e:create` 14, `e2e:dashboard` 13, `e2e:hardening` 9 passed | same file |
+| Browser, **mock wallet**, scratch server 3100 | `e2e` 13, `e2e:create` 14, `e2e:dashboard` 14, `e2e:hardening` 9 passed (P2-8A.1; `e2e:dashboard` was 13 before the wallet-control test was added) | same file and `p2-8a1-fixes.md` |
 | **Manual MetaMask (Windows Brave)** | SPEC worked example: Tests 1 to 4 reported by the owner (Tests 5 and 6 not separately reported). DTT creation, listing and a trade, reported by the owner (Section F) | Section F |
 
 The automated rows were run in this repository's WSL environment. They are not a deployment check, and they do not prove any MetaMask behaviour.

@@ -125,6 +125,12 @@ One `waitBounded` (`lib/order-runner.ts`) serves orders, approvals, token creati
 - **After any failure that has a hash** every on-chain read is refreshed, so My orders shows what is really on the chain.
 - **Not built (needs the engine):** cancel, batch matching, stop-limit. See [BONUS_INTEGRATION.md](BONUS_INTEGRATION.md) for what the UI needs from Person 1 and how it will be verified. No such control is shown.
 
+## Query refresh and RPC cost (P2-8A.1)
+- **Static reads are not re-read every block.** Reads that can never change for their query key (token name, symbol, decimals and `isFactoryToken`; an OrderBook's constants and its two token addresses; each registered market's token pair) carry `staleTime: Infinity` and `meta: { scope: "static" }` (`lib/query-scope.ts`). The per-block refresh (`useLiveBlock`) skips them; everything else (balances, allowances, total supply, books, my orders, trade logs, contract code, registry counts and lists) is still refreshed on every new block.
+- **Static reads are still refreshed** after a confirmed transaction or approval (`use-tx-flow.ts`) and on a proven chain reset (`use-chain-watch.ts`), because both call a full invalidation. A different contract address or chain is a different query key, so a new token or market is fetched on its own.
+- **Requests are batched** (`http(RPC_URL, { batch: true })` in `lib/wagmi.ts`): the same JSON-RPC operations are sent, packed into fewer HTTP requests. Batching does not reduce the work the node does. `lib/rpc-batching.test.ts` pins that a failing call inside a batch fails only its own caller, and that a missing receipt behaves the same, with and without batching.
+- Measured numbers, before and after, are in [`p2-8a1-fixes.md`](ai-audit/test-evidence/person2/p2-8a1-fixes.md).
+
 ## Design system
 **Source of truth:** the approved Liquid Glass reference screenshot, which is dark-only.
 - **Ground and accents:** deep navy with layered radial lighting; violet accent `#7c5cf2` and lilac `#b49cff`, plus azure `#6aa4ff`.
@@ -211,6 +217,7 @@ Playwright's Chromium has no wallet extension, so none of this is covered by the
 - **Chain-reset detection compares block identity, so it cannot see a reset before the app has seen a block.** Reload after restarting Anvil, and redeploy if the contracts are gone.
 - **MetaMask not exercised by automation.** The browser run uses a mock wallet; wallet behaviour is on the manual checklist (the owner has verified the SPEC example by hand).
 - **Deployment check is not a bytecode check.** It establishes code presence and the market's token addresses. A different deployment that reuses the same deterministic addresses and tokens would pass. The exporter's bytecode check is the stronger guard.
+- **If the RPC dies after a page has loaded, the page keeps showing its last data without saying so** (found in P2-8A.1; the "Read from chain, refreshed every block" label and the block number stay on screen). Refreshes are triggered by new blocks and by user actions, and a dead node produces neither; the head watcher swallows its own errors. Not fixed in P2-8A.1 (proposal in the evidence file).
 - **Reads are not atomic.** There is no Multicall3 on Anvil, so a snapshot's reads can come from adjacent blocks for a moment.
 - **Trade-log rescan.** Trade stats rescan the market's `Trade` logs from the deploy block on each new block. That is fine locally, but it needs an incremental cache before any long-lived chain.
 - **No strict CSP:** a Content-Security-Policy is deferred. Safe headers are set: nosniff, frame denial, referrer policy and permissions policy.

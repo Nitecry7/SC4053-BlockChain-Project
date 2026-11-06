@@ -208,3 +208,6 @@ These values match the reported DTT trade (the SPEC worked example on DTT/SGDx: 
 - The stateful invariant suite and fuzz hardening (Phase 7); Slither and `forge lint` triage of `OrderBook.sol`, with the solidity-security review (Phase 8).
 - Prompt-log entries after 2026-11-02, issue entries for any bugs found, and independent-review evidence for Phases 4 to 8; the model used per phase.
 - After the bonuses land: the pre-integration checklist in `BONUS_INTEGRATION.md`.
+
+## 7. Update (P2-8A.1, 2026-11-06)
+This file records the P2-8A audit as it stood and is not rewritten. Later status, with evidence, is in [`p2-8a1-fixes.md`](p2-8a1-fixes.md): R6 and R7 fixed (axe violations on the 18 views: 12 and 6 before, 0 after); R1 and R2 fixed and measured (overview per block 65 to 45 operations and 9 HTTP requests with batching); R3 to R5 unchanged; R8 partly measured by sampling rendered pixels; I-5 done ([p2-013](../../issues/p2-013-chain-id-guard-bypassed-by-forge-chain-override.md), [p2-014](../../issues/p2-014-exporter-accepted-a-partial-broadcast.md)); I-1 recorded with proposed wording. New findings: R6b (four role-less labelled containers) and R9 (the page keeps showing stale data as live after the RPC dies). The baseline in section 5.1 is now unit 383, browser 13 / 14 / 14 / 9; the other rows are unchanged.

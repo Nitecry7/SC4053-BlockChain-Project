@@ -46,7 +46,8 @@ export function ConnectControl({ className }: { className?: string }) {
             type="button"
             onClick={openAccountModal}
             className={cn(chip, "border border-white/16 bg-[#1a2034]/85 pl-1.5 hover:bg-[#222a44]", className)}
-            aria-label={`Wallet ${account.address}, open account menu`}
+            title={account.address}
+            aria-label={`${shortAddress(account.address)}, open account menu`}
           >
             <AccountAvatar address={account.address} />
             <span className="font-mono text-[0.8125rem]">{shortAddress(account.address)}</span>

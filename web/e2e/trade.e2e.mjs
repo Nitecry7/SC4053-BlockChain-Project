@@ -77,7 +77,10 @@ let context;
 let page;
 const ticket = () => page.locator("#order");
 const mock = (fn, arg) => page.evaluate(fn, arg);
-const text = async (locator) => (await locator.textContent())?.replace(/\s+/g, " ").trim() ?? "";
+// Visible text: the visually hidden exact values (`.sr-only`, added in P2-8A.1 for assistive technology) are left out, so these
+// assertions still check what is drawn on screen.
+const text = async (locator) =>
+  (await locator.evaluate((el) => { const c = el.cloneNode(true); c.querySelectorAll(".sr-only").forEach((n) => n.remove()); return c.textContent; }))?.replace(/\s+/g, " ").trim() ?? "";
 
 async function placeOrderThroughUi({ side, price, amount, approveClicks = 1 }) {
   const t = ticket();
@@ -145,7 +148,7 @@ async function main() {
       await shot("connect-pending-escalated-desktop.png");
     }
     await page.getByTestId("connect-pending").waitFor({ state: "detached", timeout: 30000 });
-    await page.getByRole("button", { name: /Wallet 0x/ }).waitFor({ timeout: 15000 });
+    await page.getByRole("button", { name: /open account menu/ }).waitFor({ timeout: 15000 });
     await mock(() => window.__mock.setDelay("connect", 0));
   });
 

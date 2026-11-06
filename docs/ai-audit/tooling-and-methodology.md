@@ -26,6 +26,7 @@ Models are shown only where the repository records them. "Not recorded" means th
 | P2-7 hardening | not recorded in the entry (the owner's brief asked for Sonnet 5.5 Medium) | none ("no Opus agent" recorded) | `prompt-log-person2.md` P2-7 |
 | Documentation alignment and this methodology file (2026-11-06) | Haiku 5.5 | none | `prompt-log-person2.md`, 2026-11-06 entries |
 | P2-8A pre-integration audit (2026-11-06) | Sonnet 5.5 (Medium) | none (claims traced by script) | `prompt-log-person2.md` P2-8A; `test-evidence/person2/p2-8a-audit.md` |
+| P2-8A.1 fixes (2026-11-06) | Sonnet 5.5 (Medium) | none | `prompt-log-person2.md` P2-8A.1; `test-evidence/person2/p2-8a1-fixes.md` |
 
 ## Tool register
 
@@ -106,7 +107,7 @@ Models are shown only where the repository records them. "Not recorded" means th
 - **Evidence:** `p2-4-frontend.md`; `p2-5-trading.md`; `p2-6-1-dashboard.md`; `p2-7-hardening.md`.
 
 ### React Best Practices (`react-best-practices`)
-- **Status:** installed, and **invoked once in P2-8A** (2026-11-06) for the front-end audit. Not invoked in P2-1 to P2-7. Its rules are mostly server-component and bundle oriented, so the bundle, re-render and client data-fetching categories were applied to this client-side wallet app. Contribution: the findings R1 to R5 in `test-evidence/person2/p2-8a-audit.md`, each backed by a measurement or a file reference. No code was changed.
+- **Status:** installed, **invoked once in P2-8A** (2026-11-06) for the front-end audit and **once in P2-8A.1** (rules applied and rejected: `test-evidence/person2/p2-8a1-fixes.md` section 7). Not invoked in P2-1 to P2-7. Its rules are mostly server-component and bundle oriented, so the bundle, re-render and client data-fetching categories were applied to this client-side wallet app. Contribution: the findings R1 to R5 in `test-evidence/person2/p2-8a-audit.md`, each backed by a measurement or a file reference. No code was changed.
 - **Installation as recorded:** a user-level copy in `~/.claude/skills/react-best-practices` (`SKILL.md` and `references/`). A copy with `references/` only is also tracked in git under `.claude/skills/react-best-practices/` since commit `d2be460`. The two copies differ; the tracked copy has no `SKILL.md`. Resolving that is an open point.
 - **No use is claimed for any phase before P2-8A.**
 

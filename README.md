@@ -328,7 +328,7 @@ Run each command in the directory shown. "Observed" means it was run on the proj
 | `node contracts/script/export-web.mjs --check --rpc-url …` | repo root | Confirm the export is current; writes nothing | `up to date` means the files match. A `stale deployment` message means the chain was restarted without a redeploy |
 | `scripts/check-local.sh` | repo root | Read-only environment check | Observed: `Result: ready. 0 warning(s). No deployment is needed.` See the table above for other results |
 | `npm run dev` | `web/` | Start the Next.js dev server on `localhost:3000` | `Ready in …` and `Local: http://localhost:3000` |
-| `npm test` | `web/` | Unit tests (Vitest, no chain needed) | Recorded: `368 passed`, and `48` gated real-chain and browser tests skipped |
+| `npm test` | `web/` | Unit tests (Vitest, no chain needed) | Recorded (P2-8A.1): `383 passed`, and `48` gated real-chain and browser tests skipped |
 | `npm run typecheck`, `npm run lint`, `npm run build` | `web/` | Types, lint, production build | Each exits with no errors |
 | `npm run e2e`, `e2e:create`, `e2e:dashboard`, `e2e:hardening` | `web/` | Browser tests with a **mock wallet** | These need a **scratch** chain (port 8546) and a scratch server (port 3100), set up as described in [docs/FRONTEND.md](docs/FRONTEND.md). They never touch your main chain |
 

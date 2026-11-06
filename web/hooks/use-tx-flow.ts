@@ -7,6 +7,7 @@ import { useAccount, usePublicClient, useWriteContract } from "wagmi";
 import { setOrderBusy } from "@/lib/busy-store";
 import { anvil } from "@/lib/chains";
 import { flowReducer, initialFlowState, isBusy, type FlowContext, type FlowEvent, type FlowState } from "@/lib/order-flow";
+import { isTransactionRefresh } from "@/lib/query-scope";
 import type { viemDeps } from "@/lib/order-runner";
 
 export const ZERO = "0x0000000000000000000000000000000000000000" as Address;
@@ -101,7 +102,7 @@ export function useTxFlow<R>(target: Address | undefined) {
   // A failure after submission (replaced, cancelled, reset, timeout) also re-reads: the chain may differ from what was on screen.
   const refreshKey = `${state.phase === "done" ? "done" : ""}:${state.approvedAmount ?? ""}:${state.phase === "failed" ? (state.failure?.hash ?? "") : ""}`;
   useEffect(() => {
-    if (refreshKey !== "::") void queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] !== "blockNumber" });
+    if (refreshKey !== "::") void queryClient.invalidateQueries({ predicate: isTransactionRefresh });
   }, [refreshKey, queryClient]);
 
   const dismissAbandoned = useCallback(() => send({ type: "DISMISS_ABANDONED" }), [send]);

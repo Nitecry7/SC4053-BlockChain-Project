@@ -117,26 +117,30 @@ Each row summarises an issue file, which holds the full analysis and the real be
 | [P2-011](issues/p2-011-duplicate-key-ghost-row-on-market-switch.md) Ghost row on market switch | reused a panel keyed by symbol, valid only for the seed pair | a misleading extra row | key by position | red run `12 passed, 1 failed`, then `13 passed` |
 | [P2-012](issues/p2-012-replacement-detection-never-had-sender-and-nonce.md) Replacement never detectable | tested "following a replacement" with a fake `waitForReceipt`; viem was never given the sender and nonce | a sped-up order could read "not confirmed", inviting a duplicate | the runner reads the transaction once and passes the fields; evidence-based chain-reset detection | defect measured on a scratch Anvil; red `10 failed, 4 passed`, then green; real chain `3 failed, 6 passed`, then `9 passed` |
 
-### 5.2 Reviewer findings in P2-3 with no issue file yet
+### 5.2 Reviewer findings in P2-3 (issue files written in P2-8A.1)
 
-These are the highest-severity findings in Person 2's work. They are recorded in [`prompt-log-person2.md`](prompt-log-person2.md) (P2-3, item 5) and [`p2-3-deployment.md`](test-evidence/person2/p2-3-deployment.md) but have **no `docs/ai-audit/issues/` entry**, which `CLAUDE.md` asks for. The analysis below is the draft for those entries.
+These are the highest-severity findings in Person 2's work. The two Medium findings now have issue files, written on 2026-11-06 (P2-8A.1) for defects found and fixed on 2026-11-05 (P2-3): [P2-013](issues/p2-013-chain-id-guard-bypassed-by-forge-chain-override.md) and [P2-014](issues/p2-014-exporter-accepted-a-partial-broadcast.md); the model of the original P2-3 session was not recorded. The two lower-severity rows below are still only drafts here, with no issue file.
 
 | Finding | 1. Why the AI made the mistake | 2. Why it is problematic | 3. How it was fixed | 4. Evidence the fix works |
 |---|---|---|---|---|
-| **Medium:** the chain-id guard could be bypassed | reasoned from how Forge usually behaves and never tried hostile flags: `block.chainid` is whatever Forge is told, so `--chain 31337` passed on any node | the script could broadcast to a non-local chain; the reviewer's test node (chain id 1) received 11 transactions | `run()` also asks the node (`eth_chainId`) | the exact command now fails with `WrongChain(1)` and the node height stays 0 ([p2-3](test-evidence/person2/p2-3-deployment.md) item 12); unit test; mutants caught |
-| **Medium:** the exporter accepted a partial broadcast | wrote "nothing is written unless every check passes" without defining "every" | an interrupted deployment (a pending transaction, an unfunded wallet) was exported as complete | require nothing pending, one receipt per transaction and every status successful | unit tests; mutants E4 and E7 caught |
+| **Medium** ([P2-013](issues/p2-013-chain-id-guard-bypassed-by-forge-chain-override.md)): the chain-id guard could be bypassed | reasoned from how Forge usually behaves and never tried hostile flags: `block.chainid` is whatever Forge is told, so `--chain 31337` passed on any node | the script could broadcast to a non-local chain; the reviewer's test node (chain id 1) received 11 transactions | `run()` also asks the node (`eth_chainId`) | the exact command now fails with `WrongChain(1)` and the node height stays 0 ([p2-3](test-evidence/person2/p2-3-deployment.md) item 12); unit test; mutants caught |
+| **Medium** ([P2-014](issues/p2-014-exporter-accepted-a-partial-broadcast.md)): the exporter accepted a partial broadcast | wrote "nothing is written unless every check passes" without defining "every" | an interrupted deployment (a pending transaction, an unfunded wallet) was exported as complete | require nothing pending, one receipt per transaction and every status successful | unit tests; mutants E4 and E7 caught |
 | **Low-Medium:** ABIs not tied to the deployed bytecode | exporter compared chain and files, not code | a rebuild without a redeploy would pair a new ABI with old addresses | deployed bytecode must equal the build artefacts (immutables masked); the market must come from the first two issued tokens | mutants E5, E6 and E8 caught; items 11 and 14 in the evidence |
 | **Low:** `deployments.ts` not reproducible | claimed the file matched a fresh Anvil; `deployBlockHash` varies with block timestamps | `--check` failed on any other fresh chain | hash removed from the output | byte-identical files on three fresh chains (`sha256sum -c`) |
 
-### 5.3 Findings from the P2-8A audit (reported, not fixed)
+### 5.3 Findings from the P2-8A audit, and their status after P2-8A.1
 
-| ID | Severity | Finding | Where |
+| ID | Severity | Finding | Status (evidence: [p2-8a1-fixes.md](test-evidence/person2/p2-8a1-fixes.md)) |
 |---|---|---|---|
-| R6 | Medium | `aria-label` on plain `<span>`s (the `Amount` and address components) is a prohibited ARIA use; exact amounts may not reach assistive technology, contradicting `PRODUCT.md`. Real screen-reader behaviour unverified | [p2-8a-audit.md](test-evidence/person2/p2-8a-audit.md) section 4 |
-| R7 | Low to Medium | two buttons whose accessible name does not contain their visible text (WCAG 2.5.3) | same |
-| R1, R2 | Medium | every block re-reads about 61% immutable data; no JSON-RPC batching (57 block-driven calls on the overview) | same |
-| R3 to R5 | Low | idle polling, log rescan from the deploy block, 304 to 448 KB gzip first-load JavaScript | same |
-| I-1 | Medium (process) | `SPEC.md` and `CLAUDE.md` say the brief is untracked at `docs/project.pdf`; it is tracked as `docs/Development_Project.pdf` | same, section 3.3 |
+| R6 | Medium | `aria-label` on plain `<span>`s (`Amount`, address chip) is a prohibited ARIA use; exact amounts may not reach assistive technology | **Fixed** in P2-8A.1 (hidden text instead; regression test red on the old code, axe 12 views to 0). Screen-reader behaviour still unverified |
+| R6b | Low | four more role-less `aria-label` containers (`tx-status`, three review boxes) | New, reported, not fixed |
+| R7 | Low to Medium | two buttons whose accessible name does not contain their visible text (WCAG 2.5.3) | **Fixed** (axe 6 views to 0; name, keyboard and five-width layout assertions) |
+| R1, R2 | Medium | every block re-read immutable data; no JSON-RPC batching | **Fixed and measured:** overview per block 65 to 45 operations, HTTP 65 to 9 with batching; Trade 43 to 28; Tokens 42 to 27 |
+| R3 to R5 | Low | idle polling, log rescan from the deploy block, 304 to 448 KB gzip first-load JavaScript | Reported, unchanged (chain watcher deliberately left alone) |
+| R8 | Low to Medium | contrast unresolved by axe | Partly measured on rendered pixels: desktop failures are token badge letters; mobile result incomplete; manual check needed |
+| R9 | Medium | after the RPC dies, the page keeps showing its last data as live | New, reported, not fixed; proposal in the evidence file |
+| I-1 | Medium (process) | `SPEC.md` and `CLAUDE.md` call the brief `docs/project.pdf`, untracked; it is tracked as `docs/Development_Project.pdf` | Recorded with proposed wording; Person 1's files not edited |
+| I-5 | Medium (process) | P2-3 Medium findings had no issue files | **Done:** P2-013 and P2-014 |
 
 ### 5.4 Static analysis and review
 
@@ -213,5 +217,5 @@ Slither triage (P2-1 to P2-3, re-run at HEAD in P2-8A) and every independent-rev
 
 ## Evidence still required (summary)
 
-- **Owner:** manual MetaMask tests and the screenshot walkthrough; screen-reader and contrast checks; decisions I-1 and I-5; the pre-AI boundary for Section 1; peer evaluation. Detail: [p2-8a-audit.md](test-evidence/person2/p2-8a-audit.md) section 6.
+- **Owner:** manual MetaMask tests and the screenshot walkthrough; screen-reader and contrast checks; decision on R9 (stale data when the RPC is down), the R6b and badge-contrast fixes, the I-1 wording agreed with Person 1; the pre-AI boundary for Section 1; peer evaluation. Detail: [p2-8a-audit.md](test-evidence/person2/p2-8a-audit.md) section 6.
 - **Person 1:** the bonus functions, the invariant suite, engine Slither and `forge lint` triage, logs and issues after 2026-11-02, and per-phase models.

@@ -13,17 +13,21 @@ import { displayText } from "@/lib/safe-text";
 import { pageRanges, REGISTRY_PAGE } from "@/lib/registry-pages";
 import type { OrderSnapshot } from "@/lib/order-status";
 import { classifyDeployment, type DeploymentStatus } from "@/lib/network-status";
+import { isPerBlockRefresh, staticQuery } from "@/lib/query-scope";
 
 const CHAIN_ID = anvil.id;
 const D = PRIMARY_DEPLOYMENT;
 
-/** Watches the Anvil head and refreshes every other on-chain read when a new block arrives. Mount once. */
+/**
+ * Watches the Anvil head and refreshes every other on-chain read when a new block arrives, except reads tagged static
+ * (see `lib/query-scope.ts`), which cannot change. Mount once.
+ */
 export function useLiveBlock() {
   const queryClient = useQueryClient();
   const block = useBlockNumber({ chainId: CHAIN_ID, watch: true });
   useEffect(() => {
     if (block.data === undefined) return;
-    void queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] !== "blockNumber" });
+    void queryClient.invalidateQueries({ predicate: isPerBlockRefresh });
   }, [block.data, queryClient]);
   return block;
 }
@@ -53,7 +57,7 @@ export function useDeploymentCheck(): DeploymentCheck {
   const allHaveCode = Boolean(codes.data?.every((c) => c && c !== "0x"));
   const tokens = useReadContracts({
     allowFailure: false,
-    query: { enabled: allHaveCode },
+    query: { enabled: allHaveCode, ...staticQuery },
     contracts: [
       { chainId: CHAIN_ID, address: D.market as Address, abi: orderBookAbi, functionName: "baseToken" },
       { chainId: CHAIN_ID, address: D.market as Address, abi: orderBookAbi, functionName: "quoteToken" },
@@ -85,28 +89,45 @@ export type TokenDetails = {
 
 /** Token metadata read from the chain, never from the export alone. */
 export function useTokenDetails(tokens: readonly Address[], enabled = true) {
-  const contracts = tokens.flatMap((address) => [
-    { chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "name" } as const,
-    { chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "symbol" } as const,
-    { chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "decimals" } as const,
-    { chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "totalSupply" } as const,
-    { chainId: CHAIN_ID, address: D.tokenFactory as Address, abi: tokenFactoryAbi, functionName: "isFactoryToken", args: [address] } as const,
-  ]);
-  const query = useReadContracts({ contracts, allowFailure: false, query: { enabled: enabled && tokens.length > 0 } });
-  const data: TokenDetails[] | undefined = query.data
-    ? tokens.map((address, i) => {
-        const r = query.data.slice(i * 5, i * 5 + 5);
-        return {
-          address,
-          name: displayText(r[0] as string, 100),
-          symbol: displayText(r[1] as string, 32),
-          decimals: Number(r[2]),
-          totalSupply: r[3] as bigint,
-          issuedByFactory: r[4] as boolean,
-        };
-      })
-    : undefined;
-  return { ...query, data };
+  const active = enabled && tokens.length > 0;
+  // name, symbol, decimals and `isFactoryToken` never change for a token address, so they are read once (static).
+  // `totalSupply` can change (mint, burn), so it stays in the per-block set.
+  const identity = useReadContracts({
+    allowFailure: false,
+    query: { enabled: active, ...staticQuery },
+    contracts: tokens.flatMap((address) => [
+      { chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "name" } as const,
+      { chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "symbol" } as const,
+      { chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "decimals" } as const,
+      { chainId: CHAIN_ID, address: D.tokenFactory as Address, abi: tokenFactoryAbi, functionName: "isFactoryToken", args: [address] } as const,
+    ]),
+  });
+  const supply = useReadContracts({
+    allowFailure: false,
+    query: { enabled: active },
+    contracts: tokens.map((address) => ({ chainId: CHAIN_ID, address, abi: demoTokenAbi, functionName: "totalSupply" }) as const),
+  });
+  const data: TokenDetails[] | undefined =
+    identity.data && supply.data
+      ? tokens.map((address, i) => {
+          const r = identity.data.slice(i * 4, i * 4 + 4);
+          return {
+            address,
+            name: displayText(r[0] as string, 100),
+            symbol: displayText(r[1] as string, 32),
+            decimals: Number(r[2]),
+            totalSupply: supply.data[i] as bigint,
+            issuedByFactory: r[3] as boolean,
+          };
+        })
+      : undefined;
+  return {
+    data,
+    isPending: identity.isPending || supply.isPending,
+    isError: identity.isError || supply.isError,
+    isFetching: identity.isFetching || supply.isFetching,
+    refetch: () => Promise.all([identity.refetch(), supply.refetch()]),
+  };
 }
 
 /** Wallet (not escrow) balances of the connected account. Escrow is a trading concept and arrives with order placement. */
@@ -140,15 +161,22 @@ export type MarketSnapshot = {
 /** Everything a read-only market view needs, from `view` functions only. */
 export function useMarketSnapshot(market: Address, enabled = true, depth: number = TICKET_BOOK_DEPTH) {
   const base = { chainId: CHAIN_ID, address: market, abi: orderBookAbi } as const;
-  const query = useReadContracts({
+  // The five constants are immutable (static); the book and prices change and are re-read every block.
+  const constants = useReadContracts({
     allowFailure: false,
-    query: { enabled },
+    query: { enabled, ...staticQuery },
     contracts: [
       { ...base, functionName: "PRICE_SCALE" },
       { ...base, functionName: "LOT_SIZE" },
       { ...base, functionName: "TICK_SIZE" },
       { ...base, functionName: "MAX_MATCHES_PER_TX" },
       { ...base, functionName: "MAX_INSERT_SCAN" },
+    ],
+  });
+  const dynamic = useReadContracts({
+    allowFailure: false,
+    query: { enabled },
+    contracts: [
       { ...base, functionName: "getBestBid" },
       { ...base, functionName: "getBestAsk" },
       { ...base, functionName: "lastTradePrice" },
@@ -159,8 +187,9 @@ export function useMarketSnapshot(market: Address, enabled = true, depth: number
   });
 
   const data: MarketSnapshot | undefined = useMemo(() => {
-    if (!query.data) return undefined;
-    const [priceScale, lotSize, tickSize, maxMatches, maxScan, bid, ask, last, hasLast, bids, asks] = query.data;
+    if (!constants.data || !dynamic.data) return undefined;
+    const [priceScale, lotSize, tickSize, maxMatches, maxScan] = constants.data;
+    const [bid, ask, last, hasLast, bids, asks] = dynamic.data;
     const toLevels = (orders: readonly { id: bigint; trader: Address; price: bigint; amount: bigint; filled: bigint }[]) =>
       orders.map((o) => ({ id: o.id, trader: o.trader, price: o.price, remaining: o.amount - o.filled }));
     return {
@@ -176,9 +205,15 @@ export function useMarketSnapshot(market: Address, enabled = true, depth: number
       bids: toLevels(bids),
       asks: toLevels(asks),
     };
-  }, [query.data]);
+  }, [constants.data, dynamic.data]);
 
-  return { ...query, data };
+  return {
+    data,
+    isPending: constants.isPending || dynamic.isPending,
+    isError: constants.isError || dynamic.isError,
+    isFetching: constants.isFetching || dynamic.isFetching,
+    refetch: () => Promise.all([constants.refetch(), dynamic.refetch()]),
+  };
 }
 
 export type TradeStats = { count: number; baseVolume: bigint; quoteVolume: bigint };
@@ -227,7 +262,7 @@ export function useMarketRegistry(enabled = true, pageSize = REGISTRY_PAGE) {
   const addresses = ((lists.data ?? []) as readonly (readonly Address[])[]).flat();
   const pairs = useReadContracts({
     allowFailure: false,
-    query: { enabled: enabled && addresses.length > 0 },
+    query: { enabled: enabled && addresses.length > 0, ...staticQuery }, // a market's two tokens never change
     contracts: addresses.flatMap((address) => [
       { chainId: CHAIN_ID, address, abi: orderBookAbi, functionName: "baseToken" } as const,
       { chainId: CHAIN_ID, address, abi: orderBookAbi, functionName: "quoteToken" } as const,
@@ -270,7 +305,7 @@ export function useMarketTokens(market: Address, enabled = true) {
   const base = { chainId: CHAIN_ID, address: market, abi: orderBookAbi } as const;
   const query = useReadContracts({
     allowFailure: false,
-    query: { enabled },
+    query: { enabled, ...staticQuery },
     contracts: [
       { ...base, functionName: "baseToken" },
       { ...base, functionName: "quoteToken" },

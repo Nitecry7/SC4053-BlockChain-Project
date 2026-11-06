@@ -329,6 +329,27 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 
 **Evidence:** [`test-evidence/person2/p2-8a-audit.md`](test-evidence/person2/p2-8a-audit.md); the draft [`ai-audit-report-draft.md`](ai-audit-report-draft.md); the checklist in [`../BONUS_INTEGRATION.md`](../BONUS_INTEGRATION.md). Baseline re-run: `forge test` 185, exporter 21, unit 368 and 48 gated skipped, typecheck and lint clean, real chain 48, browser 13, 14, 13 and 9. All of the owner's processes were checked unchanged at the end.
 
+## 2026-11-06: P2-8A.1, accessibility, RPC cost and audit-evidence fixes
+
+**Model:** Sonnet 5.5 (Medium). **Prompt (summary):** fix the confirmed P2-8A findings: R6 (`aria-label` on spans), R7 (accessible names), R1/R2 (per-block RPC cost), record I-5 (missing P2-3 issue files) and I-1; recheck accessibility and contrast; report, do not fix, anything else. Refinements: keep the chain watcher unchanged unless same-height hash changes stay provably detected; prove `meta` survives wagmi at the real query-cache level and that stale data is not shown as current when the RPC is down; report HTTP requests and JSON-RPC operations separately and prove batching parity. No staging, committing or pushing; 8545 and 3000 untouched.
+
+**What the AI produced:** `lib/query-scope.ts` (static-read tag and the two refresh predicates), static/dynamic splits in `useTokenDetails` and `useMarketSnapshot`, static tags on market tokens, `Amount` and `AddressChip` semantics, wallet-control accessible names, `role="group"` on one labelled div, `http(RPC_URL, { batch: true })`, 15 new unit tests, one new browser test, issues P2-013 and P2-014, and [`p2-8a1-fixes.md`](test-evidence/person2/p2-8a1-fixes.md). Unit 383 passed (368 before), browser 13 / 14 / 14 / 9, real chain 48, `forge test` 185, exporter 21, axe 0 violations on 18 views (before: 12 and 6).
+
+**What the AI got wrong (all caught before being reported):**
+1. My first query-scope test contained leftover junk code that failed; removed.
+2. A batching test expected `ok:16n`; `String(16n)` is `16`.
+3. The accessible-name change broke the existing browser suites, which located the wallet button by its old name or an `aria-label^="Wallet"` selector, and one assertion matched text that now included the hidden values. The selectors and the text helper were adapted; no assertion about what is shown was loosened.
+4. A `Copy Address` selector matched two buttons (substring match) until `exact: true`.
+5. The first cache comparison paired queries by array index and reported 6 of 16 dynamic reads unchanged; matching by query hash showed the two unchanged ones were disabled queries that never ran.
+6. The contrast script kept only the six worst runs per view, so the mobile result is incomplete; this is stated, not hidden.
+7. **A real gap found by testing, not by the plan:** after the scratch node was stopped, the page kept showing "Read from chain, refreshed every block" and old balances. It predates this change (inferred from the code) and is reported as R9 with a proposed fix, not implemented.
+
+**What the human did:** approved the plan and set the refinements above. Still needed: manual screen-reader and contrast checks, the decision on R9, the R6b and badge-contrast fixes, and Person 1's decision on the `SPEC.md`/`CLAUDE.md` wording (I-1).
+
+**Skills and MCPs actually invoked:** `react-best-practices` (invoked; rules applied are listed in the evidence file, section 7). axe-core 4.14.0 loaded transiently from jsDelivr, not a dependency. Not invoked: `solidity-security`, Slither (no Solidity changed), Context7, Playwright MCP, design skills.
+
+**Evidence:** [`test-evidence/person2/p2-8a1-fixes.md`](test-evidence/person2/p2-8a1-fixes.md); issues [P2-013](issues/p2-013-chain-id-guard-bypassed-by-forge-chain-override.md) and [P2-014](issues/p2-014-exporter-accepted-a-partial-broadcast.md).
+
 ## Requirements traceability
 Current status through P2-7 (2026-11-06). Earlier statuses are in the phase entries above.
 
@@ -347,5 +368,6 @@ Current status through P2-7 (2026-11-06). Earlier statuses are in the phase entr
 | R5 / R6 / G (UX): reliable order and creation lifecycle | Orders and token/market creation report what actually happened despite speed-ups, cancels, replacements, restarts | `docs/FRONTEND.md` "Transaction lifecycle hardening", `docs/BONUS_INTEGRATION.md` | `web/lib/order-runner.ts`, `chain-reset.ts`, `create-runner.ts`, `web/hooks/use-chain-watch.ts`, `web/components/shell/chain-reset-notice.tsx` | `chain-reset.test.ts`, `order-runner.hardening.test.ts`, `hardening.integration.test.ts`, `e2e/hardening.e2e.mjs` (9, mock wallet) | `test-evidence/person2/p2-7-hardening.md`, issue P2-012 | n/a | Implemented; mock-wallet verified (P2-7). MetaMask Test 10 pending. Limits: a speed-up landing before the first lookup cannot be followed; chain-reset detection needs a block seen first |
 | R4 / R2 (browser) | Issue tokens and list markets from the front end | `docs/FRONTEND.md` "Token issuance and market listing" | `web/lib/create-*.ts`, `web/hooks/use-create-flow.ts`, `web/components/create/` | `create-*.test.ts`, `creation.integration.test.ts` (21), `e2e/create.e2e.mjs` (14) | `test-evidence/person2/p2-6-issuance-listing.md` | 7 | Mock wallet and scratch chain verified. MetaMask: the owner reported DTT creation and listing; steps 8a to 8l were not confirmed one by one |
 | D (report evidence): AI Audit Report and validation | Eight-section report, four-part issue format, validation evidence | `ai-audit-report-draft.md`, `tooling-and-methodology.md` | n/a (documentation) | P2-8A baseline re-run: `forge test` 185, unit 368, real chain 48, browser 13 / 14 / 13 / 9 (mock wallet); Slither re-run on Person 2 files | `test-evidence/person2/p2-8a-audit.md` | 1 to 8 | Person 2 side audited and drafted. Outstanding: the invariant suite and engine static analysis (Person 1), the bonus functions (Person 1), manual MetaMask evidence and screenshots (owner), the P2-3 issue entries |
+| D2 (P2-8A.1 fixes): accessibility semantics, per-block RPC cost, P2-3 issue records | `PRODUCT.md` accessibility; no unnecessary refetch; four-part issue format | `web/components/data/amount.tsx`, `address-chip.tsx`, `wallet/connect-control.tsx`, `dashboard/wallet-panels.tsx`, `hooks/use-dex-data.ts`, `lib/query-scope.ts`, `lib/wagmi.ts` | `amount.test.ts` (6), `query-scope.test.ts` (7), `rpc-batching.test.ts` (2), `e2e:dashboard` wallet-control test | unit 383, browser 13 / 14 / 14 / 9, real chain 48, axe 0 violations on 18 views; overview per-block 65 to 45 operations, HTTP 65 to 9 with batching | `test-evidence/person2/p2-8a1-fixes.md` | 1 to 8 | R6, R7, R1, R2, I-5 fixed. Open: R3 to R5, R6b, R8 (partly measured), R9 (RPC outage shows stale data), manual screen-reader and contrast checks |
 
 Other rows are not started by Person 2.

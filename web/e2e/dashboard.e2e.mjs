@@ -86,7 +86,7 @@ const rowSymbols = async () => (await holdings().locator("li [data-token-symbol]
 async function connect() {
   await page.getByRole("button", { name: /Connect wallet/ }).first().click();
   await page.getByRole("button", { name: /Browser Wallet/ }).click();
-  await page.getByRole("button", { name: /Wallet 0x/ }).waitFor({ timeout: 15000 });
+  await page.getByRole("button", { name: /open account menu/ }).waitFor({ timeout: 15000 });
 }
 async function openDashboard(search = "") {
   await page.goto(`${BASE}/${search}`);
@@ -278,6 +278,44 @@ async function main() {
     await page.keyboard.press("Space");
     assert(await page.getByLabel("Show zero balances").isChecked(), "Space toggles the checkbox");
     assert((await page.getByRole("combobox", { name: "Market" }).count()) === 1, "the select has an accessible name");
+  });
+
+  await test("wallet controls (P2-8A.1, R7): accessible names contain the visible text, keyboard operates them, header fits at five widths", async () => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: BASE });
+    await page.setViewportSize({ width: 1586, height: 1000 });
+    await openDashboard();
+    await connect();
+    const walletBtn = page.getByRole("button", { name: /open account menu/ });
+    const visible = (await walletBtn.innerText()).trim();
+    assert(/^0x[0-9a-fA-F]{4}.+[0-9a-fA-F]{4}$/.test(visible), `the connected button shows the shortened address (got "${visible}")`);
+    const snap = await walletBtn.ariaSnapshot();
+    assert(snap.includes(`button "${visible}, open account menu"`), `the accessible name starts with the visible text: ${snap}`);
+    const copyBtn = page.getByRole("button", { name: "Copy Address", exact: true });
+    assert((await copyBtn.count()) === 1, "the Copy Address button's accessible name is its visible text");
+    assert((await copyBtn.ariaSnapshot()).includes('button "Copy Address"'), "no label overrides the visible text");
+    await walletBtn.focus();
+    assert(await walletBtn.evaluate((el) => el === document.activeElement), "the wallet button takes keyboard focus");
+    await page.keyboard.press("Enter");
+    await page.getByRole("dialog").waitFor({ timeout: 10000 });
+    await page.keyboard.press("Escape");
+    await page.getByRole("dialog").waitFor({ state: "detached", timeout: 10000 });
+    await copyBtn.focus();
+    await page.keyboard.press("Enter");
+    await page.getByRole("button", { name: "Copied", exact: true }).waitFor({ timeout: 5000 });
+    const clip = await page.evaluate(() => navigator.clipboard.readText());
+    assert(clip.toLowerCase() === ALICE.toLowerCase(), "Enter on Copy Address copies the connected address");
+    for (const w of [375, 390, 430, 768, 1586]) {
+      await page.setViewportSize({ width: w, height: 900 });
+      await page.waitForTimeout(250);
+      const m = await page.evaluate(() => {
+        const b = [...document.querySelectorAll("header button")].find((el) => /open account menu/.test(el.getAttribute("aria-label") ?? ""));
+        const r = b?.getBoundingClientRect();
+        return { overflow: document.documentElement.scrollWidth - window.innerWidth, left: r?.left, right: r?.right, w: window.innerWidth };
+      });
+      assert(m.overflow <= 0, `header overflows by ${m.overflow}px at ${w}`);
+      assert(m.left !== undefined && m.left >= 0 && m.right <= m.w, `the wallet button fits inside the viewport at ${w} (${m.left}..${m.right})`);
+    }
+    await page.setViewportSize({ width: 1586, height: 1000 });
   });
 
   await test("layout at desktop, tablet and mobile: no horizontal overflow, no console errors", async () => {
