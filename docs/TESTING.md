@@ -338,6 +338,16 @@ After 7f or 7g you may need to reset MetaMask's cached nonce (Section E, item 1)
 | 9f | Switch MetaMask to Bob | The holdings panel shows only Bob's balances (no Alice tokens); tick **Show zero balances** and DTT appears with 0 |
 | 9g | As Bob, buy 4 DTT on the dashboard ticket (limit 2.2) | The order goes to the DTT / SGDx book; Bob's holdings then show 4 DTT without a reload |
 
+## Test 10: speed up, cancel and restart (P2-7)
+**Status: PROCEDURE ONLY. Not performed with MetaMask.** The same behaviours passed an automated browser run with a **mock** wallet on a scratch chain, where a "speed up", "cancel" and "replace" were sent straight to Anvil with the same nonce (see `ai-audit/test-evidence/person2/p2-7-hardening.md`). The wallet's own Speed up / Cancel buttons were not exercised. Anvil mines a block per transaction, so a transaction stays pending only if mining is paused: ask for help before changing Anvil's settings, and use a scratch chain (port 8546), not your main one.
+
+| # | Do this | Expect |
+|---|---|---|
+| 10a | On a scratch chain with automine off, place an order and, while it is pending, use MetaMask **Speed up**; then mine a block | The ticket follows the new hash and shows one resting order; the result links the new hash; My orders lists one order |
+| 10b | Same, but press **Cancel** in MetaMask | "The transaction was cancelled", "Cancelled by <hash>", no order, no result card |
+| 10c | Restart the scratch Anvil while the Dashboard is open (and redeploy) | After a few seconds a notice says the local chain changed, with the reason; balances are re-read; no success is claimed |
+| 10d | Keep Anvil running and just wait | No reset notice appears |
+
 ---
 
 # D. Screenshots

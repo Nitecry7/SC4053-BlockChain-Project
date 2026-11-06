@@ -1,0 +1,55 @@
+{
+  "wallet": "MOCK (not MetaMask)",
+  "rpc": "http://127.0.0.1:8546",
+  "base": "http://localhost:3100",
+  "passed": 9,
+  "failed": 0,
+  "results": [
+    {
+      "name": "connect Alice on the trade page",
+      "status": "pass",
+      "ms": 1035
+    },
+    {
+      "name": "a sped-up order that stays pending is followed to its new hash and confirmed, once",
+      "status": "pass",
+      "ms": 4747
+    },
+    {
+      "name": "a cancelled order is reported as cancelled (never as placed), and nothing was placed",
+      "status": "pass",
+      "ms": 5006
+    },
+    {
+      "name": "an order replaced by a different action is reported as replaced, and the real outcome is on-chain",
+      "status": "pass",
+      "ms": 4615
+    },
+    {
+      "name": "a local chain reset is detected from block identity: a notice with the evidence, everything re-read, no success claim",
+      "status": "pass",
+      "ms": 24681
+    },
+    {
+      "name": "an intact chain that merely mines new blocks never shows the reset notice (no false positive)",
+      "status": "pass",
+      "ms": 10519
+    },
+    {
+      "name": "header with a connected wallet fits at 375, 390, 768 and 1586 px: no overflow, a 40 px menu button, the whole address visible",
+      "status": "pass",
+      "ms": 1691
+    },
+    {
+      "name": "mobile layout: the reset notice fits and nothing overflows horizontally",
+      "status": "pass",
+      "ms": 11441
+    },
+    {
+      "name": "no unexpected console errors",
+      "status": "pass",
+      "ms": 0
+    }
+  ],
+  "consoleErrors": []
+}

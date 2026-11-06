@@ -1,6 +1,6 @@
 # Front end (Person 2): wallet, on-chain data and limit-order trading
 
-Status: **P2-6.** The app connects a wallet, reads the local deployment, places **limit orders** (with the ERC20 approval they need) on any market listed through MarketFactory, issues new tokens through TokenFactory and lists new markets through MarketFactory. Order cancellation and the bonus orders are not built: the engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` still revert.
+Status: **P2-7.** The app connects a wallet, reads the local deployment, places **limit orders** (with the ERC20 approval they need) on any market listed through MarketFactory, issues new tokens through TokenFactory and lists new markets through MarketFactory. Order cancellation and the bonus orders are not built: the engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` still revert.
 
 ## Run it
 ```bash
@@ -85,7 +85,7 @@ web/
 | simulating | checking against the contract | a short status line |
 | reconciling | receipt read, reading `getOrder` | step list |
 | done | **receipt status success**, `OrderPlaced` decoded, `getOrder` read | the result card |
-| failed | rejected, reverted, replaced/cancelled, timeout, RPC error | a distinct notice with Try again |
+| failed | rejected, reverted, replaced/cancelled, timeout, local chain reset, RPC error | a distinct notice with Try again |
 | stale | account, network or market changed mid-flight | a dismissable notice; the old result is never applied to the new account |
 A transaction hash is shown as "submitted", never as success. The order id comes from the confirmed `OrderPlaced` event, not from the simulation. A second click while anything is in flight is ignored.
 
@@ -113,6 +113,13 @@ A transaction hash is shown as "submitted", never as success. The order id comes
 
 **Registry paging.** `useTokenRegistry` and `useMarketRegistry` read every page of 50 up to `REGISTRY_CAP` (500 entries, `lib/registry-pages.ts`); beyond that the pages say "Showing the first N of M".
 
+## Transaction lifecycle hardening (P2-7)
+One `waitBounded` (`lib/order-runner.ts`) serves orders, approvals, token creation and market listing.
+- **Speed-ups, cancels and replacements.** viem can only follow a replaced transaction if it is told the sender and nonce, so the runner reads the submitted transaction once (`readTransaction`) and hands those fields to every receipt window. A re-priced transaction (same target, data and value) is followed to its new hash and reconciled like any other receipt (the mined `OrderPlaced` must match the requested side, price and amount; an approval is re-read from the chain). A transaction **cancelled** or **replaced by a different action** is a failure, shown under the hash that was mined ("Cancelled by" / "Replaced by" with a link), and never as a placed order.
+- **Local chain reset.** After a timed-out receipt window the runner compares the chain's identity with the one seen at submission (`lib/chain-reset.ts`): a different genesis hash, a different hash at the block seen earlier, or a head below that block ends the wait with "The local chain was reset" and the evidence. **A transaction the node no longer lists is not treated as a reset** (it can be dropped or replaced on an intact chain); it ends as "not confirmed yet", says the node no longer lists it, and sends the user to My orders. The whole app also watches the chain (`hooks/use-chain-watch.ts`, every 3 s): on a proven reset it re-reads every query and shows a dismissible notice, because viem's block watcher is silent when the new head is below the old one.
+- **After any failure that has a hash** every on-chain read is refreshed, so My orders shows what is really on the chain.
+- **Not built (needs the engine):** cancel, batch matching, stop-limit. See [BONUS_INTEGRATION.md](BONUS_INTEGRATION.md) for what the UI needs from Person 1 and how it will be verified. No such control is shown.
+
 ## Design system
 **Source of truth:** the approved Liquid Glass reference screenshot, which is dark-only.
 - **Ground and accents:** deep navy with layered radial lighting; violet accent `#7c5cf2` and lilac `#b49cff`, plus azure `#6aa4ff`.
@@ -131,7 +138,7 @@ A transaction hash is shown as "submitted", never as success. The order id comes
 |---|---|---|---|
 | Unit (node) | `npm test` | validation, allowance step, execution estimate, lifecycle reducer, runner with a fake chain, receipt decoding with synthetic logs, error mapping, wallet copy | anything on a real chain |
 | Real chain | `E2E_RPC_URL=http://127.0.0.1:8546 E2E_ALLOW_MUTATE=1 npx vitest run --no-file-parallelism lib/trading.integration.test.ts lib/creation.integration.test.ts` (sequential: the files share one chain and its snapshots) | the same code against the deployed contracts on a scratch Anvil: SPEC example to the wei, resting, partial and immediate fills, multi-maker sweep, the fill cap, self trade, exact approvals, named reverts, estimate-vs-chain parity | MetaMask or any browser |
-| Browser (mock wallet) | see `web/e2e/trade.e2e.mjs` (trading, `npm run e2e`) `web/e2e/create.e2e.mjs` (issuance and listing, `npm run e2e:create`) and `web/e2e/dashboard.e2e.mjs` (market selector and holdings, `npm run e2e:dashboard`) | the UI drives the whole flow in Chromium against the scratch chain, including pending-wallet guidance, rejection, double click, account switch and wrong network | **MetaMask.** The wallet is an injected stand-in |
+| Browser (mock wallet) | see `web/e2e/trade.e2e.mjs` (trading, `npm run e2e`) `web/e2e/create.e2e.mjs` (issuance and listing, `npm run e2e:create`) `web/e2e/dashboard.e2e.mjs` (market selector and holdings, `npm run e2e:dashboard`) and `web/e2e/hardening.e2e.mjs` (speed-up, cancel, replace and chain reset, `npm run e2e:hardening`) | the UI drives the whole flow in Chromium against the scratch chain, including pending-wallet guidance, rejection, double click, account switch and wrong network | **MetaMask.** The wallet is an injected stand-in |
 | Manual MetaMask | the checklist below | the real wallet prompts | not run by Claude |
 
 The real-chain suites also cover issuance and listing (`lib/creation.integration.test.ts`: exact supply and balances, every named revert, duplicate and reversed pairs, a 6-decimal and a non-token address, an external 18-decimal token, and real trading on a newly listed market).
@@ -195,6 +202,8 @@ Playwright's Chromium has no wallet extension, so none of this is covered by the
 - **Listing and issuing are permissionless and permanent.** Anyone can issue a token with any name or symbol and list any 18-decimal token; the UI labels provenance but cannot judge safety. A market's base/quote orientation can never be changed or undone with the current contracts.
 - **The wallet and the app can use different nodes.** Both must be the same chain-31337 node. If your wallet points at another 31337 node, the transaction goes there and this app, which reads its own RPC, will report it as not confirmed.
 - **Token movements are token-reported.** The escrow, refund and received amounts come from the tokens' own `Transfer` events (cross-checked with `getOrder`); a hostile token could emit consistent logs. Wallet balances on the result card are read from the chain separately. Symbols are chosen by whoever issues a token, so the review shows the contract addresses.
+- **A speed-up that lands before the app's first lookup of the transaction** (milliseconds after the wallet returns the hash) cannot be followed, because the node no longer returns the original and its nonce is unknown. The app then says "not confirmed yet" and that the node no longer lists the transaction; the order may well exist, so check My orders before placing it again.
+- **Chain-reset detection compares block identity, so it cannot see a reset before the app has seen a block.** Reload after restarting Anvil, and redeploy if the contracts are gone.
 - **MetaMask not exercised by automation.** The browser run uses a mock wallet; wallet behaviour is on the manual checklist (the owner has verified the SPEC example by hand).
 - **Deployment check is not a bytecode check.** It establishes code presence and the market's token addresses. A different deployment that reuses the same deterministic addresses and tokens would pass. The exporter's bytecode check is the stronger guard.
 - **Reads are not atomic.** There is no Multicall3 on Anvil, so a snapshot's reads can come from adjacent blocks for a moment.

@@ -246,6 +246,23 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 
 **Skills and MCPs:** `playwright-core`, `impeccable detect`, Foundry. No reviewer, Context7, shadcn or `solidity-security` (no Solidity or signing-path change). Deviation from the brief: no "component" test harness was added (no jsdom dependency); logic is in pure tested modules and the components are covered by the browser run.
 
+## 2026-11-06: P2-7, transaction-lifecycle hardening and bonus-integration readiness
+
+**Prompt (summary):** Plan then implement P2-7: handle replaced, repriced and cancelled pending transactions in the P2-5 runner, prevent stale receipts and misleading confirmations, strengthen account, network, rejection and local-chain-restart behaviour, add multi-market regression, and document what Person 1's bonuses (cancel, batch, stop-limit) will need, without activating any bonus UI. The user approved the plan with two refinements: chain-reset detection must be evidence-based (a missing transaction alone is not proof), and viem's replacement behaviour must be measured across several windows before finalising `waitBounded`. A follow-up asked for one narrow correction: the existing 5 px header overflow at 390 px with a connected wallet.
+
+**What the AI got wrong:**
+1. The P2-5 runner's "follows a re-priced transaction" was only tested with a fake `waitForReceipt`; viem was never given the sender and nonce, so the real wait could not see a replacement (issue P2-012). The P2-6 creation runner copied the same shape.
+2. In this session: the first real-chain tests mined the speed-up at once and passed even with the fix removed; the choreography was corrected and a mutant run proved it (3 red).
+3. A `pkill -f` pattern matched my own shell and killed the scratch Anvil (the user's 8545 was unaffected); later a stale scratch server made a run fail with HTTP 500 chunks before I found it.
+4. A browser-test helper used `lastSent()` and picked up the earlier approval transaction ("nonce too low"); a wording slip put the word "reset" in a message that had to avoid it.
+5. A single cache-hit of viem's `getBlockNumber` left the displayed block stale after a reset; found from a screenshot and fixed with one delayed re-read.
+6. I reported the header overflow as "5 px" and left it. Measuring showed the real cause: at 390 px the row needs about 431 px, and flex shrink had already crushed the menu button to 20 px, so the touch target was also broken (at 375 px the overflow was 20 px). Fixed in the follow-up with layout classes only.
+7. While writing this log the first time, a second `open().read()` overwrote the entry; the final diff review caught it and it was restored.
+
+**What the human did:** approved the plan with the two refinements above; asked for the header fix and a final diff review. Still pending: `docs/TESTING.md` Test 10 with MetaMask, review and commit.
+
+**Skills and MCPs:** Foundry (scratch Anvil, `forge test`), `playwright-core`, `impeccable detect`. No reviewer was spawned and no Opus agent: there is no new signing or contract path, only wait-logic and notice changes. `solidity-security` was not applicable (no Solidity changed). Context7 was not needed (viem behaviour was measured and the installed source read).
+
 ## Requirements traceability
 | ID | Brief text | Design | Code | Tests | Evidence | Report § | Status |
 |---|---|---|---|---|---|---|---|
@@ -259,5 +276,6 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 | B1 (cancel remainder), B2, B3 | Bonus: cancel, batched matching, conditional orders | n/a | none: the engine's `cancelOrder`, `matchOrders`, stop functions revert, so the UI has no control for them | n/a | `OrderBook.sol` lines 88-101 | n/a | **not implemented** (Person 1's engine); not presented as available |
 | T1 / T2 | Who triggers execution and how often; priority at equal price | `docs/FRONTEND.md` | the UI says matching only happens inside order transactions and that a crossed remainder cannot be cleared yet | `trading.integration.test.ts` (fill cap) | `p2-5-trading.md` | 4 | behaviour observed on a real chain; the priority rule itself is the engine's (Person 1) |
 | R2 (front end) / G (UX) | Usable multi-market dashboard and wallet overview | `docs/FRONTEND.md` "Dashboard market selector" | `web/lib/market-select.ts`, `holdings.ts`, `registry-pages.ts`, `web/hooks/use-market-choice.ts`, `use-holdings.ts`, `web/components/dashboard/` | `market-select`, `holdings`, `registry-pages` unit tests; `e2e:dashboard` (mock wallet) | `test-evidence/person2/p2-6-1-dashboard.md`, issue P2-011 | n/a | Mock-wallet verified; MetaMask Test 9 pending |
+| R5 / R6 / G (UX): reliable order and creation lifecycle | Orders and token/market creation report what actually happened despite speed-ups, cancels, replacements, restarts | `docs/FRONTEND.md` "Transaction lifecycle hardening", `docs/BONUS_INTEGRATION.md` | `web/lib/order-runner.ts`, `chain-reset.ts`, `create-runner.ts`, `web/hooks/use-chain-watch.ts`, `web/components/shell/chain-reset-notice.tsx` | `chain-reset.test.ts`, `order-runner.hardening.test.ts`, `hardening.integration.test.ts`, `e2e/hardening.e2e.mjs` | `test-evidence/person2/p2-7-hardening.md`, issue P2-012 | n/a | implemented, mock-wallet verified; MetaMask Test 10 pending |
 Other rows are not started by Person 2.
 | R4 / R2 (browser) | Issue tokens and list markets from the front end | `docs/FRONTEND.md` "Token issuance and market listing" | `web/lib/create-*.ts`, `web/hooks/use-create-flow.ts`, `web/components/create/` | `create-*.test.ts`, `creation.integration.test.ts` (21), `e2e/create.e2e.mjs` (14) | `test-evidence/person2/p2-6-issuance-listing.md` | 7 | mock wallet and scratch chain only; MetaMask not yet performed |

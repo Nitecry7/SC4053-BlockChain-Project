@@ -7,7 +7,8 @@ import { fail, viemDeps, waitBounded, type ContractCall, type ReceiptLike, type 
 import { decodeMarketCreated, decodeTokenCreated, type MarketCreatedEvent, type TokenCreatedEvent } from "./receipt";
 
 /** The chain and wallet operations a creation needs: simulate, sign, wait, and read back what the receipt claims. */
-export type CreateDeps = Pick<RunnerDeps, "simulate" | "write" | "waitForReceipt"> & {
+export type CreateDeps = Pick<RunnerDeps, "simulate" | "write" | "waitForReceipt"> &
+  Partial<Pick<RunnerDeps, "readTransaction" | "readChainAnchor" | "inspectChain">> & {
   read: (call: ContractCall, blockNumber?: bigint) => Promise<unknown>;
 };
 
@@ -323,6 +324,10 @@ export function viemCreateDeps(publicClient: PublicClient, writeContract: Parame
     simulate: base.simulate,
     write: base.write,
     waitForReceipt: base.waitForReceipt,
+    // Replacement fields and the chain-identity check are shared with orders: one `waitBounded` serves every flow.
+    readTransaction: base.readTransaction,
+    readChainAnchor: base.readChainAnchor,
+    inspectChain: base.inspectChain,
     read: (c, blockNumber) =>
       publicClient.readContract({ address: c.address, abi: c.abi, functionName: c.functionName, args: c.args, ...(blockNumber !== undefined ? { blockNumber } : {}) } as never),
   };

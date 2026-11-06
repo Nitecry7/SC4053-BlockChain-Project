@@ -199,7 +199,7 @@ With your Anvil network selected (menu names vary by MetaMask version): *Tokens,
 |---|---|---|
 | Contracts (185 tests) | `contracts/` | `forge test` |
 | Exporter (21 tests) | repo root | `node --test contracts/script/export-web.test.mjs` |
-| Front-end unit tests (345 pass, 39 gated tests skipped), types, lint, build | `web/` | `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` |
+| Front-end unit tests (368 pass, 48 gated tests skipped), types, lint, build | `web/` | `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` |
 | Real-chain and browser suites | scratch chain only | see [`docs/FRONTEND.md`](docs/FRONTEND.md), "Testing" |
 
 The real-chain and browser suites send transactions, so they run against a **separate scratch Anvil (port 8546) and a scratch server (port 3100)**, never your main chain: the real-chain suite refuses port 8545. Deploy to a scratch chain with `FOUNDRY_BROADCAST` and `FOUNDRY_CACHE_PATH` pointing at a temporary folder, otherwise forge overwrites the record the exporter checks on your main chain (details in `docs/FRONTEND.md`).

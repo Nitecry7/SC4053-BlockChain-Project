@@ -1,6 +1,7 @@
 import type { Abi, Address, Hex, PublicClient } from "viem";
 import { demoTokenAbi, marketFactoryAbi, orderBookAbi, tokenFactoryAbi } from "./contracts/abis";
 import { describeTxError } from "./errors";
+import { assessChain, type ChainAnchor, type ChainVerdict } from "./chain-reset";
 import { decodeOrderReceipt, reconcileOrder, type OrderReceipt } from "./receipt";
 import { SIDE_INDEX, type ValidOrder } from "./order-input";
 import type { FlowContext, FlowEvent, FlowFailure } from "./order-flow";
@@ -23,15 +24,31 @@ export type OrderOutcome = {
 export type ContractCall = { address: Address; abi: Abi; functionName: string; args: readonly unknown[] };
 export type ReceiptLike = { transactionHash: Hex; status: "success" | "reverted"; blockNumber: bigint; gasUsed: bigint; logs: readonly { address: Address; topics: readonly Hex[]; data: Hex }[] };
 
+/**
+ * The fields that identify a submitted transaction's nonce slot. viem needs them to detect a replacement: a node that
+ * drops the original transaction no longer returns it by hash, and without these fields the replacement is never found
+ * (measured on Anvil with viem 2.57.16: all three windows timed out even after the replacement was mined).
+ */
+export type TxFields = { from: Address; nonce: number; input: Hex; to: Address | null; value: bigint };
+
 /** The few chain and wallet operations the lifecycle needs. Real implementations are below; tests inject fakes. */
 export type RunnerDeps = {
   simulate: (call: ContractCall, account: Address, blockNumber?: bigint) => Promise<void>;
   /** Sends the transaction from the wallet. Resolves with the hash once the wallet has signed and broadcast it. */
   write: (call: ContractCall, account: Address, chainId: number) => Promise<Hex>;
   /** `onReplaced` fires when the wallet re-prices (speed up), replaces or cancels the transaction; viem still resolves with the replacement's receipt. */
-  waitForReceipt: (hash: Hex, opts: { timeoutMs: number; onReplaced: (reason: "repriced" | "cancelled" | "replaced", hash: Hex) => void }) => Promise<ReceiptLike>;
+  waitForReceipt: (
+    hash: Hex,
+    opts: { timeoutMs: number; onReplaced: (reason: "repriced" | "cancelled" | "replaced", hash: Hex) => void; replacement?: TxFields },
+  ) => Promise<ReceiptLike>;
   readAllowance: (token: Address, owner: Address, spender: Address) => Promise<bigint>;
   readOrder: (market: Address, id: bigint, blockNumber?: bigint) => Promise<OrderSnapshot>;
+  /** The just-submitted transaction as the node sees it (for replacement detection). Optional: absent means no replacement fields. */
+  readTransaction?: (hash: Hex) => Promise<TxFields | undefined>;
+  /** Identity of the chain at submission time (genesis hash and head), for the reset check. Optional. */
+  readChainAnchor?: () => Promise<ChainAnchor | undefined>;
+  /** After a timed-out wait: is it still the same chain, and does the node still know the transaction? Optional. */
+  inspectChain?: (anchor: ChainAnchor, hash: Hex) => Promise<{ verdict: ChainVerdict; txKnown?: boolean }>;
 };
 
 export type Dispatch = (event: FlowEvent<OrderOutcome>) => void;
@@ -55,22 +72,35 @@ export const fail = <R>(dispatch: (event: FlowEvent<R>) => void, attempt: number
   const described = describeTxError(error);
   // Once a hash exists the wallet has broadcast it. Unless the chain said it reverted, was cancelled or replaced, it may
   // still be mined, so say so before the user is offered another attempt.
-  const maybePending = hash !== undefined && !["reverted", "cancelled", "replaced", "timeout"].includes(described.kind);
+  const maybePending = hash !== undefined && !["reverted", "cancelled", "replaced", "timeout", "chain-reset"].includes(described.kind);
+  // A replaced or cancelled transaction fails under the hash that was mined in its place.
+  const shown = (error as { replacementHash?: Hex } | undefined)?.replacementHash ?? hash;
   const failure: FlowFailure = {
     ...described,
     detail: maybePending ? `${described.detail} The transaction may still be mined: check its page, and My orders, before sending another.` : described.detail,
     step,
-    hash,
+    hash: shown,
   };
   dispatch({ type: "FAILED", attempt, failure });
 };
 
+const best = async <T>(read: (() => Promise<T>) | undefined): Promise<T | undefined> => {
+  try {
+    return read ? await read() : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 /**
  * Waits for a receipt in bounded windows. A timeout is not a failure: it marks the flow delayed and keeps waiting,
- * up to `maxWindows`. A re-priced (sped-up) transaction is followed to its new hash.
+ * up to `maxWindows`. Every window waits on the same hash with the same sender/nonce fields (read once), so a
+ * replacement is found in any window, not only the first. A re-priced (sped-up) transaction is followed to its new hash.
+ * After a timed-out window the chain's identity is re-checked: a chain that is provably not the one the transaction was
+ * sent to ends the wait; a transaction the node merely no longer lists does not (it is reported as such at the end).
  */
 export async function waitBounded<R>(
-  deps: Pick<RunnerDeps, "waitForReceipt">,
+  deps: Pick<RunnerDeps, "waitForReceipt"> & Partial<Pick<RunnerDeps, "readTransaction" | "readChainAnchor" | "inspectChain">>,
   hash: Hex,
   p: Pick<RunParams, "attempt" | "windowMs" | "maxWindows">,
   dispatch: (event: FlowEvent<R>) => void,
@@ -78,26 +108,41 @@ export async function waitBounded<R>(
 ): Promise<ReceiptLike> {
   const windowMs = p.windowMs ?? DEFAULT_WINDOW_MS;
   const maxWindows = p.maxWindows ?? DEFAULT_MAX_WINDOWS;
+  const replacement = await best(deps.readTransaction && (() => deps.readTransaction!(hash)));
+  const anchor = await best(deps.readChainAnchor);
   let lastError: unknown;
-  let replacedBy: "cancelled" | "replaced" | undefined;
+  let replacedBy: { reason: "cancelled" | "replaced"; hash: Hex } | undefined;
+  let txUnknown = false;
   for (let window = 0; window < maxWindows; window++) {
     try {
       const receipt = await deps.waitForReceipt(hash, {
         timeoutMs: windowMs,
+        replacement,
         onReplaced: (reason, h) => {
           if (reason === "repriced") dispatch({ type: "HASH_REPLACED", attempt: p.attempt, hash: h });
-          else replacedBy = reason;
+          else replacedBy = { reason, hash: h };
         },
       });
       // viem resolves with the REPLACEMENT's receipt for a cancelled or replaced transaction. That is not our order.
-      if (replacedBy) throw Object.assign(new Error(`transaction ${replacedBy}`), { name: "TransactionReplacedError", reason: replacedBy });
+      if (replacedBy) {
+        throw Object.assign(new Error(`transaction ${replacedBy.reason}`), { name: "TransactionReplacedError", reason: replacedBy.reason, replacementHash: replacedBy.hash });
+      }
       return receipt;
     } catch (e) {
       lastError = e;
       if (describeTxError(e).kind !== "timeout" || !isCurrent()) throw e;
       dispatch({ type: "DELAYED", attempt: p.attempt });
+      if (anchor && deps.inspectChain) {
+        const seen = await best(() => deps.inspectChain!(anchor, hash));
+        if (!isCurrent()) throw e;
+        if (seen?.verdict.verdict === "reset") {
+          throw Object.assign(new Error("the local chain was reset"), { name: "ChainResetError", evidence: seen.verdict.evidence });
+        }
+        if (seen?.txKnown !== undefined) txUnknown = !seen.txKnown;
+      }
     }
   }
+  if (txUnknown && lastError && typeof lastError === "object") (lastError as { txUnknown?: boolean }).txUnknown = true;
   throw lastError;
 }
 
@@ -115,6 +160,7 @@ export async function runApproval(deps: RunnerDeps, p: RunParams, dispatch: Disp
     if (!isCurrent()) return;
     const receipt = await waitBounded(deps, hash, p, dispatch, isCurrent);
     if (!isCurrent()) return;
+    hash = receipt.transactionHash; // a re-priced transaction mined under a new hash: later messages cite that one
     if (receipt.status !== "success") {
       return fail(dispatch, p.attempt, "approve", Object.assign(new Error("reverted"), { name: "ContractFunctionRevertedError" }), hash);
     }
@@ -149,6 +195,7 @@ export async function runOrder(deps: RunnerDeps, p: RunParams, dispatch: Dispatc
 
     const receipt = await waitBounded(deps, hash, p, dispatch, isCurrent);
     if (!isCurrent()) return;
+    hash = receipt.transactionHash; // a re-priced transaction mined under a new hash: later messages cite that one
 
     if (receipt.status !== "success") {
       // Best effort: replay the call just before the failing block to learn why. It may not reproduce.
@@ -258,12 +305,40 @@ export function viemDeps(
       } as never);
     },
     write: (call, account, chainId) => writeContract({ ...call, account, chainId }),
-    waitForReceipt: (hash, { timeoutMs, onReplaced }) =>
+    waitForReceipt: (hash, { timeoutMs, onReplaced, replacement }) =>
       publicClient.waitForTransactionReceipt({
         hash,
         timeout: timeoutMs,
+        ...(replacement ? { replacement } : {}),
         onReplaced: (r) => onReplaced(r.reason, r.transaction.hash),
       }) as Promise<ReceiptLike>,
+    readTransaction: async (hash) => {
+      const t = await publicClient.getTransaction({ hash });
+      return { from: t.from, nonce: t.nonce, input: t.input, to: t.to, value: t.value };
+    },
+    readChainAnchor: async () => {
+      const [genesis, head] = await Promise.all([publicClient.getBlock({ blockNumber: 0n }), publicClient.getBlock()]);
+      return { genesisHash: genesis.hash, blockNumber: head.number, blockHash: head.hash };
+    },
+    inspectChain: async (anchor, hash) => {
+      // Each read is independent: a failed read is "unknown", a "block not found" answer is evidence ("null").
+      const read = async <T>(f: () => Promise<T>): Promise<T | undefined> => f().catch(() => undefined);
+      const [genesis, head, atAnchor, known] = await Promise.all([
+        read(() => publicClient.getBlock({ blockNumber: 0n })),
+        read(() => publicClient.getBlock()),
+        publicClient.getBlock({ blockNumber: anchor.blockNumber }).catch((e: { name?: string }) => (e?.name === "BlockNotFoundError" ? null : undefined)),
+        publicClient.getTransaction({ hash }).then(
+          () => true,
+          (e: { name?: string }) => (e?.name === "TransactionNotFoundError" ? false : undefined),
+        ),
+      ]);
+      const verdict = assessChain(anchor, {
+        genesisHash: genesis?.hash,
+        latestNumber: head?.number,
+        hashAtAnchor: atAnchor === undefined ? undefined : atAnchor === null ? null : atAnchor.hash,
+      });
+      return { verdict, ...(known !== undefined ? { txKnown: known } : {}) };
+    },
     readAllowance: (token, owner, spender) =>
       publicClient.readContract({ address: token, abi: demoTokenAbi, functionName: "allowance", args: [owner, spender] }) as Promise<bigint>,
     readOrder: async (market, id, blockNumber) =>

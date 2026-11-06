@@ -27,7 +27,7 @@ export function Brand({ compact = false }: { compact?: boolean }) {
     <Link href="/" className="flex items-center gap-2.5 rounded-lg" aria-label="SC4053 DEX, home">
       <BrandMark />
       {!compact && (
-        <span className="text-[1.3125rem] font-bold tracking-[-0.045em] whitespace-nowrap">
+        <span className="text-[1.1875rem] font-bold sm:text-[1.3125rem] tracking-[-0.045em] whitespace-nowrap">
           SC4053 <span className="text-lilac">DEX</span>
         </span>
       )}

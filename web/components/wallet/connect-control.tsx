@@ -50,7 +50,7 @@ export function ConnectControl({ className }: { className?: string }) {
           >
             <AccountAvatar address={account.address} />
             <span className="font-mono text-[0.8125rem]">{shortAddress(account.address)}</span>
-            <ChevronDown className="size-3.5 text-muted-foreground" aria-hidden />
+            <ChevronDown className="hidden size-3.5 text-muted-foreground sm:block" aria-hidden />
           </button>
         );
       }}

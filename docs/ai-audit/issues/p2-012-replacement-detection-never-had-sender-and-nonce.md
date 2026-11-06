@@ -1,0 +1,26 @@
+# Issue P2-012: a sped-up, cancelled or replaced transaction was only "followed" in fake-chain tests; the real wait could not see it
+
+- **Date:** 2026-11-06
+- **Phase:** P2-7, transaction-lifecycle hardening (originally written in P2-5, reused unchanged in P2-6)
+- **Found by:** planning P2-7 (the "stale hash" limitation noted in P2-5), then measuring viem 2.57.16 against a scratch Anvil instead of trusting the unit tests. Severity: Medium (a confirmed order could be reported as "not confirmed yet", which invites a duplicate order; no funds are put at risk because the contract rules and escrow are unchanged).
+
+## 1. Why the AI made the mistake
+In P2-5 the AI wrote `waitBounded` around viem's `onReplaced` callback and tested it with a fake `waitForReceipt` that simply calls `onReplaced("repriced", H(2))`. That proves the runner reacts to the callback, not that viem ever calls it. viem finds a replacement only if it can read the original transaction by hash or is told the sender and nonce (`replacement: { from, nonce, ... }`). The AI never passed those fields, and the creation runner (P2-6) copied the same dependency shape (`CreateDeps` listed only three members), so the blind spot spread. Two smaller slips came from the same shortcut: after a re-price the runner kept the first hash for later failure messages, and a replaced or cancelled transaction failed under the hash of the transaction that was **not** mined.
+
+A second error in this session's own reasoning: the first real-chain tests mined the speed-up immediately, and they passed even with the fix removed. The defect only appears when a receipt window starts after the original has left the pool; the tests were changed to keep the replacement pending across later windows before they were trusted.
+
+## 2. Why it is problematic
+After a MetaMask "speed up" that stays pending for a while, the next 60-second wait on the original hash cannot find the replacement. All windows time out and the page says "Not confirmed yet", although the order is on-chain (found with a measured scenario below). A user who believes it failed may place the order again. After a local chain restart the app also kept showing the old chain's balances (viem's block watcher emits nothing when the new head is below the old one), and "no longer in the node's pool" could not be told apart from "the chain was reset".
+
+## 3. How we fixed it
+- `lib/order-runner.ts`: `waitBounded` reads the submitted transaction once (`readTransaction`) and passes its sender, nonce, input, target and value to every wait window; the real `viemDeps` implements it. A replaced or cancelled transaction now fails under the replacement's hash, and the order or approval is reported under the hash that mined. `lib/create-runner.ts` forwards the same dependencies, so token creation and market listing get the fix too.
+- New `lib/chain-reset.ts` (`assessChain`): a reset is claimed only from block identity (a different genesis hash, a different hash at the block seen earlier, or a head below that block). A missing transaction alone is never a reset: it is reported as "the node no longer lists this transaction" with advice to check My orders.
+- New `hooks/use-chain-watch.ts` and `components/shell/chain-reset-notice.tsx`: polls the head, and on a proven reset invalidates every read and shows the evidence.
+- `components/trade/tx-status.tsx` shows "Cancelled by" / "Replaced by" with the hash.
+
+## 4. Evidence the fix works
+- **Measured defect (scratch Anvil, viem 2.57.16, no-mining; script kept in the session scratchpad):** with the original call (no `replacement` fields), repriced, cancelled and replaced-by-different-action transactions were all reported as `WaitForTransactionReceiptTimeoutError` in three windows, even after the replacement was mined. With the fields, all three were detected with the right reason (`repriced`, `cancelled`, `replaced`) and the replacement's receipt.
+- **Red unit tests (real output):** `npx vitest run lib/chain-reset.test.ts lib/order-runner.hardening.test.ts` before the fix: `10 failed | 4 passed (14)`; after: all pass. Mutation checks, each turning tests red and then restored: no hash tracking (2 red), replacement fields not forwarded (2 red), unlisted transaction treated as a reset (1 red), missing anchor block alone treated as a reset (1 red), replacement hash not surfaced (2 red).
+- **Red/green on a real chain:** `lib/hardening.integration.test.ts` with the replacement fields removed from `viemDeps`: `3 failed | 6 passed` (re-priced order, re-priced approval, token creation); with the fix: `9 passed`. The cancelled and replaced real-chain tests did not fail in the mutant run (viem shares one polling observer between calls for the same hash, so that outcome depends on timing); they remain as outcome checks, not as proof of this defect.
+- **Browser (mock wallet, not MetaMask):** `npm run e2e:hardening`, results in `p2-7-hardening.md`.
+- Limitation: a speed-up that lands before the app's first lookup of the transaction (milliseconds after the wallet returns the hash) cannot be followed; the app reports "not confirmed yet / no longer lists this transaction" and sends the user to My orders (pinned by a real-chain test that also checks the order exists on-chain).

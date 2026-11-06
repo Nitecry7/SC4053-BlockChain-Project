@@ -10,6 +10,7 @@ import { useLiveBlock } from "@/hooks/use-dex-data";
 import { cn } from "@/lib/utils";
 import { ConnectControl } from "@/components/wallet/connect-control";
 import { ConnectingNotice } from "@/components/wallet/wallet-pending-notice";
+import { ChainResetNotice } from "./chain-reset-notice";
 import { Brand } from "./brand";
 import { NAV_ITEMS, TOP_NAV, isActive, type NavItem } from "./nav-items";
 import { SearchBox } from "./search-box";
@@ -105,11 +106,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         Skip to content
       </a>
       <header className="sticky top-0 z-30 border-b border-white/[0.08] bg-[linear-gradient(90deg,rgb(7_10_22/0.94),rgb(15_23_46/0.9),rgb(8_12_24/0.95))] backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-[1680px] items-center gap-4 px-4 md:px-6 lg:gap-7 lg:pl-8">
+        <div className="mx-auto flex h-16 max-w-[1680px] items-center gap-2 px-3 sm:gap-4 sm:px-4 md:px-6 lg:gap-7 lg:pl-8">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger
               render={<button type="button" />}
-              className="inline-grid size-10 place-items-center rounded-xl text-[#d3d7ea] hover:bg-white/6 md:hidden"
+              className="inline-grid size-10 shrink-0 place-items-center rounded-xl text-[#d3d7ea] hover:bg-white/6 md:hidden"
               aria-label="Open navigation"
             >
               <Menu className="size-5" aria-hidden />
@@ -153,6 +154,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </aside>
         <main id="main" className="min-w-0">
           <ConnectingNotice />
+          <ChainResetNotice />
           {children}
         </main>
       </div>

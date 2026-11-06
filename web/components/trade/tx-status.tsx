@@ -21,6 +21,12 @@ export function TxStatus({ state, kind }: { state: FlowState; kind: "order" | "a
   const steps = flowSteps(kind, state.phase, state.failedFrom);
   if (steps.length === 0) return null;
   const hash = kind === "order" ? state.orderHash : state.approvalHash;
+  // A cancelled or replaced transaction fails under the hash that was mined in its place: show it, so the outcome can be checked.
+  const failure = state.phase === "failed" ? state.failure : undefined;
+  const other =
+    failure?.hash && failure.hash !== hash && (failure.kind === "cancelled" || failure.kind === "replaced")
+      ? { hash: failure.hash, label: failure.kind === "cancelled" ? "Cancelled by" : "Replaced by" }
+      : undefined;
   return (
     <div className="glass-inset rounded-[0.875rem] px-3.5 py-3" aria-label={kind === "order" ? "Order progress" : "Approval progress"}>
       <ol className="space-y-1.5">
@@ -39,6 +45,14 @@ export function TxStatus({ state, kind }: { state: FlowState; kind: "order" | "a
             {shortAddress(hash, 10, 6)}
           </Link>
           {state.delayed && <span className="mt-1 block text-warn">Not confirmed yet. It may still be pending; do not resubmit.</span>}
+          {other && (
+            <span className="mt-1 block">
+              {other.label}{" "}
+              <Link href={`/tx/${other.hash}`} className="font-mono text-lilac hover:text-white" title={other.hash}>
+                {shortAddress(other.hash, 10, 6)}
+              </Link>
+            </span>
+          )}
         </p>
       )}
     </div>

@@ -8,7 +8,8 @@ export type ErrorKind =
   | "disconnected"
   | "cancelled"
   | "replaced"
-  | "timeout";
+  | "timeout"
+  | "chain-reset";
 /** `errorName` is set when the contract returned a custom error that the ABI decoded. */
 export type DescribedError = { kind: ErrorKind; title: string; detail: string; errorName?: string };
 
@@ -127,9 +128,31 @@ export function describeTxError(error: unknown): DescribedError {
   if (replaced) {
     return replaced.reason === "cancelled"
       ? { kind: "cancelled", title: "The transaction was cancelled", detail: "A cancelling transaction was mined instead. Nothing was ordered." }
-      : { kind: "replaced", title: "The transaction was replaced", detail: "A different transaction was mined instead. Check My Orders before trying again." };
+      : {
+          kind: "replaced",
+          title: "The transaction was replaced",
+          detail: "A different transaction from your wallet took its place and was mined, so your original request did not place anything. Check My orders before trying again.",
+        };
   }
-  if (named("WaitForTransactionReceiptTimeoutError") || named("TransactionReceiptNotFoundError")) {
+  const reset = named("ChainResetError") as { evidence?: unknown } | undefined;
+  if (reset) {
+    const facts = Array.isArray(reset.evidence) ? reset.evidence.filter((x): x is string => typeof x === "string").join("; ") : "";
+    return {
+      kind: "chain-reset",
+      title: "The local chain was reset",
+      detail: `This transaction can no longer be confirmed${facts ? `: ${facts}` : ""}. Balances and orders are being re-read. Check My orders and place the order again only if it is not listed.`,
+    };
+  }
+  const timedOut = named("WaitForTransactionReceiptTimeoutError") ?? named("TransactionReceiptNotFoundError");
+  if (timedOut) {
+    if ((timedOut as { txUnknown?: unknown }).txUnknown === true) {
+      return {
+        kind: "timeout",
+        title: "Not confirmed yet",
+        detail:
+          "The node no longer lists this transaction and it has no receipt: it may have been dropped or replaced. The chain itself looks unchanged. Check My orders before sending another; do not resubmit yet.",
+      };
+    }
     return {
       kind: "timeout",
       title: "Not confirmed yet",

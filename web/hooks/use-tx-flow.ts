@@ -98,9 +98,10 @@ export function useTxFlow<R>(target: Address | undefined) {
 
   // After an approval or a confirmed operation, refresh every on-chain read right away (the block watcher would do it
   // within a few seconds): balances, allowances, books, registries and the user's orders.
-  const refreshKey = `${state.phase === "done" ? "done" : ""}:${state.approvedAmount ?? ""}`;
+  // A failure after submission (replaced, cancelled, reset, timeout) also re-reads: the chain may differ from what was on screen.
+  const refreshKey = `${state.phase === "done" ? "done" : ""}:${state.approvedAmount ?? ""}:${state.phase === "failed" ? (state.failure?.hash ?? "") : ""}`;
   useEffect(() => {
-    if (refreshKey !== ":") void queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] !== "blockNumber" });
+    if (refreshKey !== "::") void queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] !== "blockNumber" });
   }, [refreshKey, queryClient]);
 
   const dismissAbandoned = useCallback(() => send({ type: "DISMISS_ABANDONED" }), [send]);
