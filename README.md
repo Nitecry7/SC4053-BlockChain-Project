@@ -1,91 +1,328 @@
-# SC4053 DEX: a non-custodial limit-order-book exchange
+<div align="center">
 
-A small decentralized exchange for the NTU **SC4053 Blockchain Technology** course project. It is an **order book, not an AMM**: traders post buy and sell limit orders, the smart contract matches them on-chain at the resting order's price with price-time priority, and partial fills are supported. Tokens stay in the trader's own wallet until an order escrows them. Everything runs on a **local Anvil chain** (chain ID 31337); nothing is deployed to a public network.
+  <h1>SC4053 DEX</h1>
 
-The official assignment brief is kept locally (`docs/Development_Project.pdf`, git-ignored) and is authoritative for requirements. This README is a quickstart. Details live in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md), [`docs/FRONTEND.md`](docs/FRONTEND.md) and [`docs/TESTING.md`](docs/TESTING.md).
+  <p>
+    <strong>A non-custodial limit-order-book exchange for the NTU SC4053 Blockchain Technology course</strong>
+    <br />
+    Issue tokens, list a market, and trade on a local Anvil chain. Your keys stay in MetaMask.
+  </p>
 
-## What works today
+  <img alt="MetaMask wallet" src="https://img.shields.io/badge/MetaMask-Wallet-F6851B?logo=metamask&logoColor=white" />
+  <img alt="Solidity" src="https://img.shields.io/badge/Solidity-0.8.24-363636?logo=solidity&logoColor=white" />
+  <img alt="Foundry" src="https://img.shields.io/badge/Foundry-forge%20%7C%20anvil%20%7C%20cast-FFDB1C" />
+  <img alt="OpenZeppelin" src="https://img.shields.io/badge/OpenZeppelin-Contracts-4E5EE4?logo=openzeppelin&logoColor=white" />
+  <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white" />
+  <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white" />
+  <img alt="wagmi and viem" src="https://img.shields.io/badge/wagmi%20%2B%20viem-2-1C1C1C" />
+  <img alt="RainbowKit 2" src="https://img.shields.io/badge/RainbowKit-2-0E76FD" />
+  <img alt="Local Anvil only" src="https://img.shields.io/badge/Network-local%20Anvil%20only-2EA44F" />
 
-| Requirement | Status |
-|---|---|
-| Issue new ERC20 tokens (R4) | **Done in the browser (P2-6):** Create token form, review, wallet signature, receipt, event decoding and on-chain verification; the token appears on the Tokens page. Verified with a mock wallet and a scratch chain; **not yet with MetaMask** (procedure in `docs/TESTING.md`, Test 8) |
-| List a token pair as a market (R2) | **Done in the browser (P2-6):** List market form with base/quote explanation, duplicate and reversed-pair detection, permanence acknowledgement, verified result and a link to Trade. Verified with a mock wallet and a scratch chain; **not yet with MetaMask** |
-| Buy and sell limit orders, automatic matching, partial fills (R5, R6) | **Done.** Place orders in the browser with MetaMask; exact approvals, simulation, receipt-based results, My orders, transaction page |
-| Self-custody (R3) | Done: signing happens only in the wallet; no key is ever used by the app |
-| Bonus: cancel an order, batched matching, conditional (stop-limit) orders | **Not implemented.** The engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` still revert, so the UI offers none of them |
-| AI Audit Report evidence | Prompt logs, issue reports and test evidence in `docs/ai-audit/` |
+</div>
 
-**Verification status.** The SPEC worked example (Alice sells 10 NTU at 2 SGDx, Bob buys 4 NTU at a limit of 2.2) has been checked three separate ways: on a scratch chain by automated tests, in a browser with a **mock** wallet, and **by the project owner with real MetaMask accounts in Windows Brave**. See the evidence in `docs/ai-audit/test-evidence/person2/p2-5-trading.md`.
-
-## Architecture and stack
-```
-Windows browser (Brave) + MetaMask  --signs-->  wallet
-        |  RainbowKit / wagmi / viem
-        v
-Next.js app (localhost:3000)  --reads chain over HTTP JSON-RPC-->  Anvil (127.0.0.1:8545, chain 31337, runs in WSL)
-                                                                     |- TokenFactory -> DemoToken (NTU, SGDx; 18 decimals)
-                                                                     |- MarketFactory -> OrderBook (one per token pair)
-```
-- **Contracts:** Solidity 0.8.24, Foundry (`forge`, `anvil`, `cast`), OpenZeppelin. `OrderBook` is the matching engine (Person 1); the factories, deployment script and exporter are Person 2's.
-- **Front end:** Next.js 16 (App Router), TypeScript, Tailwind v4, shadcn/ui, RainbowKit 2, wagmi 2, viem 2, TanStack Query. No backend, database or indexer: the browser reads the chain directly.
-- **Units:** both tokens have 18 decimals; prices are quote units per whole base token scaled by 1e18; lot and tick size are 1e9.
-
-## Repository map
-| Path | What is in it |
-|---|---|
-| `contracts/src/` | `OrderBook.sol`, `TokenFactory.sol`, `MarketFactory.sol`, `DemoToken.sol` |
-| `contracts/test/` | Foundry tests (185) |
-| `contracts/script/` | `Deploy.s.sol` (deployment), `export-web.mjs` (writes ABIs and addresses for the front end) |
-| `web/` | The Next.js app. `web/lib/contracts/` is **generated** by the exporter |
-| `scripts/check-local.sh` | Read-only environment check (see below) |
-| `docs/` | `DEPLOYMENT.md`, `FRONTEND.md`, `TESTING.md`, `MARKET_FACTORY.md`, the engine plan and phases, and `ai-audit/` (prompt logs, issues, test evidence) |
-| `SPEC.md`, `CONTRACT_INTERFACE.md` | Engine behaviour and the frozen contract interface (shared; do not edit casually) |
-| `PRODUCT.md`, `DESIGN.md` | Product and design reference for the front end |
-
-## Ports, in one table
-| Port | What | Notes |
-|---|---|---|
-| **8545** | Your Anvil (local chain) | The chain MetaMask and the app talk to |
-| **3000** | Your Next.js dev server (`npm run dev`) | The address you open in the browser |
-| 8546, 3100 | Scratch Anvil and scratch app server for automated tests | Used by the test suites only; never your main chain |
+<table align="center">
+  <tr>
+    <td align="center" width="230">
+      <a href="#feature-overview">
+        <strong>🪙 Issue tokens</strong><br />
+        Create a fixed-supply ERC20 in the app
+      </a>
+    </td>
+    <td align="center" width="230">
+      <a href="#architecture">
+        <strong>🏪 List markets</strong><br />
+        Any two 18-decimal tokens, through MarketFactory
+      </a>
+    </td>
+    <td align="center" width="230">
+      <a href="#user-journey">
+        <strong>📖 Trade on-chain</strong><br />
+        Limit orders, partial fills, maker-price settlement
+      </a>
+    </td>
+  </tr>
+</table>
 
 ---
 
-# 1. First-time setup (once per machine)
+## 📌 About
 
-### 1.1 Windows and WSL
-1. In Windows PowerShell: `wsl --install -d Ubuntu`, then restart Windows if asked and finish Ubuntu's first-run user setup.
-2. Do everything below **inside the Ubuntu (WSL) terminal**. Keep the project in the Linux filesystem (for example `~/projects/`), not under `/mnt/c`.
-3. Install **MetaMask** in your Windows browser (this project was tested with Brave).
+SC4053 DEX is a small exchange for the SC4053 course. It is an **order book, not an AMM**: traders post buy and sell limit orders, the smart contract matches them on-chain at the resting order's price, and partial fills are supported. Tokens stay in the trader's wallet until an order escrows them.
 
-### 1.2 Tools
-| Tool | Needed | Tested with |
+Everything runs on a **local Anvil chain** (chain ID `31337`). Nothing is deployed to a public network, and this repository makes no claim about one.
+
+> **Scope.** The official assignment brief (kept locally in `docs/Development_Project.pdf`, git-ignored) is the authority for requirements. Cancelling orders, batch matching and stop-limit orders are **not implemented** in the shared engine (see [Implemented and pending](#implemented-and-pending)).
+
+---
+
+## ✨ Feature overview
+
+<a id="feature-overview"></a>
+
+| Feature | Status | Where in the app |
 |---|---|---|
-| Node.js and npm | Node 22.18 or newer (`web/package.json` engines) | Node 26.13.0, npm 11.20.0 |
-| Foundry (`forge`, `anvil`, `cast`) | recent | 1.9.0 |
-| git | any | |
+| 🪙 **Token issuance**: a fixed-supply ERC20 (18 decimals) through `TokenFactory` | ✅ Built. Automated and scratch-chain tests pass. The project owner reported creating a token (DTT) in the app with MetaMask | **Create token** |
+| 🏪 **Permissionless token-pair listing**: one `OrderBook` per unordered pair, registered by `MarketFactory` | ✅ Built. Duplicate and reversed pairs are rejected | **List market** |
+| 🦊 **Self-custodial wallet authorization**: every transaction is signed in MetaMask; the app holds no keys | ✅ Built | **Connect wallet** |
+| 📖 **On-chain limit-order trading** for buy and sell orders | ✅ Built | **Trade** |
+| ⚡ **Automatic matching, partial fills and maker-price settlement** inside the order transaction | ✅ Built in the engine. The SPEC worked example was checked with MetaMask by the owner | **Trade** |
+| 🔐 **Token approvals and escrow**: the exact amount is approved, and escrow is shown as its own balance | ✅ Built. Approval and order are separate wallet confirmations | Order ticket |
+| 🧾 **Refunds and order history**: refunds, fills and remaining escrow, plus a transaction page | ✅ Built | **My orders**, `/tx/<hash>` |
+| 📊 **Multi-market dashboard and token holdings**: choose any listed market; balances per token, never added together | ✅ Built (P2-6.1) | **Dashboard** |
+| 🔁 **Transaction replacement tracking and local chain-reset detection**: a sped-up, cancelled or replaced transaction is followed to what was mined; a restarted chain is reported with its evidence | ✅ Built (P2-7). Mock-wallet and real-chain tests pass; the wallet's own speed-up and cancel buttons are not yet tested by hand | Result cards, chain-reset notice |
+| ❌ **Cancel an order**, 🧮 **batch matching**, 🎯 **stop-limit orders** | ⛔ **Not implemented.** The engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` still `revert()`, so the app shows no control for them | none |
 
-Install Foundry with its official installer (see https://getfoundry.sh): `curl -L https://foundry.paradigm.xyz | bash`, open a new terminal, run `foundryup`, and make sure it is on your `PATH`:
-```bash
-export PATH="$HOME/.foundry/bin:$PATH"      # put this line in ~/.bashrc
-forge --version && anvil --version && cast --version
+---
+
+## 🏗️ Architecture
+
+<a id="architecture"></a>
+
+```mermaid
+flowchart LR
+    Trader["👤 Trader<br/>(any browser, e.g. Brave)"]
+    subgraph Browser["Browser, localhost:3000"]
+        UI["🖥️ Next.js app<br/>RainbowKit · wagmi · viem"]
+    end
+    Wallet["🦊 MetaMask<br/>signs only; the app never sees a key"]
+    subgraph Chain["Anvil, chain 31337, RPC 127.0.0.1:8545"]
+        TF["🪙 TokenFactory"]
+        Tokens["DemoToken ERC20s<br/>NTU and SGDx (seed), DTT (issued in the app)"]
+        MF["🏪 MarketFactory"]
+        OB["📖 OrderBook per token pair<br/>immutable, holds escrow"]
+    end
+    Script["⚙️ Foundry deploy script<br/>Deploy.s.sol, run once, local only"]
+
+    Trader --> UI
+    UI -->|"read: public JSON-RPC, no wallet needed"| Chain
+    UI -->|"write: request a signature"| Wallet
+    Wallet -->|"signed transaction, same RPC"| Chain
+    Script -.->|"deploys"| TF
+    Script -.->|"deploys and creates the NTU/SGDx market"| MF
+    TF -->|"deploys and registers"| Tokens
+    MF -->|"deploys and registers"| OB
+    OB -->|"escrow and settlement"| Tokens
 ```
-Install Node.js with your preferred method (for example `nvm`). Check: `node -v && npm -v`.
 
-### 1.3 Get the code and build
+*Reads go straight to the node, so market data shows even with no wallet connected. Every write is signed in MetaMask. MetaMask and the app must point at the **same** Anvil. The app has no backend, database or indexer.*
+
+**MarketFactory in one paragraph.** `MarketFactory` is the accepted mechanism for creating and registering markets. It deploys a new, unmodified `OrderBook(base, quote)` for each unordered token pair and records it in an on-chain registry, so the app can discover markets. It is **not** an AMM, a liquidity pool, a token router, an escrow contract or an off-chain matcher. It holds no tokens and is never the sender of an order. A new market starts **with no trading liquidity**.
+
+> 🔎 **Detailed workflow:** the step-by-step market-creation diagram (duplicate check, constructor validation, the `MarketCreated` event and discovery) is in **[docs/MARKET_FACTORY.md](docs/MARKET_FACTORY.md#market-creation-workflow)**. The "why MarketFactory" comparison and tradeoffs are in the same file.
+
+---
+
+## 🧭 User journey
+
+<a id="user-journey"></a>
+
+```mermaid
+flowchart TD
+    Connect["🦊 Connect MetaMask<br/>account and network are checked"]
+    Create["🪙 Create token<br/>one wallet request, no approval"]
+    List["🏪 List a token pair<br/>base and quote are permanent"]
+    Select["🔍 Select a market<br/>reads only, no wallet request"]
+    Empty["📖 New market starts empty<br/>no resting liquidity"]
+    Approve["🔐 Approve the exact collateral<br/>wallet confirmation 1"]
+    Place["🔴 Place the limit order<br/>wallet confirmation 2"]
+    Cross{"Does the order cross the book?"}
+    Rest["⏳ Order rests<br/>escrow stays in the OrderBook"]
+    Match["⚡ OrderBook matches in the same transaction<br/>at the maker's price, partial fills allowed"]
+    Settle["✅ Pay the seller and the buyer<br/>refund unused buy escrow"]
+    Outcome["🔍 Check the outcome<br/>receipt, fills, My orders"]
+
+    Connect --> Create
+    Create --> List
+    List --> Select
+    Select --> Empty
+    Empty --> Approve
+    Approve --> Place
+    Place --> Cross
+    Cross -->|"No"| Rest
+    Cross -->|"Yes"| Match
+    Match --> Settle
+    Settle --> Outcome
+    Rest --> Outcome
+```
+
+*Creating a token and listing a market are optional when the market already exists, as the seed NTU/SGDx market does. The other trader repeats the approve and place steps with the quote token, and the escrow is rounded up. An order that rests waits for a counterparty; it does not trade with the market.*
+
+---
+
+## 🧰 Technology
+
+| Layer | Technology | Purpose in this project |
+|---|---|---|
+| Contracts | **Solidity** (`^0.8.20` pragma, compiled with 0.8.24) | `OrderBook` matching engine, `TokenFactory`, `MarketFactory`, `DemoToken` |
+| | **OpenZeppelin** (`ERC20`, `SafeERC20`, `ReentrancyGuard`, `Math`) | Standard token behaviour, safe transfers, reentrancy protection |
+| Local chain | **Foundry**: `forge` (build, test, deploy), `anvil` (local chain), `cast` (reads and sends from the shell) | Compiling, testing and deploying, and the local node on port 8545 |
+| Frontend | **Next.js 16** (App Router), **React 19**, **TypeScript** | The web app, served on port 3000 |
+| | **Tailwind CSS 4**, **shadcn/ui**, **lucide-react** | Styling and the component primitives in `web/components/ui/` |
+| Wallet and chain | **RainbowKit 2** (connect dialog), **wagmi 2** (hooks), **viem 2** (JSON-RPC, decoding, bigint-exact formatting) | Wallet connection, reads and writes, and event decoding |
+| | **TanStack Query** | Caching and refreshing on-chain reads |
+| Tests | **Vitest** (unit and gated real-chain suites), **Foundry** (contract tests), **Playwright** (`playwright-core` driving Chromium with a mock wallet) | Automated checks at each layer; see [docs/TESTING.md](docs/TESTING.md) |
+
+Versions are pinned in `web/package.json` and `web/package-lock.json`. The Solidity compiler version is in `contracts/foundry.toml`.
+
+---
+
+## 🗂️ Project structure
+
+```
+SC4053-BlockChain-Project/
+├── contracts/                 Solidity project (Foundry)
+│   ├── src/                   OrderBook (matching engine), TokenFactory, MarketFactory, DemoToken
+│   ├── test/                  Foundry tests (185), invariant and integration tests
+│   └── script/                Deploy.s.sol (deployment), export-web.mjs (ABIs and addresses for the app)
+├── web/                       Next.js app
+│   ├── app/                   Routes: overview, markets, tokens, trade, create-token, list-market, tx/[hash]
+│   ├── components/            Screens and widgets: shell, wallet, dashboard, trade, create, registry, data, ui
+│   ├── hooks/                 Chain reads, the transaction lifecycle, the chain-reset watcher
+│   ├── lib/                   Validation, bigint units, the transaction runners, decoding, and their tests
+│   │   └── contracts/         GENERATED by export-web.mjs (ABIs and deployment addresses); do not edit
+│   └── e2e/                   Browser suites run with a mock wallet on a scratch chain
+├── scripts/
+│   └── check-local.sh         Read-only environment check (run it before deploying)
+├── docs/                      Deployment, frontend, testing, MarketFactory and bonus-integration guides
+│   └── ai-audit/              AI audit report: prompt logs, issues, test evidence
+├── SPEC.md                    Engine behaviour (shared; Person 1's engine rules)
+├── CONTRACT_INTERFACE.md      Frozen contract interface (shared)
+├── PRODUCT.md                 What the product is for, what it does today, and its limits
+└── DESIGN.md                  Approved visual design system for the web app
+```
+
+---
+
+<a id="quickstart"></a>
+
+## 🚀 Quickstart
+
+Run everything inside the **Ubuntu (WSL) terminal**. Keep the project in the Linux filesystem (for example `~/projects/`), not under `/mnt/c`. The app is opened in a Windows browser with MetaMask installed. Brave is the browser this project was tested with.
+
+### First-time setup (once per machine)
+
+**1. Install the tools.**
+
+| Tool | Version used here | Check |
+|---|---|---|
+| Foundry (`forge`, `anvil`, `cast`) | 1.9.0 | `forge --version && anvil --version && cast --version` |
+| Node.js and npm | Node 22.18 or newer (`web/package.json` engines) | `node -v && npm -v` |
+| git | any | `git --version` |
+
+Install Foundry from https://getfoundry.sh (`curl -L https://foundry.paradigm.xyz | bash`, open a new terminal, then `foundryup`). If `forge` is not found, add this to `~/.bashrc`:
 ```bash
-# anywhere, e.g. ~/projects
+export PATH="$HOME/.foundry/bin:$PATH"
+```
+
+**2. Get the code and build it.**
+```bash
+# any folder, e.g. ~/projects
 git clone https://github.com/Nitecry7/SC4053-BlockChain-Project.git
-cd SC4053-BlockChain-Project                         # <- "repo root" in this README
-git submodule update --init --recursive              # forge-std and OpenZeppelin (needed to compile)
+cd SC4053-BlockChain-Project          # the "repo root" for every command below
+git submodule update --init --recursive   # forge-std and OpenZeppelin, needed to compile
 
-cd contracts && forge build && cd ..                 # contracts/
-cd web && npm ci && cd ..                            # web/  (exact versions from package-lock.json)
+cd contracts && forge build && cd ..  # run in contracts/
+cd web && npm ci && cd ..             # run in web/ (exact versions from package-lock.json)
 ```
-Optional: `web/.env.example` documents `NEXT_PUBLIC_RPC_URL` (default `http://127.0.0.1:8545`) and an optional WalletConnect id. The defaults work; you do not need a `.env.local`.
 
-### 1.4 MetaMask (once)
-In MetaMask add a custom network (menu names vary slightly between MetaMask versions: *Settings, Networks, Add network, Add a network manually*):
+**3. Add the local network to MetaMask (once).** See [MetaMask and local accounts](#metamask-and-local-accounts) for the fields and for importing accounts.
+
+### Every working session
+
+Anvil keeps its state **only while it runs**. A restart gives a new, empty chain at block 0. Use three WSL terminals:
+
+| Terminal | Directory | Command | Stays running? |
+|---|---|---|---|
+| 1. Chain | repo root | `anvil` | Yes. Closing it destroys the chain |
+| 2. Checks | repo root | `scripts/check-local.sh` | No, run once |
+| 3. App | `web/` | `npm run dev` | Yes |
+
+**Terminal 1.** Expected: a banner with `Available Accounts`, `Private Keys`, a mnemonic and `Chain ID 31337`, ending with `Listening on 127.0.0.1:8545`.
+
+**Terminal 2.** `scripts/check-local.sh` is read-only. It never deploys, never stops anything and never touches a key. It checks the tools, the RPC on chain 31337, the contract code at each exported address, that the export is current, and that the app answers.
+
+| The check says | Meaning | Do |
+|---|---|---|
+| `Result: ready` | Deployment exists and matches the export | Nothing. Go to terminal 3 |
+| `no JSON-RPC answer` | Anvil is not running | Start Anvil (terminal 1) |
+| `chain id is N` | Wrong network | Fix the RPC URL. Never deploy to it |
+| `NO contract code` (none of the exported contracts exist) | Fresh or restarted Anvil | **Deploy once** (see below) |
+| `export check failed` while the contracts exist | The chain is fine; the export record is stale or from another run | **Do not redeploy.** See [docs/TESTING.md](docs/TESTING.md), troubleshooting |
+
+**Terminal 3.** `cd web && npm run dev`. Expected (from a recorded run; the port is `3000` by default):
+```
+▲ Next.js 16.4.5 (Turbopack)
+- Local:         http://localhost:3000
+✓ Ready in 223ms
+```
+Open **http://localhost:3000**. The dashboard's Network card should say `Anvil (local)`, `Chain ID 31337` and a block number. If it says **"No SC4053 DEX deployment on this chain"**, use the table above.
+
+### Deploy and export (only on a fresh or restarted chain)
+
+Deploy only when `check-local.sh` reports no contract code. This creates `TokenFactory`, `MarketFactory`, the NTU and SGDx tokens (1,000,000 each, minted to Anvil account 0), the NTU/SGDx market **through `MarketFactory`**, and sends 10,000 NTU and 10,000 SGDx to Anvil accounts 1 to 3.
+
+```bash
+# contracts/
+cd contracts
+export RPC_URL=http://127.0.0.1:8545
+export DEPLOYER=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266   # Anvil account 0: a public address, not a key
+forge script script/Deploy.s.sol:Deploy --rpc-url "$RPC_URL" --broadcast --unlocked --sender "$DEPLOYER"
+cd ..
+
+# repo root: write the ABIs and addresses the app reads, then confirm them
+node contracts/script/export-web.mjs --rpc-url "$RPC_URL"
+node contracts/script/export-web.mjs --check --rpc-url "$RPC_URL"
+```
+The deploy script refuses any chain that is not 31337 and uses no private key: Anvil's accounts are unlocked, and `--unlocked --sender` makes the node sign for account 0. On a fresh Anvil the addresses are always the same and `web/lib/contracts/deployments.ts` does not change. Always trust what the exporter writes over any table. Details: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+**When deployment is and is not needed:**
+
+| Situation | Deploy? |
+|---|---|
+| You restarted your computer, but Anvil is running and `check-local.sh` says ready | No |
+| You restarted **Anvil** (state is gone) | Yes, once, then export |
+| You only restarted `npm run dev` | No |
+| The app shows a stale deployment after you redeployed | Export again (do not deploy again) |
+| You changed contract code (engine or factory) | Yes, on a scratch chain first; see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+
+---
+
+## 🧾 Command reference
+
+Run each command in the directory shown. "Observed" means it was run on the project owner's local Anvil for this document (read-only), on 2026-11-06. Other examples are illustrative.
+
+| Command | Run in | Purpose | Example output and what it means |
+|---|---|---|---|
+| `anvil` | repo root | Start the local chain on `127.0.0.1:8545` | Banner ending `Listening on 127.0.0.1:8545`. A fresh chain starts at block 0 |
+| `cast chain-id --rpc-url http://127.0.0.1:8545` | any | Check which chain the node is | Observed: `31337`. Anything else means the wrong network |
+| `cast block-number --rpc-url http://127.0.0.1:8545` | any | Latest block height | Observed: `13`. This is the **height**: 13 blocks have been mined. It is **not** the number of trades |
+| `cast call <NTU> "decimals()(uint8)" --rpc-url …` | any | Read ERC20 decimals | Observed for NTU: `18`. Both demo tokens must read 18 |
+| `cast call <NTU> "totalSupply()(uint256)" --rpc-url …` | any | Read total supply in base units | Observed: `1000000000000000000000000 [1e24]` = 1,000,000 NTU with 18 decimals. A different value means a different deployment |
+| `cast code <address> --rpc-url …` | any | Check that a contract exists at an address | Long hex output means code is present. Empty `0x` means nothing is deployed there (for example after an Anvil restart) |
+| `cast receipt <txHash> --rpc-url …` | any | Read a transaction's receipt | `status 1 (success)` means it was mined and succeeded. A missing receipt means it is not mined yet, or the node has dropped it |
+| `cast call <MarketFactory> "marketCount()(uint256)" --rpc-url …` | any | Count the registered markets | Observed: `2` (NTU/SGDx and one more on the owner's chain) |
+| `forge build` | `contracts/` | Compile | Ends with `Compiler run successful`. Regenerated artifacts go to `contracts/out/` |
+| `forge test` | `contracts/` | Contract tests | Observed for the recorded run: `185 passed`. Any `failed` line means a broken contract or test |
+| `node --test contracts/script/export-web.test.mjs` | repo root | Exporter tests | Recorded: `21 passed` |
+| `forge script script/Deploy.s.sol:Deploy --rpc-url … --broadcast --unlocked --sender …` | `contracts/` | Deploy (local only) | Logs with the deployer, `TokenFactory`, `MarketFactory`, NTU, SGDx and the NTU/SGDx market, then `ONCHAIN EXECUTION COMPLETE & SUCCESSFUL`. Run only on a chain with no contract code |
+| `node contracts/script/export-web.mjs --rpc-url …` | repo root | Write ABIs and addresses for the app | Writes `web/lib/contracts/`. Refuses to write if the chain, the deployment record and the build disagree |
+| `node contracts/script/export-web.mjs --check --rpc-url …` | repo root | Confirm the export is current; writes nothing | `up to date` means the files match. A `stale deployment` message means the chain was restarted without a redeploy |
+| `scripts/check-local.sh` | repo root | Read-only environment check | Observed: `Result: ready. 0 warning(s). No deployment is needed.` See the table above for other results |
+| `npm run dev` | `web/` | Start the Next.js dev server on `localhost:3000` | `Ready in …` and `Local: http://localhost:3000` |
+| `npm test` | `web/` | Unit tests (Vitest, no chain needed) | Recorded: `368 passed`, and `48` gated real-chain and browser tests skipped |
+| `npm run typecheck`, `npm run lint`, `npm run build` | `web/` | Types, lint, production build | Each exits with no errors |
+| `npm run e2e`, `e2e:create`, `e2e:dashboard`, `e2e:hardening` | `web/` | Browser tests with a **mock wallet** | These need a **scratch** chain (port 8546) and a scratch server (port 3100), set up as described in [docs/FRONTEND.md](docs/FRONTEND.md). They never touch your main chain |
+
+---
+
+<a id="metamask-and-local-accounts"></a>
+
+## 🦊 MetaMask and local accounts
+
+**The three parts.** The app reads the chain itself over its RPC URL, with or without a wallet. MetaMask has its own RPC setting, so it can show balances and send transactions to the same node. "Connect wallet" in the app is a separate permission: it lets the site see one account.
+
+**Add the network in MetaMask** (menu names vary by version: *Settings, Networks, Add network, Add a network manually*):
 
 | Field | Value |
 |---|---|
@@ -94,135 +331,89 @@ In MetaMask add a custom network (menu names vary slightly between MetaMask vers
 | Chain ID | `31337` |
 | Currency symbol | `ETH` |
 
-**RPC connection versus wallet connection.** They are two separate things. The RPC URL is how a program *reads the chain*: the Next.js app reads balances, orders and trades from `127.0.0.1:8545` by itself, even with no wallet connected. MetaMask has its *own* RPC setting (the form above) so it can show balances and send transactions to the same node. "Connect wallet" in the app is something else again: it asks MetaMask for permission to see one of your accounts. The app and MetaMask must point at the **same** Anvil.
+**Public address versus private key.** An address (`0x7099…79C8`) is public, like an account number, and is safe to show. A private key is a secret that signs transactions; whoever holds it controls the account. This app never sees a key. Keys are used only by MetaMask.
 
----
+**Anvil's test accounts.** Anvil starts with accounts derived from a **public default mnemonic**. Its keys are published widely. Use them only on a local, disposable chain. **Never send real assets to them.** The default mnemonic is not secret, but treat any key you derive from it as disposable.
 
-# 2. Every working session (after you restart Windows or WSL)
+**Alice and Bob** are the two development accounts used in [docs/TESTING.md](docs/TESTING.md):
 
-Anvil keeps its state **only while it runs**. After a restart it is a brand-new chain at block 0 with nothing deployed. Use three WSL terminals.
-
-**Terminal 1: Anvil** (repo root or anywhere)
-```bash
-anvil
-```
-Expected: a banner listing `Available Accounts`, `Private Keys`, a `Wallet` section with the mnemonic, `Chain ID` `31337`, and finally:
-```
-Listening on 127.0.0.1:8545
-```
-Leave it running. Closing it destroys the chain.
-
-**Terminal 2: check before you deploy** (repo root)
-```bash
-scripts/check-local.sh
-```
-This is read-only: it never deploys, never stops anything and never touches a key. It checks the tools, that the RPC answers with chain ID 31337, that every exported contract has code on *this* chain, that the export is current, and that the front end answers. A healthy result:
-```
-PASS  chain id 31337 at http://127.0.0.1:8545
-PASS  tokenFactory has contract code at 0x5FbDB2315678afecb367f032d93F642f64180aa3
-...
-PASS  export is current: export-web: abis.ts, deployments.ts are up to date for chain 31337
-Result: ready. 0 warning(s). No deployment is needed.
-```
-**Do not redeploy just to start the front end.** Decide from the result:
-
-| The check says | Meaning | Do |
+| Name | Anvil account index | Address starts with |
 |---|---|---|
-| `Result: ready` | Deployment exists and matches the export | Nothing. Go to step 3 |
-| `no JSON-RPC answer` | Anvil is not running | Start Anvil (terminal 1) |
-| `chain id is N` | Wrong network | Fix the RPC URL; never deploy to it |
-| `NO contract code ... None of the exported contracts exist` | Fresh or restarted Anvil | **Deploy once** (section 3) |
-| `export check failed` but the contracts *do* exist | The chain is fine; the export record is stale or from another run | Do **not** redeploy. See `docs/TESTING.md`, Troubleshooting |
+| Alice | 0 | `0xf39F…` |
+| Bob | 1 | `0x7099…` |
 
-**Terminal 3: the app** (`web/`)
+**Import an account into MetaMask.** Account selector, *Add account or hardware wallet*, *Import account*, keep the type *Private Key*, paste the key from the Anvil banner (under `Private Keys`), and press *Import*. Do not paste a key anywhere else.
+
+**Import the demo tokens** for each account that should show balances: *Tokens, Import tokens, Custom token*, then paste the token **address** from `web/lib/contracts/deployments.ts` or the app's **Tokens** page. MetaMask should fill in the symbol and `18` decimals. Repeat for each token.
+
+**Derive an account's address without printing its key.** Anvil's default mnemonic is public, so this derivation is for a disposable chain only:
 ```bash
-cd web
-npm run dev
+read -r -s ANVIL_MNEMONIC        # paste the "Mnemonic:" phrase from the Anvil banner, then Enter (nothing is echoed)
+cast wallet address --mnemonic "$ANVIL_MNEMONIC" --mnemonic-index 1     # prints the address for index 1 (Bob)
+unset ANVIL_MNEMONIC
 ```
-Expected (taken from a real run; the port is `3000` by default):
-```
-▲ Next.js 16.4.5 (Turbopack)
-- Local:         http://localhost:3000
-✓ Ready in 223ms
-```
-Open **http://localhost:3000** in Windows Brave. The dashboard's Network card should say `Anvil (local)`, `Chain ID 31337` and a block number. If it instead says **"No SC4053 DEX deployment on this chain"**, the chain has no deployment (see the table above). Use **Connect wallet** to connect MetaMask.
+The index is the position in the derivation path. Index `0` is Alice, `1` is Bob. The address printed for index `1` is `0x70997970C51812dc3A010C7d01b50e0d17dc79C8`, which matches Anvil account 1. Verified this session with Anvil's public test phrase. To get the **private key** itself, see the walkthrough in [docs/TESTING.md](docs/TESTING.md) (section B4). Never save or share that output.
+
+**Why MetaMask's label differs from Anvil's index.** MetaMask names imported accounts in the order you imported them ("Imported Account 1", …). That has nothing to do with Anvil's numbering. **Check the address** under the account name before every test. You can rename accounts in MetaMask.
 
 ---
 
-# 3. Deploy and export (only on a fresh chain)
+## 🛠️ Troubleshooting
 
-Do this only when the check reports no contract code. It creates `TokenFactory`, `MarketFactory`, the NTU and SGDx tokens (1,000,000 each, minted to Anvil account 0) and the NTU/SGDx `OrderBook`, and sends 10,000 NTU and 10,000 SGDx to Anvil accounts 1 to 3.
+Read the **Action** column first: it says whether to restart, reconnect, check, re-export or redeploy. **Never reset the chain just because a page looks stale.**
 
-```bash
-# contracts/
-cd contracts
-export RPC_URL=http://127.0.0.1:8545
-export DEPLOYER=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266     # Anvil account 0: a public address, not a key
-forge script script/Deploy.s.sol:Deploy --rpc-url "$RPC_URL" --broadcast --unlocked --sender "$DEPLOYER"
-cd ..
-
-# repo root: write the ABIs and addresses the front end reads
-node contracts/script/export-web.mjs --rpc-url "$RPC_URL"
-# repo root: confirm
-node contracts/script/export-web.mjs --check --rpc-url "$RPC_URL"
-```
-Expected from the deploy (taken from a real run on a fresh chain):
-```
-== Logs ==
-  deployer        0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-  TokenFactory    0x5FbDB2315678afecb367f032d93F642f64180aa3
-  MarketFactory   0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
-  NTU (base)      0xa16E02E87b7454126E5E10d957A927A7F5B5d2be
-  SGDx (quote)    0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968
-  NTU/SGDx market 0xCafac3dD18aC6c6e92c921884f9E4176737C052c
-...
-ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
-```
-and from the check: `export-web: abis.ts, deployments.ts are up to date for chain 31337`.
-
-- On a **fresh Anvil** these addresses are always the same, so the exporter leaves `web/lib/contracts/deployments.ts` unchanged. On a chain where account 0 has already sent transactions, addresses differ and the exporter rewrites that tracked file: always use what the exporter wrote, not this table.
-- The script refuses any chain that is not 31337, uses no private key (Anvil's accounts are unlocked), and the exporter refuses to write unless the chain, the broadcast record and the build all agree. Details: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
-
-### Where are the addresses?
-- The app: **Tokens** and **Markets** pages show every token and market, with copyable addresses.
-- The generated file: `web/lib/contracts/deployments.ts` (`tokenFactory`, `marketFactory`, `market` = the NTU/SGDx `OrderBook`, `baseToken` = NTU, `quoteToken` = SGDx).
-- On the chain: `cast call <MarketFactory> "getMarkets(uint256,uint256)(address[])" 0 10 --rpc-url http://127.0.0.1:8545`.
-
-### Import NTU and SGDx into MetaMask
-With your Anvil network selected (menu names vary by MetaMask version): *Tokens, Import tokens, Custom token*, then paste the token **address** (from the file or the Tokens page). MetaMask normally fills the symbol and decimals; they should be `NTU` / `SGDx` and `18`. Repeat for the second token. Do this for each account that should show the balances.
-
----
-
-# 4. Tests
-
-| What | Where | Command |
+| Symptom | Cause and how to check | Action |
 |---|---|---|
-| Contracts (185 tests) | `contracts/` | `forge test` |
-| Exporter (21 tests) | repo root | `node --test contracts/script/export-web.test.mjs` |
-| Front-end unit tests (368 pass, 48 gated tests skipped), types, lint, build | `web/` | `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` |
-| Real-chain and browser suites | scratch chain only | see [`docs/FRONTEND.md`](docs/FRONTEND.md), "Testing" |
+| "Cannot reach the local Anvil node" | Anvil is not running on 8545. `cast chain-id --rpc-url http://127.0.0.1:8545` fails | **Start** Anvil (terminal 1). Then check again |
+| Network is not 31337 / wrong network banner | MetaMask is on another network, or the RPC points at a different node. `cast chain-id` shows the node's chain | **Reconnect**: switch MetaMask to *Anvil Local* (31337, `127.0.0.1:8545`) |
+| Anvil was restarted and state is gone | Dashboard says "No SC4053 DEX deployment". `check-local.sh` reports no contract code | **Deploy** once, then **export**, then reload the page |
+| No contracts deployed | `cast code <MarketFactory>` returns `0x` | **Deploy**, then **export** |
+| Stale export or addresses (the app shows old addresses, or the exporter says `stale deployment`) | The export record is from another run or chain. Contracts still exist at the recorded addresses (`check-local.sh`) | **Re-export** only if the contracts match. Do not redeploy. See [docs/TESTING.md](docs/TESTING.md) |
+| Wrong or disconnected MetaMask account | The address in MetaMask is not the one the app shows | **Reconnect**: switch account in MetaMask, then *Connect wallet* again |
+| MetaMask popup never appears | The request is waiting behind the browser's *Extensions* icon. The app shows a "Waiting for MetaMask confirmation" card | **Check the toolbar**: open the Extensions menu, open MetaMask, approve. Or reject the old request, then press *Try again* |
+| Token balances do not match your expectation | Wrong account or network, or the token is not imported into MetaMask. Holdings show only the connected account | **Check** the account address and the network, then **reconnect**. Import the token address into MetaMask if it is missing. No redeploy needed |
+| Token allowance is insufficient | The order needs more approval than you gave. The ticket shows an approval step | **Approve** the exact amount, then place the order. The app does not reuse a stale allowance |
+| Why does an order need two confirmations? | An ERC20 `approve` and the order (`placeLimitOrder`) are two transactions. The token must allow the OrderBook to move funds before the OrderBook can escrow them | **Expected.** Confirm both. Approvals are separate from the order |
+| Transaction status is unknown or pending | The app waits in bounded windows. A transaction can still be mined later, or the node can drop it | **Check** *My orders* and the transaction page before placing the order again. Do not repeat an order just because a card says "not confirmed yet" |
+| A notice says the local chain was reset | Anvil restarted (block identity changed). The app shows the evidence | **Reload** the page. If the contracts are gone, **deploy** and **export** |
+| Command fails with "no such file" or "not a project" | Wrong terminal directory. `npm` needs `web/`, `forge` needs `contracts/`, `check-local.sh` runs from the repo root | **Change directory** (see the table in Quickstart) |
+| Next.js: port 3000 already in use | Another dev server is running | **Stop** that `npm run dev` (find it with `ss -ltnp \| grep :3000`). Do not stop Anvil |
+| Hydration warning mentioning an attribute such as `cz-shortcut-listen` | A browser extension changes the page before React loads. Recorded in `docs/TESTING.md`, section E | **Ignore** it or test in a window without extensions. It is not an app error |
+| Chromium test tools fail with "error while loading shared libraries" | Chromium needs system libraries such as `libnss3` and `libnspr4` in WSL | **Install** them with `sudo apt-get install libnss3 libnspr4` (a system change you run yourself). Only the browser tests need this |
 
-The real-chain and browser suites send transactions, so they run against a **separate scratch Anvil (port 8546) and a scratch server (port 3100)**, never your main chain: the real-chain suite refuses port 8545. Deploy to a scratch chain with `FOUNDRY_BROADCAST` and `FOUNDRY_CACHE_PATH` pointing at a temporary folder, otherwise forge overwrites the record the exporter checks on your main chain (details in `docs/FRONTEND.md`).
-
-To test by hand with MetaMask, follow the illustrated guide: **[`docs/TESTING.md`](docs/TESTING.md)**.
+More detail, with diagnosis steps, is in [docs/TESTING.md](docs/TESTING.md#e-troubleshooting-and-faq) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ---
 
-# 5. Troubleshooting (short)
+## 📚 Documentation
 
-| Symptom | Likely cause and first check |
+| Document | What it covers |
 |---|---|
-| Dashboard: "No SC4053 DEX deployment on this chain" | Anvil was restarted. Run `scripts/check-local.sh`; deploy only if it says no contract code |
-| "Cannot reach the local Anvil node" | Anvil is not running on 8545 (terminal 1) |
-| App and MetaMask disagree (different balances, wrong network banner) | They point at different nodes or MetaMask is on another network. Network must be 31337 at `http://127.0.0.1:8545` |
-| `export-web ... stale deployment` while the contracts exist | The exporter's record (`contracts/broadcast/.../run-latest.json`) is from another chain or run. Do not redeploy; see `docs/TESTING.md` |
-| MetaMask spinning but no popup | The request is waiting behind the browser's *Extensions* icon. See the notice the app shows, and `docs/TESTING.md` |
-| Transactions fail after an Anvil restart | MetaMask's cached nonce. Settings, Advanced, "Clear activity tab data" for that network (standard MetaMask behaviour) |
-| `git status` shows `web/next-env.d.ts` modified | Next regenerates it on `dev` and `build`. It is generated; do not commit that change |
-| Chromium test tooling: "error while loading shared libraries" | Missing system libraries (WSL). See `docs/TESTING.md`, Troubleshooting |
+| [docs/TESTING.md](docs/TESTING.md) | The manual trading walkthrough with MetaMask (Alice and Bob), test layers, which steps were performed, and troubleshooting |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | The deploy script, the exporter and its safety checks, what each kind of change does to chain state, and size and gas after engine changes |
+| [docs/FRONTEND.md](docs/FRONTEND.md) | The front end's architecture, the trading, creation and dashboard flows, transaction hardening, the test suites and known limits |
+| [docs/MARKET_FACTORY.md](docs/MARKET_FACTORY.md) | The accepted MarketFactory architecture, its workflow diagram, the comparison with manual deployment, and tradeoffs |
+| [docs/BONUS_INTEGRATION.md](docs/BONUS_INTEGRATION.md) | What the front end needs before the bonus engine functions can be shown. Nothing bonus is active |
+| [PRODUCT.md](PRODUCT.md) | Product purpose, users, what is implemented today, and the verification status |
+| [DESIGN.md](DESIGN.md) | The approved visual system for the web app |
+| [CONTRACT_INTERFACE.md](CONTRACT_INTERFACE.md) | The frozen contract interface shared between the engine and the front end |
+| [docs/ai-audit/](docs/ai-audit/) | The AI audit report: prompt logs, issue reports and test evidence |
 
-Everything else, with diagnosis steps, is in [`docs/TESTING.md`](docs/TESTING.md#e-troubleshooting-and-faq).
+---
 
-## Safety notes
+<a id="implemented-and-pending"></a>
+
+## ✅ Implemented and pending
+
+**Implemented and verified:** wallet connection; token issuance; market listing through MarketFactory; limit orders with exact approvals, escrow, matching and partial fills; order history and transaction pages; the multi-market dashboard and holdings; transaction replacement tracking and chain-reset detection.
+
+**Verification status.** The SPEC worked example (Alice sells 10 NTU at 2 SGDx, Bob buys 4 NTU at a limit of 2.2) was checked on a scratch chain by automated tests, in a browser with a **mock** wallet, and by the project owner with real MetaMask accounts. The owner also reported creating DTT, listing DTT/SGDx and a trade on that market. Those reports are recorded in [docs/TESTING.md](docs/TESTING.md), section F, which says which steps were not performed.
+
+**Pending:** cancel an order, batch matching and stop-limit orders are not built. The engine functions revert, so the interface offers no control for them. The manual cases for negative paths, speed-up and cancel in MetaMask are procedures, not yet performed.
+
+---
+
+## 🔒 Safety notes
 - Anvil's default accounts, keys and mnemonic are **publicly known**. Use them only on local, disposable chains and never put real assets in them. No private key or seed phrase is stored in this repository.
-- Never put a private key in a `NEXT_PUBLIC_` variable: those are shipped to the browser.
+- Never place a private key in a `NEXT_PUBLIC_` variable. Those values are shipped to the browser.
+- Signing happens only in your wallet. The app has no server that holds keys.

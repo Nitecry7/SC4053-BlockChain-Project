@@ -45,7 +45,7 @@ An exchange whose interface shows only what the chain says. Every figure is read
 - **Balances:** show wallet balance and escrowed amount as different quantities.
 - **Bonus engine features named in the brief** (cancelling the remainder of an order, batched multi-party matching, conditional stop-limit orders) are part of the course scope but are Person 1's engine work and are not yet working (see below).
 
-### Implemented today (through P2-6)
+### Implemented today (through P2-7)
 
 The web app can: connect a browser wallet through RainbowKit; show the connected account, network and live block; show wrong-network, no-deployment and node-unreachable states; list issued tokens and listed markets from the on-chain registries; show token balances; show a market's best bid and ask, last trade price, spread, live order book, a depth chart, and trade count and volume derived from `Trade` events; and format and validate amounts with bigint-exact helpers that mirror the engine.
 
@@ -55,7 +55,9 @@ Since P2-6 it can also **issue a token** (name, symbol, fixed supply through Tok
 
 Since P2-6.1 the Dashboard also has a **market selector** (any market in the MarketFactory registry, carried in `?market=`; the seed NTU/SGDx market is the fallback for a missing or invalid value) that switches the pair panels, depth, book, summary, ticket and Trade link together, and an **All token holdings** panel: the connected wallet's balance in every token found through the TokenFactory registry and the tokens of every listed market (deduplicated, nonzero by default, labelled issued by TokenFactory or listed externally, never added together, no prices). Registry reads now cover every page up to 500 entries.
 
-The web app **cannot yet**: cancel or match orders or place stop-limit orders. The deployed engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` revert, so the UI offers none of them. Do not describe any of these as functional until they are built and verified. Wallet behaviour is verified against a mock wallet and a scratch chain, and the SPEC worked example has been performed by the project owner with real MetaMask accounts (`docs/TESTING.md`); the other manual cases there are procedures not yet performed.
+Since P2-7 the order runner, and the token and market flows that share it, follow a **sped-up, cancelled or replaced transaction** to what was actually mined (viem is given the sender and nonce, so the wait can see a replacement). A cancelled or replaced transaction is reported as a failure under the hash that was mined, never as a placed order. A **local chain reset** (Anvil restarted or a snapshot reverted) is detected from block identity, not from a missing transaction alone; the app then re-reads every query and shows the evidence. Narrow layout fixes keep the connected-wallet header usable at 375 and 390 px.
+
+The web app **cannot yet**: cancel or match orders or place stop-limit orders. The deployed engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` revert, so the UI offers none of them. Do not describe any of these as functional until they are built and verified. Wallet behaviour is verified against a mock wallet and a scratch chain. The project owner has performed the SPEC worked example with real MetaMask accounts (`docs/TESTING.md`), and has reported creating DTT, listing DTT/SGDx and a trade on that market, which the owner's chain state supports; the remaining manual cases are procedures not yet performed.
 
 ### Contract facts the interface must respect
 
@@ -79,8 +81,17 @@ The web app **cannot yet**: cancel or match orders or place stop-limit orders. T
 
 ### Explicitly open
 
-- Person 1 has not reviewed the factory-created NTU/SGDx market that the app reads.
-- Only the SPEC worked example has been performed with real MetaMask accounts (by the project owner). The negative and recovery cases in `docs/TESTING.md` have not been performed manually.
+- Person 1 was notified of the MarketFactory architecture. No separate review or signed approval is recorded.
+- Manual MetaMask: the SPEC worked example (NTU/SGDx) was performed by the project owner. The DTT/SGDx creation, listing and trade were reported by the owner; their transaction hashes and screenshots are not recorded in this repository. The negative, recovery and speed-up/cancel cases in `docs/TESTING.md` have not been performed manually.
+
+## Verification status
+
+| Layer | What it covers | What it does not cover |
+|---|---|---|
+| Automated unit and contract tests | validation, runners, decoding, `forge test` (185) | a real wallet |
+| Real chain (scratch Anvil, unlocked dev accounts) | issuance, listing, trading, hardening scenarios | MetaMask |
+| Browser with a mock wallet | the UI flows on a scratch chain | MetaMask (a stand-in wallet) |
+| Manual MetaMask (owner) | SPEC worked example; DTT/SGDx creation, listing and trade (reported) | every other manual case |
 - The course brief does not state a deadline or a testnet requirement; the team's 8 November date is an internal plan.
 - Which team member leads each AI Audit Report section is not confirmed.
 

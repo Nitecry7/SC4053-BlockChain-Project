@@ -18,6 +18,21 @@ Screenshots are labelled the same way: **Reference render** = a screenshot of th
 
 ---
 
+### Results by layer (keep these separate)
+
+These are different kinds of evidence. An automated pass says nothing about MetaMask, and a mock-wallet pass says nothing about the real wallet.
+
+| Layer | Recorded result (AI-run, P2-7 evidence, 2026-11-06) | Where |
+|---|---|---|
+| Unit tests (`npm test`) | 368 passed, 48 gated suites skipped | `web/` |
+| Contracts (`forge test`) | 185 passed | `contracts/` |
+| Exporter (`node --test contracts/script/export-web.test.mjs`) | 21 passed | repo root |
+| Real chain, unlocked Anvil dev accounts, scratch Anvil 8546 | 48 passed (trading, creation, hardening) | `docs/ai-audit/test-evidence/person2/p2-7-hardening.md` |
+| Browser, **mock wallet**, scratch server 3100 | `e2e` 13, `e2e:create` 14, `e2e:dashboard` 13, `e2e:hardening` 9 passed | same file |
+| **Manual MetaMask (Windows Brave)** | SPEC worked example: Tests 1 to 4 reported by the owner (Tests 5 and 6 not separately reported). DTT creation, listing and a trade, reported by the owner (Section F) | Section F |
+
+The automated rows were run in this repository's WSL environment. They are not a deployment check, and they do not prove any MetaMask behaviour.
+
 # A. Prepare the test environment
 
 ### A1. Start WSL and open the project
@@ -26,7 +41,7 @@ In Windows, open **Ubuntu** from the Start menu (or run `wsl` in PowerShell). Th
 cd ~/projects/SC4053-BlockChain-Project        # wherever you cloned it; this folder is the "repo root"
 export PATH="$HOME/.foundry/bin:$PATH"          # once per terminal if Foundry is not already on your PATH
 ```
-First time on this machine? Do the one-time setup in the [README, section 1](../README.md#1-first-time-setup-once-per-machine) first.
+First time on this machine? Do the one-time setup in the [README, Quickstart](../README.md#quickstart) first.
 
 ### A2. Start Anvil (terminal 1)
 ```bash
@@ -117,7 +132,7 @@ done
 
 (I ran this snippet on the owner's chain after their MetaMask test and it printed 969,990 / 970,008 for Alice and 10,004 / 9,992 for Bob, exactly the values Section C predicts after the trades.)
 
-To show the tokens in MetaMask, import them once per account (README, "Import NTU and SGDx into MetaMask"): *Import tokens, Custom token*, paste the NTU address, then the SGDx address (both are in `web/lib/contracts/deployments.ts` and on the app's **Tokens** page).
+To show the tokens in MetaMask, import them once per account (the steps are also in the README, under *MetaMask and local accounts*): *Import tokens, Custom token*, paste the NTU address, then the SGDx address (both are in `web/lib/contracts/deployments.ts` and on the app's **Tokens** page).
 
 ---
 
@@ -308,7 +323,7 @@ Remember: an **ERC20 approval** and **placing the order** are two *different* bl
 After 7f or 7g you may need to reset MetaMask's cached nonce (Section E, item 1).
 
 ## Test 8: create a token and list a market (P2-6)
-**Status: PROCEDURE ONLY. Not performed with MetaMask.** The same flows have passed an automated browser run with a **mock** wallet and a scratch-chain integration suite (see `ai-audit/test-evidence/person2/p2-6-issuance-listing.md`); neither is a MetaMask result. Use Alice (as in Tests 1 to 6) unless stated.
+**Status: PROCEDURE ONLY as written, not completed step by step with MetaMask.** The owner has reported creating DTT and listing DTT / SGDx, and the chain shows that market (Section F). The same flows have passed an automated browser run with a **mock** wallet and a scratch-chain integration suite (see `ai-audit/test-evidence/person2/p2-6-issuance-listing.md`); neither is a MetaMask result. Use Alice (as in Tests 1 to 6) unless stated.
 
 | # | Do this | Expect |
 |---|---|---|
@@ -388,7 +403,7 @@ Each item says how sure we are: **Verified here** (reproduced or checked in this
 - **Symptom:** the dashboard says "No SC4053 DEX deployment on this chain"; balances are zero; MetaMask transactions fail or look stuck.
 - **Cause (verified here):** plain `anvil` keeps the chain in memory only. Restarting a scratch Anvil in this project gave block 0 with no contracts.
 - **Check:** `scripts/check-local.sh` reports `NO contract code`.
-- **Fix:** deploy and export once (README section 3 / A5, A6). Then reset MetaMask's cached nonce for the Anvil network: *Settings, Advanced, Clear activity tab data* (standard MetaMask behaviour; **not tested** in this project).
+- **Fix:** deploy and export once (see A5 and A6 above). Then reset MetaMask's cached nonce for the Anvil network: *Settings, Advanced, Clear activity tab data* (standard MetaMask behaviour; **not tested** in this project).
 - **Not covered:** `anvil --state <file>` exists in Anvil's help and can persist a chain, but it has **not been tested** with this project's deployment and export checks.
 
 ### 2. Ports 3000, 3100, 8545 and 8546
@@ -423,7 +438,7 @@ See B3 and B4: read the `Private Keys` section of Anvil's banner, or derive acco
 ### 7. Unexpected native-token-symbol warnings
 - **Symptom:** MetaMask warns that the currency symbol or network details do not match what it knows for chain ID 31337.
 - **Status: unverified.** This was not reproduced here and the exact wording is not recorded, so no root cause is claimed.
-- **What is safe:** use `ETH` as the symbol (README, A9). The symbol is a display label in MetaMask and does not affect the contracts or the app. If a warning blocks you, double-check the chain ID is `31337` and the RPC URL is `http://127.0.0.1:8545`.
+- **What is safe:** use `ETH` as the symbol (see A9 above). The symbol is a display label in MetaMask and does not affect the contracts or the app. If a warning blocks you, double-check the chain ID is `31337` and the RPC URL is `http://127.0.0.1:8545`.
 
 ### 8. Next.js hydration errors from browser extensions (ColorZilla)
 - **Symptom:** the dev overlay or console shows a hydration mismatch mentioning an attribute such as `cz-shortcut-listen="true"` on `<body>`.
@@ -465,6 +480,9 @@ There is no background process. Matching happens **inside the transaction of a n
 | 5. Alice's order partly filled, 6 NTU | On-screen steps **not separately reported** | Owner reported "6 NTU remaining"; chain: filled 4e18, status 1, market holds 6 NTU |
 | 6. My orders and transaction details | **Not separately reported** | Decoded events verified read-only against the owner's receipt |
 | 7a to 7h. Negative and recovery cases | **No** | Procedures only |
+| 8. Create a token and list a market (Test 8 steps) | **Partly.** The owner reported creating **DTT** and listing **DTT / SGDx** in the app. The individual steps 8a to 8l were not confirmed one by one | Owner report. Chain, read by the AI (read-only, 2026-11-06): the second registered market has base `DTT` (`0xeEBe00Ac0756308ac4AaBfD76c05c4F3088B8883`) and quote SGDx (`0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968`); its `lastTradePrice()` is 2e18, i.e. a trade at 2 SGDx per DTT has happened |
+| 8j. DTT trade (partial sell fill, maker-price settlement) | **Reported by the owner**, not checked step by step against 8j | Owner report of a partially filled sell at the maker's price. The chain reads above are consistent with a trade at 2 but do not by themselves show the fill amounts. No transaction hashes or screenshots are recorded in this repository |
+| 9 and 10. Dashboard selector, speed-up and cancel | **No** | Procedures only |
 
 The orders were created on-chain at 2026-11-05 15:00:21 UTC (order 1) and 15:29:48 UTC (order 2); the owner reported the result on 2026-11-06. The same SPEC example also passed in the automated mock-wallet browser run and in the real-chain suite on a scratch Anvil: see [`ai-audit/test-evidence/person2/p2-5-trading.md`](ai-audit/test-evidence/person2/p2-5-trading.md).
 

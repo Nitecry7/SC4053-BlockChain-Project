@@ -32,3 +32,10 @@ One read-only Sonnet reviewer: no high or medium defects; four low findings, all
 
 ## Limits
 Names and symbols are not unique; anyone can list any 18-decimal token (labelled, not blocked); orientation is permanent; registries are read one page (50) at a time; the P2-5 `runOrder`/`runApproval` still keep the original hash after a speed-up; screenshots in `p2-6-screens/` are mock-wallet renders, and nine `FAIL-*.jpg` files from an early failed run remain there and should be deleted by hand.
+
+## Follow-up, 2026-11-06 (documentation alignment, Haiku 5.5)
+The sections above are the historical record of the P2-6 session and are unchanged. Since then:
+- **Owner report, manual MetaMask (not in this session):** the project owner reported creating the DTT token in the app, listing DTT / SGDx, and a trade on that market. Transaction hashes and screenshots are not in this repository. The steps of Test 8 were not checked one by one; see `docs/TESTING.md` Section F.
+- **Read-only chain observation (AI, 2026-11-06, 8545):** the market registry holds the NTU/SGDx market and a second market with base DTT and quote SGDx. That market's `lastTradePrice()` is 2e18. This shows a trade occurred. It does not show fill amounts.
+- **Superseded limit:** the "Limits" line above says the P2-5 runner keeps the original hash after a speed-up. P2-7 fixed this (issue P2-012, `p2-7-hardening.md`).
+- The "Manual MetaMask: nothing yet" row in this file is correct for the P2-6 session. The owner's later DTT report does not change that historical row.

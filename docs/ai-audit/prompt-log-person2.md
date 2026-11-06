@@ -263,6 +263,21 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 
 **Skills and MCPs:** Foundry (scratch Anvil, `forge test`), `playwright-core`, `impeccable detect`. No reviewer was spawned and no Opus agent: there is no new signing or contract path, only wait-logic and notice changes. `solidity-security` was not applicable (no Solidity changed). Context7 was not needed (viem behaviour was measured and the installed source read).
 
+## 2026-11-06: documentation alignment and README redesign (model: Haiku 5.5, docs only)
+
+**Model:** Haiku 5.5 for this entire task. Earlier sessions' Sonnet attribution is not carried over.
+
+**Prompt (summary):** Make the documentation match the implemented DEX through P2-7: an SGHomie-style README with three Mermaid diagrams (architecture, user journey, MarketFactory workflow), the accepted MarketFactory architecture (rationale, tradeoffs, not an AMM, router, escrow or matcher), PRODUCT, FRONTEND, TESTING, DEPLOYMENT, MARKET_FACTORY and a narrow CONTRACT_INTERFACE deployment-handoff correction. Separate owner-reported MetaMask actions from read-only chain observations. No Solidity, frozen API, SPEC, ENGINE_PHASES, CLAUDE or Person 1 history changes. No commit.
+
+**What the AI got wrong:**
+1. The first draft of MARKET_FACTORY.md had a duplicate "What it does" heading after the new sections; caught on re-reading and removed.
+2. The first draft of the TESTING.md results table grouped Tests 5 and 6 with the owner's confirmed steps. Section F says they were not separately reported; the table was corrected to match Section F before the work was reported.
+3. The first version of the workflow chart drew Anvil with four arrows into the contracts, which reads as if Anvil calls them. The architecture picture uses one chain box instead.
+
+**What the human did:** supplied the README reference and two diagrams as starting points, approved the plan with the MarketFactory diagram and rationale, and asked that the attribution be Haiku 5.5. The DTT/SGDx manual trade was reported by the owner; its hashes and screenshots are not in the repository and are not recorded here.
+
+**Evidence:** this was a docs-only change, so no test suite was run. Checks actually run: all three Mermaid diagrams parsed with mermaid 12.2.0 in headless Chromium; a relative-link and anchor check over 12 edited files (one reported item is a documented image-syntax example, not a broken link); read-only `cast` and `scripts/check-local.sh` reads on 8545 (chain 31337, block 13, `marketCount` 2, DTT base, SGDx quote, `lastTradePrice` 2e18). Nothing was marked passed that was not run.
+
 ## Requirements traceability
 | ID | Brief text | Design | Code | Tests | Evidence | Report § | Status |
 |---|---|---|---|---|---|---|---|

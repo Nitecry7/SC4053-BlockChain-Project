@@ -31,3 +31,6 @@ Environment: WSL2, Foundry 1.9.0, Chromium 1252 via `playwright-core`. Scratch A
 
 ## Screenshots
 `p2-6-1-screens/` (mock wallet): default disconnected, Alice's holdings, Bob with zero balances, DTT selected, invalid market, trade result, and overview/trade at desktop, tablet and mobile. These are mock-wallet renders, not MetaMask, and not the final screenshot walkthrough.
+
+## Follow-up, 2026-11-06 (documentation alignment, Haiku 5.5)
+The sections above are the historical record of the P2-6.1 session and are unchanged. The owner reported a manual DTT / SGDx creation, listing and trade after this session. That is recorded in `docs/TESTING.md` Section F as an owner report. The dashboard's Test 9 steps (market selector, holdings, account switch) were not reported as performed, and no screenshots from that run are in this repository. The "Manual MetaMask: nothing yet" row above is correct for the P2-6.1 session.

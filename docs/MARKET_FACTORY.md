@@ -1,10 +1,72 @@
 # MarketFactory (Person 2)
 
-**Status: DRAFT, pending Person 1's review.** It is not part of the frozen `CONTRACT_INTERFACE.md`, which is unchanged.
+**Status: accepted architecture, implemented and used.** The project owner has accepted MarketFactory as the mechanism for permissionless market creation and registration. `Deploy.s.sol` creates the seed NTU/SGDx market through it, the frontend discovers and trades listed markets through its registry (including DTT/SGDx on the owner's chain), and the test suites cover it. Person 1 has been notified of this decision. No separate technical review or signed approval from Person 1 is recorded in this repository. `CONTRACT_INTERFACE.md` is updated only in its deployment handoff; no interface item changed.
 
-**P2-3 integration decision (user-authorized, not reviewed by Person 1):** `contracts/script/Deploy.s.sol` now creates the seed NTU/SGDx market through this factory. The project owner authorized this for P2-3. Person 1 has not independently reviewed or approved it, so the "Review request for Person 1" below is still open.
+**What it is not:** MarketFactory is not an AMM, a liquidity pool, a token router, an escrow contract or an off-chain matching engine. It holds no tokens, has no trading function and is never the `msg.sender` of an order.
 
 Brief reference: section 5.1 asks for a front end that supports *token listing*, order submission and execution, and self-custody. Token **issuance** (TokenFactory) and token **listing** (this contract) are separate steps: an issued token is not tradable until a market exists for it.
+
+## Market creation workflow
+The diagram follows `createMarket` in `contracts/src/MarketFactory.sol` line by line. The app's checks run before any wallet request, so most invalid inputs never reach MetaMask.
+
+```mermaid
+flowchart TD
+    A["👤 User selects base and quote tokens"]
+    P["🖥️ App reads the chain first:<br/>decimals() = 18, tokens differ, getMarket(a, b) is empty"]
+    B["🦊 MetaMask signs createMarket(base, quote)"]
+    C["🏭 MarketFactory.createMarket"]
+    D["Compute pair key: sort the two addresses,<br/>keccak256(abi.encode(low, high))"]
+    E{"Pair or reverse already registered?"}
+    F["❌ Revert MarketExists(existing)<br/>the UI shows the existing base and quote"]
+    G["Deploy new OrderBook(base, quote)"]
+    H{"Constructor accepts the pair?<br/>Distinct, nonzero, 18 decimals"}
+    I["❌ Constructor reverts InvalidTokens or UnsupportedDecimals<br/>whole transaction rolled back, nothing registered"]
+    J["Store pair lookup, isMarket flag and registry entry"]
+    K["Emit MarketCreated(market, base, quote, creator)"]
+    L["✅ Next.js discovers the market through getMarkets and MarketCreated"]
+    M["📖 New empty OrderBook<br/>no resting liquidity yet"]
+    N["🔄 Traders approve and place orders directly on that OrderBook,<br/>never through the factory"]
+
+    A --> P
+    P --> B
+    B --> C
+    C --> D
+    D --> E
+    E -->|"Yes"| F
+    E -->|"No"| G
+    G --> H
+    H -->|"No"| I
+    H -->|"Yes"| J
+    J --> K
+    K --> L
+    L --> M
+    M --> N
+```
+
+- **Market creation adds no trading liquidity.** The new OrderBook starts empty; the first orders come from traders, through their own approvals.
+- **The factory never holds trader funds.** It stores addresses only. Escrow sits in each OrderBook, and the factory is never a party to a trade.
+- **A token without `decimals()`** produces an empty revert from the constructor's static call (reported as "not an ERC-20" in the UI). The duplicate check uses the same pair key as the rest of the contract, so the reversed pair is caught in either order.
+
+## Why MarketFactory instead of manual OrderBook deployment
+Before this factory, a market existed only if someone ran a deployment script for it. The table compares the two options.
+
+| | Manual `new OrderBook(...)` by a script | MarketFactory |
+|---|---|---|
+| Who can list a pair | whoever has the deploy script and a node | anyone, from the app, with a wallet |
+| How the app finds markets | addresses copied into configuration | on-chain registry (`getMarkets`, `MarketCreated`) |
+| Duplicate and reversed pairs | nothing prevents them | rejected with `MarketExists` |
+| External ERC20s | possible, but each address is wired by hand | any valid 18-decimal token, labelled as external in the UI |
+| Coupling with the engine | none | none: OrderBook is unmodified, the factory only calls its constructor |
+
+**Advantages.** Permissionless creation of several markets without redeploying anything, registry discovery for the frontend, duplicate-pair prevention, support for externally issued compatible tokens, and separation from the trading engine (the factory has no trading code).
+
+**Tradeoffs.**
+- **Deployment gas.** Each market costs one contract creation. This repository does not record a per-market gas figure; measure it with `forge test --gas-report` before quoting one.
+- **Permanent base and quote orientation.** The first creator fixes it (see Limitations).
+- **Potentially unsafe external tokens.** Anyone can list a valid token; `isMarket` proves provenance, not trust.
+- **Separate liquidity per market.** Each OrderBook keeps its own book; a DTT/SGDx market does not share orders with NTU/SGDx.
+- **Factory size grows with OrderBook.** The factory embeds the OrderBook creation code (measured below). Engine growth eventually pushes the factory toward the 24,576-byte limit.
+- **No automatic upgrades.** An existing market keeps the bytecode it was deployed with. A new engine means a new factory and new markets; nothing migrates, and orders in old markets stay in those markets.
 
 ## What it does
 `contracts/src/MarketFactory.sol` deploys `new OrderBook(base, quote)` for a token pair and records it in an on-chain registry. It does nothing else.
@@ -47,7 +109,7 @@ Errors from the OrderBook constructor pass through unchanged: `InvalidTokens` (z
 - **A token can burn the gas of its own listing.** A token that makes its `decimals()` call fail inside a static context makes that single `createMarket` consume the gas forwarded to it. Only the caller of that transaction pays.
 - **Embedded engine bytecode.** The factory contains OrderBook's creation code (about 7 KB). If Person 1 changes OrderBook after deployment, markets created by an already-deployed factory keep the old code, so redeploy the factory with the engine.
 - **Factory size tracks OrderBook size.** The factory's runtime code embeds OrderBook's creation code, so it reaches the 24,576-byte limit before OrderBook does. Measured: factory runtime 8,358 B against OrderBook initcode 6,974 B. If the stop-order bonus makes OrderBook's initcode much larger, re-run `forge build --sizes` after every engine change.
-- The factory is a **second deployment entry point**: `Deploy.s.sol` could create the seed market through it, which changes the deployment handoff in `CONTRACT_INTERFACE.md` ("deploys the tokens, then `OrderBook(base, quote)`").
+- **Deployment entry point.** `Deploy.s.sol` creates the seed market through this factory. `CONTRACT_INTERFACE.md`'s deployment handoff now says so; the interface items themselves did not change.
 
 ## Notes for the UI
 - Read `baseToken()` and `quoteToken()` from a market before pricing anything. `getMarket(a, b)` ignores argument order, so it says nothing about orientation.
@@ -55,14 +117,13 @@ Errors from the OrderBook constructor pass through unchanged: `InvalidTokens` (z
 - Page `getMarkets` with a fixed limit (for example 50), because a spammed registry could make one huge read hit the RPC's call gas cap.
 - `creator` in `MarketCreated` is `msg.sender`, which can be a contract.
 
-## Review request for Person 1
-Please confirm, or ask for changes to, each of the following before this is wired into deployment or the UI.
+## Integration checklist (forward-looking)
+Person 1 has been notified of the architecture. The items below are what must hold whenever the engine changes. They are a checklist, not a record of any review.
 
-1. **Approach.** A separate, permissionless Person 2 contract that instantiates your `OrderBook` unmodified, plus a registry. Alternative if you prefer: no factory, and listing stays a script-only step (this would leave "token listing" as a display feature only).
-2. **How it uses OrderBook.** Only `new OrderBook(base, quote)`. Your constructor reads no `msg.sender`, `tx.origin` or owner, so a factory-created market is identical to a directly deployed one. Evidence: runtime bytecode equality, a replay of one trade sequence on both a factory market and a direct deployment with full state compared, and a differential check of every write function (`MarketFactoryIntegration.t.sol`).
-3. **Your review should cover:** (a) that the constructor's only external calls are the `decimals()` reads, which is what the no-reentrancy-guard argument rests on; (b) that the unordered-pair rule and "first creator fixes the orientation" are acceptable for your engine, including the tick-size consequence described under Limitations; (c) that the factory size stays under the limit as OrderBook grows; (d) that the tests do not duplicate or contradict your engine tests (they re-use public API only, and none of your files are changed).
-4. **Where the API is documented.** This file (`docs/MARKET_FACTORY.md`, Person 2). Say if you would rather have an appendix in `CONTRACT_INTERFACE.md`, which needs both of us to agree.
-5. **Deployment handoff.** Are you happy for `Deploy.s.sol` to create the seed market through the factory, with you reviewing that part?
-6. **Compatibility.** The differential test calls `cancelOrder`, `matchOrders`, `placeStopLimitOrder`, `triggerStopOrders` and `placeLimitOrder` on a factory market and a direct deployment, and compares results. It stays valid when you implement the bonus functions.
-
-Please record your decision as a PR comment so it is written down.
+- [ ] **Engine compatibility.** `forge test` passes, including `MarketFactoryIntegration.t.sol`, which checks that a factory market and a direct deployment behave the same through the public API.
+- [ ] **Size.** `cd contracts && forge build --root . --sizes`: factory runtime stays below 24,576 B and initcode below 49,152 B (`Deploy.t.sol` asserts these limits). Last recorded: factory runtime 8,358 B, OrderBook initcode 6,974 B.
+- [ ] **Constructor behaviour.** The constructor's only external calls are the `decimals()` reads, which the no-reentrancy-guard argument depends on. Any new external call needs a new review of that argument.
+- [ ] **Orientation rule.** The unordered-pair rule and "first creator fixes orientation" still suit the engine, including the tick-size consequence under Limitations.
+- [ ] **ABI and records.** After any engine change: rebuild, redeploy a compatible factory on a scratch chain, regenerate `web/lib/contracts/` with `contracts/script/export-web.mjs`, review the diff, then run the real-chain and browser suites. Redeploying the main Anvil needs the project owner's approval, and it discards the existing chain state.
+- [ ] **Security.** Re-check the risks in this file (external tokens, orientation, spam) against the new engine before publishing it.
+- [ ] **Interface.** `CONTRACT_INTERFACE.md` stays frozen. A changed engine interface is a shared decision, not a change to this file.

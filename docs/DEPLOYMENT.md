@@ -2,7 +2,7 @@
 
 Local Anvil only (chain id 31337). `run()` refuses any other chain: it checks Forge's chain id **and** asks the node itself (`eth_chainId`), because Forge's `--chain 31337` flag alone can make Forge report 31337 against any node. The independent reviewer reproduced that bypass against a node reporting chain id 1 (11 transactions were broadcast). I re-ran the same command after the fix and it fails with `WrongChain(1)` and sends nothing. No private key is used anywhere: Anvil's accounts are unlocked, so the node signs for its own account. `--rpc-url` is required, because the node is queried.
 
-**Integration status:** the script creates the seed NTU/SGDx market through `MarketFactory`. That choice was **authorized by the project owner for P2-3**. Person 1 has not reviewed it, and `CONTRACT_INTERFACE.md` (which still describes a direct `OrderBook` deployment) is unchanged. See `docs/MARKET_FACTORY.md`.
+**Integration status:** `MarketFactory` is the accepted way to create markets. The script creates the seed NTU/SGDx market through it, and the frontend lists and trades markets from its registry. Person 1 has been notified of this decision; no separate review is recorded. `CONTRACT_INTERFACE.md`'s deployment handoff describes this flow. See `docs/MARKET_FACTORY.md`.
 
 ## What gets deployed
 | Contract | Role |
@@ -76,6 +76,18 @@ How it stays honest:
 - After an Anvil restart without a redeploy, the exporter stops with `stale deployment ...` and tells you to redeploy. This covers both a chain that is shorter than the recorded block and a chain whose block at that height has a different hash.
 - MetaMask caches nonces per network, so after restarting Anvil you will probably need MetaMask's "Clear activity tab data" for the 31337 network. This is standard MetaMask behaviour and has **not been tested in this project**.
 - `contracts/broadcast/*/31337/` is gitignored. `web/lib/contracts/*.ts` is not. Whether to commit `deployments.ts` is your decision: it is only correct for a chain deployed the same way (a fresh Anvil, deployer at nonce 0). On such a chain it is byte-identical every time, which was checked on three separate fresh chains, so `--check` works as a CI-style guard there.
+
+## What each kind of change does to state
+| Action | What happens on the chain | What happens to the app |
+|---|---|---|
+| **Restart Anvil with fresh state** (no persistence) | The earlier chain is gone: every contract, token balance, order and trade. The new chain starts at block 0 | Run the deploy and export again. Until then the app reports no deployment |
+| **Deploy more contracts on the same chain** | Existing contracts, balances, orders and trades stay where they are. Nothing is deleted | `deployments.ts` is unchanged unless the exporter's seed addresses change. Other markets are found through the registry |
+| **Change the exported addresses** (a redeploy on the same chain) | The new deployment is new state. Old contracts and orders do **not** move to it | The app reads only the addresses in `deployments.ts`, so it shows the new set |
+| **Change OrderBook and redeploy MarketFactory** | Existing markets keep their deployed bytecode. Only markets created by the new factory use the new engine. Nothing migrates | Run the exporter again. Old markets stay registered in the old factory |
+
+**Create more markets** through `MarketFactory.createMarket`, from the app's **List market** page or with `cast send`. Each new market is a separate, immutable OrderBook with its own empty book and its own escrow. The exporter records only the seed NTU/SGDx market; other markets are discovered from the registry.
+
+**Size and gas after engine changes.** The factory embeds OrderBook's creation code, so bonus features may increase factory size. Run `forge build --sizes` after each engine change (the factory must stay below 24,576 B runtime and 49,152 B initcode), and measure deployment gas with `forge test --gas-report` before relying on a figure.
 
 ## Size check
 `MarketFactory` embeds `OrderBook`'s creation code, so it grows with the engine. After any engine change run:

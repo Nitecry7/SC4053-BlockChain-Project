@@ -194,7 +194,7 @@ Five chart tokens exist (`--chart-1` #9c80fb, `--chart-2` #6aa4ff, `--chart-3` #
 ### Hierarchy
 - **Display** (700, 2.25rem to 2.5rem, 1.08, -0.048em): the hero title "SC4053 DEX" with "DEX" in Lilac.
 - **Page title** (700, 1.875rem, tight, -0.045em): Markets and Tokens page headers.
-- **Brand** (700, 1.3125rem, -0.045em): the header wordmark.
+- **Brand** (700, 1.3125rem, -0.045em): the header wordmark. Below 640 px it is 1.1875rem, so the connected-wallet header fits 375 and 390 px.
 - **Figure** (600, 1.375rem, tabular): large entered or displayed values, such as the order ticket's price and amount fields.
 - **Panel title** (600, 0.9375rem, -0.02em): every panel heading.
 - **Body** (400, 0.8125rem, relaxed 1.625, -0.011em body tracking): supporting copy and table text. Hero and header paragraphs are capped near 60ch to 62ch.
@@ -264,7 +264,7 @@ Generous, soft geometry. Panels are 18px (1.125rem); the hero, sidebar and glass
 ### Connect control (header)
 - **Disconnected:** a 40px glass-active pill with a wallet icon and "Connect wallet" ("Connect" below sm).
 - **Wrong network:** a 40px amber pill (border `warn/40`, fill `warn/12`) with an alert icon and "Wrong network".
-- **Connected:** a 40px pill, fill `#1a2034` at 85% with a `white/16` border, showing a gradient avatar, the shortened address in mono and a chevron.
+- **Connected:** a 40px pill, fill `#1a2034` at 85% with a `white/16` border, showing a gradient avatar, the shortened address in mono and a chevron (the chevron is hidden below 640 px).
 - **Loading:** a pulsing neutral pill.
 
 ### Navigation
