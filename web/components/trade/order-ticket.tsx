@@ -115,7 +115,8 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
   const flowPair = useMemo(() => ({ market: marketAddress, baseToken: base.address, quoteToken: quote.address }), [marketAddress, base.address, quote.address]);
   const ZERO = "0x0000000000000000000000000000000000000000";
   const pairKnown = base.address !== ZERO && quote.address !== ZERO;
-  const flow = useOrderFlow(live && pairKnown ? flowPair : undefined);
+  const settling = state.deployment.settling;
+  const flow = useOrderFlow(live && !settling && pairKnown ? flowPair : undefined);
   const { openConnectModal } = useConnectModal();
   const sw = useSwitchChain();
   const phase = flow.state.phase;
@@ -170,7 +171,9 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
 
   // The one primary button, chosen from wallet, network, market, validation, allowance and lifecycle state.
   let cta: { label: string; onClick?: () => void; disabled?: boolean };
-  if (!live) cta = { label: "Market unavailable", disabled: true };
+  if (state.deployment.status.kind === "unreachable") cta = { label: "Node unreachable", disabled: true };
+  else if (settling) cta = { label: "Verifying chain…", disabled: true };
+  else if (!live) cta = { label: "Market unavailable", disabled: true };
   else if (network.kind === "disconnected") cta = { label: "Connect wallet", onClick: () => openConnectModal?.() };
   else if (network.kind === "connecting") cta = { label: "Waiting for wallet…", disabled: true };
   else if (network.kind === "wrong-network")
@@ -232,7 +235,7 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
             ))}
           </div>
 
-          <fieldset disabled={locked || !live} className="min-w-0 space-y-2">
+          <fieldset disabled={locked || !live || settling} className="min-w-0 space-y-2">
             <legend className="sr-only">Order details</legend>
             <Field
               id="order-price"
@@ -349,8 +352,8 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
           )}
 
           {reviewing && order && (
-            <div className="mt-3 space-y-2 rounded-[0.875rem] border border-lilac/30 bg-[#161d36]/70 px-3.5 py-3 text-[0.75rem]" aria-label="Review order" data-testid="review">
-              <p className="flex items-center gap-1.5 text-[0.8125rem] font-semibold">
+            <div className="mt-3 space-y-2 rounded-[0.875rem] border border-lilac/30 bg-[#161d36]/70 px-3.5 py-3 text-[0.75rem]" role="group" aria-labelledby="order-review-title" data-testid="review">
+              <p id="order-review-title" className="flex items-center gap-1.5 text-[0.8125rem] font-semibold">
                 <ShieldCheck className="size-4 text-lilac" aria-hidden /> Review before you sign
               </p>
               <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1">
@@ -446,7 +449,7 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
             type="button"
             disabled={cta.disabled}
             onClick={cta.onClick}
-            className="mt-3 h-11 w-full rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(152_128_246/0.9)_49%,rgb(120_98_220/0.9))] text-[0.8125rem] font-semibold text-white shadow-[inset_0_1px_5px_rgb(255_255_255/0.2),0_10px_24px_-12px_rgb(124_92_242/0.8)] transition-[filter] hover:brightness-110 disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-[linear-gradient(100deg,rgb(101_86_204/0.4),rgb(162_139_248/0.4)_49%,rgb(120_98_220/0.4))] disabled:text-white/70 disabled:shadow-none disabled:hover:brightness-100"
+            className="mt-3 h-11 w-full rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] text-[0.8125rem] font-semibold text-white shadow-[inset_0_1px_5px_rgb(255_255_255/0.2),0_10px_24px_-12px_rgb(124_92_242/0.8)] transition-[filter] hover:brightness-110 disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-[linear-gradient(100deg,rgb(101_86_204/0.4),rgb(162_139_248/0.4)_49%,rgb(120_98_220/0.4))] disabled:text-white/70 disabled:shadow-none disabled:hover:brightness-100"
           >
             {cta.label}
           </button>

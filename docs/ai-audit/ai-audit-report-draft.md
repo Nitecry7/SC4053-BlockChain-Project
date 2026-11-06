@@ -128,17 +128,17 @@ These are the highest-severity findings in Person 2's work. The two Medium findi
 | **Low-Medium:** ABIs not tied to the deployed bytecode | exporter compared chain and files, not code | a rebuild without a redeploy would pair a new ABI with old addresses | deployed bytecode must equal the build artefacts (immutables masked); the market must come from the first two issued tokens | mutants E5, E6 and E8 caught; items 11 and 14 in the evidence |
 | **Low:** `deployments.ts` not reproducible | claimed the file matched a fresh Anvil; `deployBlockHash` varies with block timestamps | `--check` failed on any other fresh chain | hash removed from the output | byte-identical files on three fresh chains (`sha256sum -c`) |
 
-### 5.3 Findings from the P2-8A audit, and their status after P2-8A.1
+### 5.3 Findings from the P2-8A audit, and their status after P2-8A.2
 
 | ID | Severity | Finding | Status (evidence: [p2-8a1-fixes.md](test-evidence/person2/p2-8a1-fixes.md)) |
 |---|---|---|---|
 | R6 | Medium | `aria-label` on plain `<span>`s (`Amount`, address chip) is a prohibited ARIA use; exact amounts may not reach assistive technology | **Fixed** in P2-8A.1 (hidden text instead; regression test red on the old code, axe 12 views to 0). Screen-reader behaviour still unverified |
-| R6b | Low | four more role-less `aria-label` containers (`tx-status`, three review boxes) | New, reported, not fixed |
+| R6b | Low | four more role-less `aria-label` containers (`tx-status`, three review boxes) | **Fixed** in P2-8A.2: reproduced in eight states (axe "needs review", `aria-prohibited-attr`), then the name moved to the `<ol>` and the review boxes became labelled groups; 0 needs-review after. See [p2-8a2-liveness.md](test-evidence/person2/p2-8a2-liveness.md) section 7 |
 | R7 | Low to Medium | two buttons whose accessible name does not contain their visible text (WCAG 2.5.3) | **Fixed** (axe 6 views to 0; name, keyboard and five-width layout assertions) |
 | R1, R2 | Medium | every block re-read immutable data; no JSON-RPC batching | **Fixed and measured:** overview per block 65 to 45 operations, HTTP 65 to 9 with batching; Trade 43 to 28; Tokens 42 to 27 |
 | R3 to R5 | Low | idle polling, log rescan from the deploy block, 304 to 448 KB gzip first-load JavaScript | Reported, unchanged (chain watcher deliberately left alone) |
-| R8 | Low to Medium | contrast unresolved by axe | Partly measured on rendered pixels: desktop failures are token badge letters; mobile result incomplete; manual check needed |
-| R9 | Medium | after the RPC dies, the page keeps showing its last data as live | New, reported, not fixed; proposal in the evidence file |
+| R8 | Low to Medium | contrast unresolved by axe | **Partly fixed** in P2-8A.2 (all failing runs kept, 18 views): badge letters, the "Connect wallet" gradient button and 11 px captions now measure above 4.5; the dimmed disconnected placeholders and one suspected measurement artifact remain; manual DevTools check still needed; no compliance claim |
+| R9 | Medium | after the RPC dies, the page keeps showing its last data as live | **Fixed** in P2-8A.2 after a controlled reproduction: probe, outage alert, "last known" labels, disabled transactions, and a verified recovery that reuses the P2-7 chain-reset assessment. Issue [P2-015](issues/p2-015-stale-data-shown-as-live-after-the-rpc-died.md). Cost +12 requests per minute |
 | I-1 | Medium (process) | `SPEC.md` and `CLAUDE.md` call the brief `docs/project.pdf`, untracked; it is tracked as `docs/Development_Project.pdf` | Recorded with proposed wording; Person 1's files not edited |
 | I-5 | Medium (process) | P2-3 Medium findings had no issue files | **Done:** P2-013 and P2-014 |
 
@@ -217,5 +217,5 @@ Slither triage (P2-1 to P2-3, re-run at HEAD in P2-8A) and every independent-rev
 
 ## Evidence still required (summary)
 
-- **Owner:** manual MetaMask tests and the screenshot walkthrough; screen-reader and contrast checks; decision on R9 (stale data when the RPC is down), the R6b and badge-contrast fixes, the I-1 wording agreed with Person 1; the pre-AI boundary for Section 1; peer evaluation. Detail: [p2-8a-audit.md](test-evidence/person2/p2-8a-audit.md) section 6.
+- **Owner:** manual MetaMask tests and the screenshot walkthrough; screen-reader and contrast checks; DevTools contrast check of the cases left open in P2-8A.2 (dimmed placeholders, the "Open Trade view" artifact), the shared name of the review boxes, the I-1 wording agreed with Person 1; the pre-AI boundary for Section 1; peer evaluation. Detail: [p2-8a-audit.md](test-evidence/person2/p2-8a-audit.md) section 6.
 - **Person 1:** the bonus functions, the invariant suite, engine Slither and `forge lint` triage, logs and issues after 2026-11-02, and per-phase models.

@@ -6,6 +6,8 @@ import { useSwitchChain } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { anvil, RPC_URL } from "@/lib/chains";
 import { describeError } from "@/lib/errors";
+import { useRpcHealth } from "@/hooks/use-rpc-health";
+import { dataReadsAllowed } from "@/lib/rpc-health";
 import { WalletOutcome, WalletWaiting } from "@/components/wallet/wallet-pending-notice";
 import type { DashboardState } from "./use-dashboard";
 
@@ -30,13 +32,16 @@ export function StatusBanners({ state }: { state: Pick<DashboardState, "deployme
   const { switchChain, isPending, reset } = useSwitchChain();
   const [switchError, setSwitchError] = useState<ReturnType<typeof describeError>>();
 
+  const health = useRpcHealth();
   const s = deployment.status;
+  // While the global RPC banner is reporting an outage or a recovery check, it is the one message; this one covers a failed first read.
+  const showUnreachable = s.kind === "unreachable" && dataReadsAllowed(health.state);
   return (
     <>
-      {s.kind === "unreachable" && (
+      {showUnreachable && (
         <Banner tone="bad" icon={<PlugZap className="size-5" />} title="Cannot reach the local Anvil node">
-          Nothing is shown as live. Start it with <code className="font-mono text-foreground">anvil</code> (RPC{" "}
-          <span className="font-mono">{RPC_URL}</span>), then reload.
+          Start it with <code className="font-mono text-foreground">anvil</code> (RPC <span className="font-mono">{RPC_URL}</span>). The page reconnects by itself and verifies
+          the chain before enabling transactions.
         </Banner>
       )}
       {(s.kind === "missing" || s.kind === "mismatch") && (

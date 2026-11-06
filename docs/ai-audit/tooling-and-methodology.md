@@ -27,6 +27,7 @@ Models are shown only where the repository records them. "Not recorded" means th
 | Documentation alignment and this methodology file (2026-11-06) | Haiku 5.5 | none | `prompt-log-person2.md`, 2026-11-06 entries |
 | P2-8A pre-integration audit (2026-11-06) | Sonnet 5.5 (Medium) | none (claims traced by script) | `prompt-log-person2.md` P2-8A; `test-evidence/person2/p2-8a-audit.md` |
 | P2-8A.1 fixes (2026-11-06) | Sonnet 5.5 (Medium) | none | `prompt-log-person2.md` P2-8A.1; `test-evidence/person2/p2-8a1-fixes.md` |
+| P2-8A.2 RPC liveness, R6b, R8 (2026-11-06) | Sonnet 5.5 (Medium requested; setting not readable in-session) | none | `prompt-log-person2.md` P2-8A.2; `test-evidence/person2/p2-8a2-liveness.md` |
 
 ## Tool register
 

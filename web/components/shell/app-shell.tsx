@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { ConnectControl } from "@/components/wallet/connect-control";
 import { ConnectingNotice } from "@/components/wallet/wallet-pending-notice";
 import { ChainResetNotice } from "./chain-reset-notice";
+import { RpcHealthBanner } from "./rpc-health-banner";
 import { Brand } from "./brand";
 import { NAV_ITEMS, TOP_NAV, isActive, type NavItem } from "./nav-items";
 import { SearchBox } from "./search-box";
@@ -154,6 +155,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </aside>
         <main id="main" className="min-w-0">
           <ConnectingNotice />
+          <RpcHealthBanner />
           <ChainResetNotice />
           {children}
         </main>

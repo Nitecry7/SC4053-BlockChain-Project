@@ -24,11 +24,11 @@ These are different kinds of evidence. An automated pass says nothing about Meta
 
 | Layer | Recorded result (AI-run, P2-7 evidence, 2026-11-06) | Where |
 |---|---|---|
-| Unit tests (`npm test`) | 383 passed, 48 gated suites skipped (P2-8A.1; was 368 in P2-7) | `web/` |
+| Unit tests (`npm test`) | 410 passed, 48 gated suites skipped (P2-8A.2; 383 in P2-8A.1, 368 in P2-7) | `web/` |
 | Contracts (`forge test`) | 185 passed | `contracts/` |
 | Exporter (`node --test contracts/script/export-web.test.mjs`) | 21 passed | repo root |
 | Real chain, unlocked Anvil dev accounts, scratch Anvil 8546 | 48 passed (trading, creation, hardening) | `docs/ai-audit/test-evidence/person2/p2-7-hardening.md` |
-| Browser, **mock wallet**, scratch server 3100 | `e2e` 13, `e2e:create` 14, `e2e:dashboard` 14, `e2e:hardening` 9 passed (P2-8A.1; `e2e:dashboard` was 13 before the wallet-control test was added) | same file and `p2-8a1-fixes.md` |
+| Browser, **mock wallet**, scratch server 3100 | `e2e` 13, `e2e:create` 14, `e2e:dashboard` 14, `e2e:hardening` 9 and `e2e:liveness` 11 passed (P2-8A.2; `e2e:liveness` is new; outages are simulated by blocking browser requests) | `p2-8a1-fixes.md`, `p2-8a2-liveness.md` |
 | **Manual MetaMask (Windows Brave)** | SPEC worked example: Tests 1 to 4 reported by the owner (Tests 5 and 6 not separately reported). DTT creation, listing and a trade, reported by the owner (Section F) | Section F |
 
 The automated rows were run in this repository's WSL environment. They are not a deployment check, and they do not prove any MetaMask behaviour.
@@ -392,6 +392,16 @@ After 7f or 7g you may need to reset MetaMask's cached nonce (Section E, item 1)
 | `17-dex-alice-order1-partly-filled.png` | Alice's My orders with #1 Partly filled, 6 NTU locked |
 | `18-dex-tx-page-bob.png` | The transaction page for Bob's order |
 | `19-metamask-extensions-pending-request.png` | Brave's Extensions menu with a pending MetaMask request |
+
+## Test 11: the node stops and comes back (P2-8A.2)
+
+**Status: PROCEDURE ONLY. Not performed with MetaMask.** The same behaviour passed a mock-wallet browser run and a scripted stop and restart of a scratch Anvil (see `ai-audit/test-evidence/person2/p2-8a2-liveness.md`). Use your own chain only if you accept stopping it; otherwise use the scratch chain on 8546.
+
+1. With the app open on `/trade` and MetaMask connected, stop Anvil with Ctrl+C in its terminal.
+2. **Expected within about 10 s:** a red banner "Cannot reach the local Anvil node" that calls the data "last known, not current", "Last known, not current" chips on the panels, and the trade area saying the node is unreachable. No order or create button is usable.
+3. Restart Anvil **with the same state** (`anvil --state <file>`): **expected within about 10 to 20 s:** a short "The node is answering again. Verifying the chain." message, then the banners clear, with no "chain changed" notice, and the ticket works again.
+4. Instead restart a **fresh** `anvil` (a different chain with the same chain ID): **expected:** the verification message, then one "The local chain changed" notice, and either "No SC4053 DEX deployment on this chain" (until you redeploy) or live data again. The ticket must stay unavailable until the notice and the verification are done.
+5. Record what you saw. Screenshots still needed: the outage banner, the verification message and the chain-changed notice.
 
 ---
 

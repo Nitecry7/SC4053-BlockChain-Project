@@ -14,6 +14,9 @@ import { pageRanges, REGISTRY_PAGE } from "@/lib/registry-pages";
 import type { OrderSnapshot } from "@/lib/order-status";
 import { classifyDeployment, type DeploymentStatus } from "@/lib/network-status";
 import { isPerBlockRefresh, staticQuery } from "@/lib/query-scope";
+import { DEPLOYMENT_CODE_KEY, DEPLOYMENT_TARGETS } from "@/lib/deployment-targets";
+import { useRpcHealth } from "@/hooks/use-rpc-health";
+import { dataReadsAllowed, transactionsAllowed } from "@/lib/rpc-health";
 
 const CHAIN_ID = anvil.id;
 const D = PRIMARY_DEPLOYMENT;
@@ -32,24 +35,20 @@ export function useLiveBlock() {
   return block;
 }
 
-export type DeploymentCheck = { status: DeploymentStatus; refetch: () => void };
+export type DeploymentCheck = {
+  status: DeploymentStatus;
+  /** True while the RPC is up again but the chain is still being verified and reads re-fetched: no transactions yet. */
+  settling: boolean;
+  refetch: () => void;
+};
 
 /** Is the exported deployment really on this chain? Contract code at every address, and the market's own tokens. */
 export function useDeploymentCheck(): DeploymentCheck {
   const client = usePublicClient({ chainId: CHAIN_ID });
-  const targets = useMemo(
-    () => [
-      { name: "TokenFactory", address: D.tokenFactory as Address },
-      { name: "MarketFactory", address: D.marketFactory as Address },
-      { name: `${D.baseToken.symbol}/${D.quoteToken.symbol} market`, address: D.market as Address },
-      { name: D.baseToken.symbol, address: D.baseToken.address as Address },
-      { name: D.quoteToken.symbol, address: D.quoteToken.address as Address },
-    ],
-    [],
-  );
+  const targets = DEPLOYMENT_TARGETS;
 
   const codes = useQuery({
-    queryKey: ["deployment-code", CHAIN_ID, ...targets.map((t) => t.address)],
+    queryKey: DEPLOYMENT_CODE_KEY,
     enabled: Boolean(client),
     queryFn: async () => Promise.all(targets.map((t) => client!.getCode({ address: t.address }))),
   });
@@ -64,6 +63,7 @@ export function useDeploymentCheck(): DeploymentCheck {
     ],
   });
 
+  const health = useRpcHealth();
   const status = classifyDeployment({
     loading: codes.isPending,
     failed: codes.isError,
@@ -73,9 +73,10 @@ export function useDeploymentCheck(): DeploymentCheck {
     marketQuote: tokens.data?.[1],
     expectedBase: D.baseToken.address,
     expectedQuote: D.quoteToken.address,
+    rpcOffline: !dataReadsAllowed(health.state),
   });
 
-  return { status, refetch: () => void codes.refetch() };
+  return { status, settling: !transactionsAllowed(health.state) && dataReadsAllowed(health.state), refetch: () => void codes.refetch() };
 }
 
 export type TokenDetails = {

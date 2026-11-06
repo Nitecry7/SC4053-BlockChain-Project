@@ -148,3 +148,6 @@ Sonnet 5.5 (Medium) for the whole phase; no subagent, no reviewer. Skill: `react
 | R9 | new, Medium, reported: stale data shown as live after the RPC dies (pre-existing, inferred) |
 | I-1 | recorded with exact wording; files not edited |
 | I-5 | fixed (two issue files) |
+
+## 12. Follow-up (2026-11-06, P2-8A.2)
+R9 was reproduced on the HEAD build and fixed; R6b was reproduced in eight states and fixed; R8 was re-measured over 18 views with every failing run kept, and the confirmed failures were adjusted (two items left). Details and numbers: [p2-8a2-liveness.md](p2-8a2-liveness.md). The findings above are left as recorded. The status table in section 11 is superseded for R6b, R8 and R9 by that file.

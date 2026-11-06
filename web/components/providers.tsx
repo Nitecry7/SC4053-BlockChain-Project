@@ -7,6 +7,7 @@ import { useState, type ReactNode } from "react";
 import { WagmiProvider } from "wagmi";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { anvil } from "@/lib/chains";
+import { RpcHealthProvider } from "@/hooks/use-rpc-health";
 import { wagmiConfig } from "@/lib/wagmi";
 
 const rainbowTheme = darkTheme({
@@ -27,7 +28,9 @@ export function Providers({ children }: { children: ReactNode }) {
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider theme={rainbowTheme} initialChain={anvil} modalSize="compact" appInfo={{ appName: "SC4053 DEX" }}>
-          <TooltipProvider delay={250}>{children}</TooltipProvider>
+          <TooltipProvider delay={250}>
+            <RpcHealthProvider>{children}</RpcHealthProvider>
+          </TooltipProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

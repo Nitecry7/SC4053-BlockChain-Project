@@ -155,8 +155,8 @@ export function TokenForm() {
               </fieldset>
 
               {reviewing && token && (
-                <div className="mt-3 space-y-2 rounded-[0.875rem] border border-lilac/30 bg-[#161d36]/70 px-3.5 py-3 text-[0.75rem]" aria-label="Review token" data-testid="review">
-                  <p className="flex items-center gap-1.5 text-[0.8125rem] font-semibold">
+                <div className="mt-3 space-y-2 rounded-[0.875rem] border border-lilac/30 bg-[#161d36]/70 px-3.5 py-3 text-[0.75rem]" role="group" aria-labelledby="token-review-title" data-testid="review">
+                  <p id="token-review-title" className="flex items-center gap-1.5 text-[0.8125rem] font-semibold">
                     <ShieldCheck className="size-4 text-lilac" aria-hidden /> Review before you sign
                   </p>
                   <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1">

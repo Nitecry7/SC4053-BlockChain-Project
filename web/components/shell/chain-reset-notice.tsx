@@ -2,10 +2,18 @@
 
 import { RefreshCw } from "lucide-react";
 import { useChainWatch } from "@/hooks/use-chain-watch";
+import { useRpcHealth } from "@/hooks/use-rpc-health";
 
 /** Shown after the local chain is provably not the one the page was reading. Everything on screen is re-read. */
 export function ChainResetNotice() {
-  const { evidence, dismiss } = useChainWatch();
+  const watch = useChainWatch();
+  const health = useRpcHealth();
+  // The chain watcher and the RPC health check can prove the same reset. One notice, whichever saw it first.
+  const evidence = watch.evidence ?? health.resetEvidence;
+  const dismiss = () => {
+    watch.dismiss();
+    health.dismissReset();
+  };
   if (!evidence) return null;
   return (
     <div role="status" data-testid="chain-reset-notice" className="mb-4 flex gap-3 rounded-2xl border border-warn/35 bg-warn/[0.08] px-4 py-3.5">
