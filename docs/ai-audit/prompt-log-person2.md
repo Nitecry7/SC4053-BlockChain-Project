@@ -308,6 +308,27 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 
 **Evidence:** link check, a table column check, `git diff --check` and protected-path diffs, reported in the completion report.
 
+## 2026-11-06: P2-8A, final pre-integration audit (model: Sonnet 5.5 Medium, audit only)
+
+**Model:** Sonnet 5.5 (Medium), as the owner asked. No subagent and no independent reviewer: this phase changed no code, and claims were traced by script (link and anchor check, grep checks on tool statuses).
+
+**Prompt (summary):** Audit Person 2's work against the official brief before the bonus integration: a requirements coverage matrix, architecture and integration checks, a bonus-integration checklist, a React, Next.js and accessibility review, a security and test baseline on scratch environments, and a preliminary AI Audit Report in the brief's eight sections. Owner refinements after the plan: a temporary pinned axe-core is allowed (not a dependency), defects are reported and not fixed, and the owner's Anvil on 8545 and `next dev` on 3000 are preserved.
+
+**What the AI got wrong (caught during this phase, before reporting):**
+1. The RPC-counting script first matched `request.url() === RPC`. Playwright reports `http://127.0.0.1:8546/` with a trailing slash, so every count was 0. Zero requests was implausible, so it was investigated and fixed (compare origins) before any figure was used.
+2. The first JavaScript figure (identical 523 KB on every route) included Next's link prefetch. It was split into "at load" and "after idle prefetch".
+3. A `forge lint` summary was first parsed wrongly and printed nothing; the raw output was read before any lint finding was reported.
+4. Two drafted numbers were wrong against the raw output and were corrected: the colour-contrast range (22 to 141 nodes, not 36 to 141) and "12 of 12 page views" for the amount violation (12 of 18).
+5. The browser suites write screenshots into tracked evidence folders by default. This was noticed before running them, and `SCREENSHOT_DIR` was pointed at the scratchpad, so no recorded evidence was overwritten.
+
+**What the human did:** approved the plan, allowed the temporary axe-core, and set the audit-only rule. Still needed from the owner: the manual MetaMask evidence, screenshots, screen-reader and contrast checks, and the decisions listed in the evidence file.
+
+**Findings (reported, not fixed):** two accessibility violation types (R6, R7); read-volume and bundle recommendations (R1 to R5); contrast not determined (R8); the brief PDF is tracked while `SPEC.md` and `CLAUDE.md` say it is untracked (I-1); Person 1's log ends on 2026-11-02 (I-2); the two Medium P2-3 findings have no issue file (I-5). No Solidity, `web/`, test, interface or Person 1 file was changed.
+
+**Skills and MCPs actually invoked:** `react-best-practices` (discoverable; invoked once, bundle, re-render and client-fetch rules applied); `solidity-security` (invoked once; grounded the bonus checklist; produced no finding of its own; not a review of `OrderBook.sol`); Slither 0.11.6 re-run on `DemoToken.sol`, `TokenFactory.sol`, `MarketFactory.sol` and `Deploy.s.sol` (not on `OrderBook.sol`); `forge lint` (first use, 7 warnings); `impeccable detect` (0 findings, regex only); axe-core 4.14.0 (temporary, pinned); the Playwright library, not the MCP; Foundry. Not used: Context7, shadcn and Awwwards MCPs, the Playwright MCP, the design skills.
+
+**Evidence:** [`test-evidence/person2/p2-8a-audit.md`](test-evidence/person2/p2-8a-audit.md); the draft [`ai-audit-report-draft.md`](ai-audit-report-draft.md); the checklist in [`../BONUS_INTEGRATION.md`](../BONUS_INTEGRATION.md). Baseline re-run: `forge test` 185, exporter 21, unit 368 and 48 gated skipped, typecheck and lint clean, real chain 48, browser 13, 14, 13 and 9. All of the owner's processes were checked unchanged at the end.
+
 ## Requirements traceability
 Current status through P2-7 (2026-11-06). Earlier statuses are in the phase entries above.
 
@@ -325,5 +346,6 @@ Current status through P2-7 (2026-11-06). Earlier statuses are in the phase entr
 | R2 (front end) / G (UX) | Usable multi-market dashboard and wallet overview | `docs/FRONTEND.md` "Dashboard market selector" | `web/lib/market-select.ts`, `holdings.ts`, `registry-pages.ts`, `web/hooks/use-market-choice.ts`, `use-holdings.ts`, `web/components/dashboard/` | `market-select`, `holdings`, `registry-pages` unit tests; `e2e:dashboard` (13, mock wallet) | `test-evidence/person2/p2-6-1-dashboard.md` (and its 2026-11-06 follow-up), issue P2-011 | n/a | Mock-wallet verified (P2-6.1). MetaMask Test 9 pending |
 | R5 / R6 / G (UX): reliable order and creation lifecycle | Orders and token/market creation report what actually happened despite speed-ups, cancels, replacements, restarts | `docs/FRONTEND.md` "Transaction lifecycle hardening", `docs/BONUS_INTEGRATION.md` | `web/lib/order-runner.ts`, `chain-reset.ts`, `create-runner.ts`, `web/hooks/use-chain-watch.ts`, `web/components/shell/chain-reset-notice.tsx` | `chain-reset.test.ts`, `order-runner.hardening.test.ts`, `hardening.integration.test.ts`, `e2e/hardening.e2e.mjs` (9, mock wallet) | `test-evidence/person2/p2-7-hardening.md`, issue P2-012 | n/a | Implemented; mock-wallet verified (P2-7). MetaMask Test 10 pending. Limits: a speed-up landing before the first lookup cannot be followed; chain-reset detection needs a block seen first |
 | R4 / R2 (browser) | Issue tokens and list markets from the front end | `docs/FRONTEND.md` "Token issuance and market listing" | `web/lib/create-*.ts`, `web/hooks/use-create-flow.ts`, `web/components/create/` | `create-*.test.ts`, `creation.integration.test.ts` (21), `e2e/create.e2e.mjs` (14) | `test-evidence/person2/p2-6-issuance-listing.md` | 7 | Mock wallet and scratch chain verified. MetaMask: the owner reported DTT creation and listing; steps 8a to 8l were not confirmed one by one |
+| D (report evidence): AI Audit Report and validation | Eight-section report, four-part issue format, validation evidence | `ai-audit-report-draft.md`, `tooling-and-methodology.md` | n/a (documentation) | P2-8A baseline re-run: `forge test` 185, unit 368, real chain 48, browser 13 / 14 / 13 / 9 (mock wallet); Slither re-run on Person 2 files | `test-evidence/person2/p2-8a-audit.md` | 1 to 8 | Person 2 side audited and drafted. Outstanding: the invariant suite and engine static analysis (Person 1), the bonus functions (Person 1), manual MetaMask evidence and screenshots (owner), the P2-3 issue entries |
 
 Other rows are not started by Person 2.

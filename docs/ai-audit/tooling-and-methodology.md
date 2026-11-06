@@ -25,6 +25,7 @@ Models are shown only where the repository records them. "Not recorded" means th
 | P2-6.1 dashboard | not recorded | none | `prompt-log-person2.md` P2-6.1 |
 | P2-7 hardening | not recorded in the entry (the owner's brief asked for Sonnet 5.5 Medium) | none ("no Opus agent" recorded) | `prompt-log-person2.md` P2-7 |
 | Documentation alignment and this methodology file (2026-11-06) | Haiku 5.5 | none | `prompt-log-person2.md`, 2026-11-06 entries |
+| P2-8A pre-integration audit (2026-11-06) | Sonnet 5.5 (Medium) | none (claims traced by script) | `prompt-log-person2.md` P2-8A; `test-evidence/person2/p2-8a-audit.md` |
 
 ## Tool register
 
@@ -70,14 +71,14 @@ Models are shown only where the repository records them. "Not recorded" means th
 
 ### solidity-security skill
 - **Purpose:** a checklist for Solidity risks (external-call results, input validation, authentication, reentrancy, gas).
-- **Status:** invoked **once**, in P2-3. Not invoked in P2-4, P2-5, P2-6, P2-6.1 or P2-7. P2-1 and P2-2 do not record it. Not invoked after P2-3 because no Solidity changed in those phases.
+- **Status:** invoked in **P2-3** and again in **P2-8A**. Not invoked in P2-4, P2-5, P2-6, P2-6.1 or P2-7. P2-1 and P2-2 do not record it. Not invoked in those phases because no Solidity changed. In P2-8A it grounded the review points requested from Person 1 for the bonus functions (see `docs/BONUS_INTEGRATION.md`); it is not a security review of `OrderBook.sol`.
 - **Contribution (P2-3):** a generic checklist. **Accepted:** check return values of external calls, validate inputs, never authenticate with `tx.origin` or `msg.sender`. **Rejected as not applicable** to a local script: reentrancy guards, circuit breakers, pull payments and gas packing.
 - **Limitations:** the skill is a reading checklist. It produced no findings of its own.
 - **Evidence:** `prompt-log-person2.md` P2-3 (item on the skill), P2-5 (recorded as a deviation).
 
 ### Slither 0.11.6 (static analysis)
 - **Purpose:** static analysis of Solidity.
-- **Status:** invoked on Person 2 contracts in P2-1, P2-2 and P2-3. Not recorded for P2-4 onwards. Not recorded on `OrderBook.sol` in Person 2's evidence. Person 1's log records the install and that Slither had not yet been run on the code at that time; this file does not claim any Person 1 result.
+- **Status:** invoked on Person 2 contracts in P2-1, P2-2 and P2-3, and re-run at commit `c23c6a3` in P2-8A on `DemoToken.sol`, `TokenFactory.sol`, `MarketFactory.sol` and `Deploy.s.sol` (results in `test-evidence/person2/p2-8a-audit.md`). Not recorded for P2-4 to P2-7. Not run on `OrderBook.sol` by Person 2. Person 1's log records the install and that Slither had not yet been run on the code at that time; this file does not claim any Person 1 result.
 - **Findings and triage:** see the static-analysis table below.
 - **Evidence:** `p2-1-issuance.md`, `p2-2-listing.md`, `p2-3-deployment.md`.
 
@@ -105,9 +106,14 @@ Models are shown only where the repository records them. "Not recorded" means th
 - **Evidence:** `p2-4-frontend.md`; `p2-5-trading.md`; `p2-6-1-dashboard.md`; `p2-7-hardening.md`.
 
 ### React Best Practices (`react-best-practices`)
-- **Status:** **installed, not invoked** in any recorded phase. It is available for future frontend work.
+- **Status:** installed, and **invoked once in P2-8A** (2026-11-06) for the front-end audit. Not invoked in P2-1 to P2-7. Its rules are mostly server-component and bundle oriented, so the bundle, re-render and client data-fetching categories were applied to this client-side wallet app. Contribution: the findings R1 to R5 in `test-evidence/person2/p2-8a-audit.md`, each backed by a measurement or a file reference. No code was changed.
 - **Installation as recorded:** a user-level copy in `~/.claude/skills/react-best-practices` (`SKILL.md` and `references/`). A copy with `references/` only is also tracked in git under `.claude/skills/react-best-practices/` since commit `d2be460`. The two copies differ; the tracked copy has no `SKILL.md`. Resolving that is an open point.
-- **No use is claimed for any phase.**
+- **No use is claimed for any phase before P2-8A.**
+
+### forge lint and axe-core (first used in P2-8A)
+- **`forge lint`** (Foundry 1.9.0): invoked in P2-8A on the contracts. 7 warnings (4 `reentrancy-events`, 2 `require-revert-in-loop`, 1 `unsafe-typecast`), 4 of them in Person 1's `OrderBook.sol`. Listed with owners in `test-evidence/person2/p2-8a-audit.md` section 5.2. Not a replacement for Slither.
+- **axe-core 4.14.0:** a temporary, pinned version loaded from a CDN into throwaway scratch pages, at desktop and mobile widths. It is **not** a project dependency and is not in `package.json` or the lockfile. Result: two serious violation types, and colour contrast not determined (axe cannot resolve translucent glass backgrounds). It finds only the machine-checkable subset of WCAG.
+- **Playwright library** (not the MCP) was used for the network capture and the axe runs, as in P2-5 to P2-7.
 
 ### SkillSpector
 - **Status:** **no installation found** under the user skills, plugins, the project `.claude/` folder, pip or npm global packages. It was **not** used. No success is claimed.

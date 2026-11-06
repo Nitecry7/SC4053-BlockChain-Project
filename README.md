@@ -177,10 +177,10 @@ AI assistance was used across the project for planning, coding, design explorati
 |---|---|---|
 | Claude Code and model roles | Claude Code; Opus 5.5, Sonnet 5.5 and Haiku 5.5 in different phases | Used in every phase. Model attribution is given where the prompt logs record it, and is marked "not recorded" otherwise |
 | Context7 and MCPs | Context7 (library documentation); shadcn and Awwwards MCPs (P2-4); Playwright MCP | Context7 accepted in P2-3 to P2-5. The Playwright MCP was attempted and did not launch. Awwwards results were rejected |
-| Solidity Security skill and Slither | `solidity-security` skill (P2-3); Slither 0.11.6 on the Person 2 contracts and deployment script | Slither: 0 results (P2-1), 5 accepted notes (P2-2), 6 accepted notes (P2-3). The skill was not invoked after P2-3 |
+| Solidity Security skill and Slither | `solidity-security` skill (P2-3 and P2-8A); Slither 0.11.6 on the Person 2 contracts and deployment script | Slither: 0 results (P2-1), 5 accepted notes (P2-2), 6 accepted notes (P2-3), re-run at HEAD in P2-8A. The skill is a checklist and produced no finding of its own. Slither has not been run on `OrderBook.sol` by Person 2 |
 | Foundry and contract testing | `forge` (185 tests, including fuzz), `anvil` and `cast` on scratch chains | Unit, fuzz and integration tests exist. A dedicated stateful invariant suite is planned for Engine Phase 7 and not yet implemented |
 | Playwright and browser testing | `playwright-core` 1.64.1 with Chromium, and a mock wallet | Mock-wallet suites pass. These are not MetaMask results |
-| Frontend design and quality | `frontend-design`, `ui-ux-pro-max`, `impeccable`, `taste-skill` (P2-4); `impeccable detect` later | Design work in P2-4. The detector runs regex rules only, so its zero results are an undercount |
+| Frontend design and quality | `frontend-design`, `ui-ux-pro-max`, `impeccable`, `taste-skill` (P2-4); `impeccable detect` later; `react-best-practices` and a temporary pinned axe-core (P2-8A) | Design work in P2-4. The detector runs regex rules only, so its zero results are an undercount. The P2-8A audit measured performance and found two accessibility violation types, reported and not yet fixed |
 | Independent reviews and AI audit evidence | Read-only reviewers in P2-1 to P2-6; prompt logs; issue reports; test evidence | P2-3 reproduced two Medium defects, which were fixed. Other reviews found no High or Medium contract defects |
 
 Full methodology, including each tool's status (invoked, attempted, or only installed), the model per phase where recorded, the static-analysis and review findings, and the checks still owed for future engine changes, is in [docs/ai-audit/tooling-and-methodology.md](docs/ai-audit/tooling-and-methodology.md).
@@ -417,6 +417,8 @@ More detail, with diagnosis steps, is in [docs/TESTING.md](docs/TESTING.md#e-tro
 | [CONTRACT_INTERFACE.md](CONTRACT_INTERFACE.md) | The frozen contract interface shared between the engine and the front end |
 | [docs/ai-audit/](docs/ai-audit/) | The AI audit report: prompt logs, issue reports and test evidence |
 | [docs/ai-audit/tooling-and-methodology.md](docs/ai-audit/tooling-and-methodology.md) | How AI tools, models and reviews were used, with each tool's recorded status |
+| [docs/ai-audit/ai-audit-report-draft.md](docs/ai-audit/ai-audit-report-draft.md) | Preliminary AI Audit Report, in the brief's eight sections, with its evidence gaps |
+| [docs/ai-audit/test-evidence/person2/p2-8a-audit.md](docs/ai-audit/test-evidence/person2/p2-8a-audit.md) | The pre-integration audit: requirements coverage, test baseline, React and accessibility review |
 
 ---
 

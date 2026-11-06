@@ -40,6 +40,35 @@ Until then the control is **absent**, not disabled-looking-functional.
 4. Run the real-chain suites, then the browser suites, against the scratch chain.
 5. Only then **ask the project owner** before redeploying on the main Anvil (8545). Redeploying replaces the contracts, so existing balances, orders and the recorded deployment evidence on that chain are lost. Archive the current evidence by date first; do not overwrite it.
 
+## Pre-integration checklist (written in P2-8A, 2026-11-06)
+
+**Every box below is unchecked: none of these checks has been performed, because none of the bonus functions is implemented.** Baseline recorded at commit `c23c6a3`: `forge test` 185 passed; `MarketFactory` 8,358 B runtime and 8,387 B initcode; `OrderBook` 6,325 B and 6,974 B; `contracts/test/invariant/` does not exist. See [`p2-8a-audit.md`](ai-audit/test-evidence/person2/p2-8a-audit.md).
+
+### A. Gate: what Person 1 must hand over first
+- [ ] The function is implemented with Foundry tests, using only the frozen signatures, events, errors and `Status` order in `CONTRACT_INTERFACE.md`. A needed interface change is agreed by both people first, not made in code.
+- [ ] **Cancel (Phase 4).** Owner-only (`NotOrderOwner`) and active-only (`OrderNotActive`). Checks-effects-interactions order: unlink, set `Cancelled`, zero `lockedQuote`, then refund. Refund is `amount - filled` base for a sell and `lockedQuote` quote for a buy (SPEC A7). Tests: open, partly filled, already filled, twice, non-owner, a token that re-enters during the refund, and solvency after a cancel.
+- [ ] **Batch (Phase 5).** `matchOrders` rejects 0 and anything above `MAX_MATCHES_PER_TX` with `InvalidMaxCount`; returns 0 without reverting on an uncrossed book; the maker is the head with the lower `bookSeq`; a gas figure is recorded like O2; the TA has confirmed what "multi-party" means (SPEC O3).
+- [ ] **Stop-limit (Phases 6a and 6b).** Escrow is pulled at placement; `PendingTrigger` orders never appear in `getBook`; one shared fill budget across a trigger call; solvency includes pending stops; `StopOrderPlaced` and `StopOrderTriggered` match the interface, with no `OrderPlaced` on activation. The SPEC limit on `lastTradePrice` manipulation stays documented.
+- [ ] Slither on the new `OrderBook.sol`, with each result triaged; the stateful invariant suite (Phase 7) and fuzz tests green, including a deep-profile run; a targeted independent review of the changed functions, with findings logged. (The Solidity Security checklist items that apply: reentrancy, access control, bounded loops, input validation, front-running. Not applicable to this non-custodial design: pull payments, a circuit breaker, upgradeability.)
+- [ ] `forge test` green on the merged branch, including `MarketFactoryIntegration.t.sol` (its differential test already calls all four functions), and `cd contracts && forge build --root . --sizes` shows the factory still well below 24,576 B runtime and 49,152 B initcode.
+
+### B. Person 2 steps after the gate
+1. [ ] Pull, `forge build`, `forge test`.
+2. [ ] Regenerate the web ABIs with `contracts/script/export-web.mjs` and review the `abis.ts` diff. Expected: named parameters appear on the four functions (same types), nothing else.
+3. [ ] Deploy to a **scratch** chain with `FOUNDRY_BROADCAST` and `FOUNDRY_CACHE_PATH` redirected, and run the real-chain suites first.
+4. [ ] Front-end changes, only for a bonus that passes the activation rule above:
+   - **Cancel:** replace the "Cancelling orders is not available" notes (`web/components/trade/my-orders.tsx:17`, `:114`) with a per-row Cancel for the user's own open or partly filled orders; add a runner beside `runOrder` in `web/lib/order-runner.ts` that reuses `waitBounded` and `useTxFlow`; decode `OrderCancelled` in `web/lib/receipt.ts`; check the refund against `getOrder` and the balance change; name `NotOrderOwner` and `OrderNotActive` in `web/lib/errors.ts`. `ORDER_STATUS_NAMES` in `web/lib/order-status.ts` already includes `Cancelled` and `PendingTrigger`.
+   - **Batch:** replace the "`matchOrders` is not available yet" text (`web/components/trade/order-result.tsx:125`) and the stub note in `web/lib/order-plan.ts:39`; show "Clear crossed book" only when `getBestBid` price is at least `getBestAsk` price; never on an uncrossed book.
+   - **Stop-limit:** a pending-stops list apart from the book and depth (both use `getBook`, which excludes pending stops); a stop ticket with trigger and limit prices; a trigger action; decode both stop events. Update the "Planned features" list (`web/components/dashboard/side-panels.tsx`) and the "not available yet" navigation entries (`web/components/shell/app-shell.tsx:181`) only for features that now work.
+5. [ ] Tests: runner unit tests with fakes; real-chain tests (cancel open, partial, filled, twice, non-owner; clear a crossed book; place, trigger and exclude stops); mock-wallet browser tests; new MetaMask procedures in `docs/TESTING.md`, marked "procedure only" until the owner performs them.
+6. [ ] Update README (the feature table), `PRODUCT.md`, `docs/FRONTEND.md`, the traceability table and the prompt log in the same change.
+7. [ ] **Redeploy decision (ask the owner first).** The factory's bytecode changes when `OrderBook` changes, so `export-web.mjs --check` will refuse the owner's current chain until it is redeployed. Either (a) start a fresh Anvil, which loses all chain state but keeps the deterministic addresses and the tracked files, or (b) redeploy on the same chain, which gives new addresses and changes `web/lib/contracts/deployments.ts`, and does not migrate old markets or orders. Archive the current evidence by date before either.
+
+### C. Evidence to record when each bonus lands
+- [ ] A real call on a scratch chain through the front end's own simulate, send and receipt path (a Foundry test alone does not activate a control).
+- [ ] `forge test` totals, factory sizes, Slither triage, invariant and fuzz results, and the independent review, each linked from the prompt log.
+- [ ] Manual MetaMask results, only for steps the owner actually performed.
+
 ## Open questions for Person 1
 
 - Which `Status` values will the bonuses add, and in what order (the front end maps the enum by index)?
