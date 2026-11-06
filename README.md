@@ -175,15 +175,15 @@ AI assistance was used across the project for planning, coding, design explorati
 
 | Category | Tools and models | Recorded status |
 |---|---|---|
-| Claude Code and model roles | Claude Code; Opus 5.5, Sonnet 5.5 and Haiku 5.5 in different phases | Used in every phase; the model per phase is recorded |
+| Claude Code and model roles | Claude Code; Opus 5.5, Sonnet 5.5 and Haiku 5.5 in different phases | Used in every phase. Model attribution is given where the prompt logs record it, and is marked "not recorded" otherwise |
 | Context7 and MCPs | Context7 (library documentation); shadcn and Awwwards MCPs (P2-4); Playwright MCP | Context7 accepted in P2-3 to P2-5. The Playwright MCP was attempted and did not launch. Awwwards results were rejected |
 | Solidity Security skill and Slither | `solidity-security` skill (P2-3); Slither 0.11.6 on the Person 2 contracts and deployment script | Slither: 0 results (P2-1), 5 accepted notes (P2-2), 6 accepted notes (P2-3). The skill was not invoked after P2-3 |
-| Foundry and contract testing | `forge` (185 tests, including fuzz), `anvil` and `cast` on scratch chains | Invariant tests are planned but not yet present |
+| Foundry and contract testing | `forge` (185 tests, including fuzz), `anvil` and `cast` on scratch chains | Unit, fuzz and integration tests exist. A dedicated stateful invariant suite is planned for Engine Phase 7 and not yet implemented |
 | Playwright and browser testing | `playwright-core` 1.64.1 with Chromium, and a mock wallet | Mock-wallet suites pass. These are not MetaMask results |
 | Frontend design and quality | `frontend-design`, `ui-ux-pro-max`, `impeccable`, `taste-skill` (P2-4); `impeccable detect` later | Design work in P2-4. The detector runs regex rules only, so its zero results are an undercount |
 | Independent reviews and AI audit evidence | Read-only reviewers in P2-1 to P2-6; prompt logs; issue reports; test evidence | P2-3 reproduced two Medium defects, which were fixed. Other reviews found no High or Medium contract defects |
 
-Full methodology, including each tool's status (invoked, attempted, or only installed), the model per phase, the static-analysis and review findings, and the checks still owed for future engine changes, is in [docs/ai-audit/tooling-and-methodology.md](docs/ai-audit/tooling-and-methodology.md).
+Full methodology, including each tool's status (invoked, attempted, or only installed), the model per phase where recorded, the static-analysis and review findings, and the checks still owed for future engine changes, is in [docs/ai-audit/tooling-and-methodology.md](docs/ai-audit/tooling-and-methodology.md).
 
 ## 🗂️ Project structure
 
@@ -191,7 +191,7 @@ Full methodology, including each tool's status (invoked, attempted, or only inst
 SC4053-BlockChain-Project/
 ├── contracts/                 Solidity project (Foundry)
 │   ├── src/                   OrderBook (matching engine), TokenFactory, MarketFactory, DemoToken
-│   ├── test/                  Foundry tests (185), invariant and integration tests
+│   ├── test/                  Foundry unit, fuzz and integration tests (185); the stateful invariant suite is planned for Phase 7, not yet implemented
 │   └── script/                Deploy.s.sol (deployment), export-web.mjs (ABIs and addresses for the app)
 ├── web/                       Next.js app
 │   ├── app/                   Routes: overview, markets, tokens, trade, create-token, list-market, tx/[hash]
