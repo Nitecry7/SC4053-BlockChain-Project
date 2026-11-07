@@ -78,36 +78,80 @@ Every figure is drawn from the committed code, tests, logs and git history. The 
 ---
 
 ## 1. Initial Specification and System Scope
-**[P1 + P2 to confirm]: the boundary before AI use.**
-- **What the brief asks:** what the team intended *before engaging AI tools*.
-- **What the repository records:**
-  - the repository's initial commit (`095b2af`, 24 Oct, a one-line README)
-  - then Person 1's first planning session, 28 Oct, which was already AI-assisted
-- **The original plan was also AI-assisted.** `docs/DEX_Trading_Engine_Plan.md`, committed in `cd35f8b`, is titled "Person 1, built with Claude Code".
-- **So no committed artefact predates AI use.** Both teammates must state what they had decided themselves before that. What follows is the scope as first written down.
+### 1.1 Problem and chosen option
+We chose **Option 1: Decentralized Exchange (DEX)** from the SC4053 development project brief. The brief's problem statement is that centralized exchanges hold users' private keys, which makes them honeypots for theft or misuse.
 
-**Requirements (brief, section 5.1, Option 1: DEX).** A minimal viable DEX on Ethereum with a simple web front end supporting token listing, order submission, order matching and execution, and user self-custody:
-- **Asset issuer:** issue new tokens that adhere strictly to ERC20.
-- **Users:** submit buy and sell orders (limit orders as the baseline); automatic execution of matched orders, with partial fulfilment.
-- **Bonus:** (1) cancel unfulfilled amounts; (2) batched execution of multi-party matching; (3) conditional orders.
-- **Tricky points to settle:** who triggers execution, how and how often; whether older orders get priority at identical conditions.
+Our goal was a minimal viable DEX on Ethereum in which:
+- users keep their keys in their own wallets (MetaMask)
+- a smart contract acts only as a non-custodial marketplace that matches and settles trades between peers
 
-**Intended smart-contract logic (first written in commit `cd35f8b`, 28 Oct: `SPEC.md`, `CONTRACT_INTERFACE.md` draft, `docs/DEX_Trading_Engine_Plan.md` sections 3 to 6):**
-- one `OrderBook` per token pair, with immutable base and quote tokens of 18 decimals
-- escrow at placement
-- execution at the maker's price, with price-time priority and partial fills
-- price-improvement refunds
-- no admin
-- the three bonus functions designed up front as interface entries
+We are a two-person team, and we split the work before writing any code:
 
-The first interface draft (`cd35f8b`) already listed every function, event and error that ships today. The human added `InvalidTokens`, `requiredQuote` and lot and tick sizes on 28 Oct (Section 4).
+| Role | Owner | Scope |
+|---|---|---|
+| Trading engine | Person 1 | `OrderBook.sol`: order placement, escrow, matching, settlement, partial fills, cancellation, batch matching, conditional orders, engine security and contract tests |
+| Tokens, deployment and frontend | Person 2 | ERC20 issuance (`DemoToken`, `TokenFactory`), market listing, deployment scripts and ABI export, the Next.js frontend, wallet integration, frontend tests and documentation |
+| Shared | Both | The contract interface, integration, cross-review, the AI Audit Report and the demo |
 
-**Intended UI (Person 2; `PRODUCT.md`, first committed in `3aba573` on 5 Nov) [P2 to confirm]:**
-- wallet connection
-- a market view with the live order book
-- an order ticket that shows approval and escrow
-- order history
-- token issuance and market listing
+### 1.2 Required features (from the brief)
+| Brief requirement | What we intended to build |
+|---|---|
+| Asset issuer: issue ERC20 tokens | Demo tokens (NTU, SGDx) issued through a token factory |
+| Submit buy and sell limit orders | `placeLimitOrder(side, price, amount)` for both sides |
+| Automatic execution of matched orders, with partial fulfilment | Matching runs inside the placing transaction, and any remainder stays on the book |
+| Bonus 1: cancel unfulfilled amounts | An owner-only `cancelOrder` that refunds only the unfilled escrow |
+| Bonus 2: batched multi-party matching | `matchOrders(maxMatches)`, which settles fills between many traders in one bounded transaction |
+| Bonus 3: conditional orders | Stop-limit orders that activate when the last trade price crosses a trigger |
+
+### 1.3 Intended smart contract logic
+These were our design decisions before implementation:
+- **Where they were recorded:** `SPEC.md` and the `CONTRACT_INTERFACE.md` draft, both committed on 28 Oct in `cd35f8b`.
+- **The freeze:** the interface was frozen on 1 Nov (`63aee60`, Phase 2a), before any escrow, matching or bonus code. Phase 1's skeleton (`7c73490`, ten minutes earlier) was built against the draft.
+
+| Decision | Our intended rule | Reason |
+|---|---|---|
+| Markets | One order book contract per token pair (base and quote) | Keeps matching simple. More pairs means more contracts, not more routing logic |
+| Escrow | Both sides fully funded at placement: sellers lock base tokens, buyers lock quote tokens at their limit price | An order should never be accepted just because a wallet held enough tokens at one moment |
+| Execution price | The resting (maker) order's price | Deterministic and easy to explain ([Figure 5](#figure-5)) |
+| Price improvement | A buyer filled below their limit is refunded the difference | No funds left stuck in the contract |
+| Priority | Better price first; at equal price, the older order first | Answers the brief's question of whether older orders deserve priority: yes. "Older" became the time an order enters the book (`bookSeq`, decided 28 Oct as O1), not its ID ([Figure 6](#figure-6)) |
+| Who triggers execution | The trader placing the order pays the gas for matching; anyone can call batch matching or stop triggering | Answers the brief's question on how, how often and by whom execution is triggered: a contract cannot run on its own ([Figure 8](#figure-8)) |
+| Bounded work | Every loop over orders has a fixed upper limit | Predictable gas, and no transaction that can never complete |
+| Conditional orders | Stop-limit, triggered by the DEX's own last trade price, with an explicit "no price yet" state (`hasTradePrice`) | Avoids an external oracle. An uninitialized zero must never look like a real price ([Figure 7](#figure-7)) |
+| Arithmetic | Integer base units only (18-decimal tokens), with rounding that always leaves the contract solvent | Solidity has no floating point |
+| Fees and admin | No fees, no owner and no admin path to user funds | Simpler accounting, and consistent with non-custody ([Figure 3](#figure-3)) |
+
+The resulting lifecycle is shown in [Figure 4](#figure-4).
+
+### 1.4 Intended UI features
+**[P2 to confirm and expand]** (Person 2's `PRODUCT.md` was first committed on 5 Nov in `3aba573`):
+- **Wallet connection,** with clear handling of the wrong network, rejected transactions, and pending, confirmed or reverted transactions.
+- **Trading views:** token balances, an order book view, buy and sell order forms with the ERC20 approval step, and the user's own orders with their status.
+- **Token creation and market listing.**
+- **Controls for the bonus features:** cancel, batch match and stop-limit orders.
+
+### 1.5 Explicitly out of scope
+- **Trading features:**
+  - automated market makers and liquidity pools
+  - market orders and trading fees
+  - external price oracles
+  - cross-chain features
+- **Architecture:** contract upgradeability, off-chain matching and a backend database.
+- **Deployment:** no real-money or mainnet deployment. The system targets a local Anvil chain.
+
+`SPEC.md` section 1 lists the engine's out-of-scope items.
+
+### 1.6 How AI was involved at this stage
+**We did not write this specification without AI.**
+
+**What we did first, ourselves:** we read the brief and fixed the option, the role split and the core trading rules.
+
+**How AI was used before any contract code:** to stress-test the plan and turn it into written specification files. The repository records it this way:
+- **The plan.** `docs/DEX_Trading_Engine_Plan.md` is titled "Person 1, built with Claude Code". It already contains the review's outcomes that we then decided on ourselves: buy orders are escrowed too, and the stop trigger has an explicit initial state (`hasTradePrice`).
+- **The specification files.** `CLAUDE.md`, `SPEC.md` and the `CONTRACT_INTERFACE.md` draft were written in Claude Code's Phase 0 plan-mode session on 28 Oct (`cd35f8b`). The AI found seven specification gaps, (a) to (g), and the human replaced two of its fixes (Section 3.2).
+- **The first contract code.** Claude Code was asked to write it only on 1 Nov (Phase 1), after those files were committed. It therefore built against our specification rather than inventing one.
+
+**What predates AI use:** only the repository's initial commit (`095b2af`, 24 Oct, a one-line README).
 
 ---
 
@@ -488,29 +532,68 @@ Person 2's front-end limits are in `docs/FRONTEND.md`. [P2 to confirm]
 ---
 
 ## 8. Lessons Learned
-**Where AI excelled:**
-- **Finding specification gaps before code existed:** seven in Phase 0.
-- **Breadth of adversarial tests once asked:** reentrancy at every transfer point; exact balances to the wei.
-- **Fresh-context reviewers.** They found the most important defects on both sides:
-  - engine: 002, 004, 005, 006, the Phase 7 ghost tautology, and 007
-  - Person 2: P2-013 and P2-014, and 13 findings in P2-5 [P2 to confirm]
-- **Producing real failing-then-passing evidence for every fix.**
+### 8.1 Where AI excelled
+**Volume and discipline of testing.** It would not have been realistic to write all of this by hand in the time available ([Figure 10](#figure-10)):
+- 245 engine tests (335 Foundry tests across the project)
+- 100% line and branch coverage of `OrderBook.sol`
+- 15 engine fuzz tests
+- an invariant suite that held over 128,000 random calls
 
-**Where AI failed (examples from the issue files):**
-- **Tests written from the prompt, not from "what would pass if the code were wrong"** (004; the Phase 7 regression for 004; the tautological ghosts; P2-001 and P2-012 proving only their own fakes).
-- **Hazards documented instead of enforced, or underrated** (001, 006).
-- **Local reasoning about global properties** (002, 003, 007; P2-003 and P2-004, one component at a time).
-- **Typical-case reasoning instead of hostile cases** (005; P2-013).
-- **Unsupported status claims.** A "worst case" gas figure that was not one (Phase 3b). A deep run reported as dead that was alive (Phase 7). In Person 2's work, README lines about tests that did not exist [P2 to confirm].
-- **Process slips.** An orphaned mutation script swapped mutants into the source for about 20 minutes, causing false failures. It was diagnosed and recorded, and DEBUGGING.md now explains how to stop a run safely.
+**Independent review found real bugs.** After each phase, a separate reviewing agent with no context from the implementing session checked the work. This was the most valuable practice we used: it found faults that the implementing agent's own tests had missed ([Figure 9](#figure-9)). Two examples:
+- **Issue 004:** a partly filled order could be overfilled and paid out of other traders' escrow, and 73 existing tests did not notice. The reviewer found it by mutation testing.
+- **Issue 006:** a High-severity design flaw. About 102 wei of dust could permanently block every stop-limit trigger. The reviewer proved it by running the attack in a scratch copy of the contracts.
 
-**Recommendations:**
-1. **Specification files as the contract,** read every session, and a frozen interface. That frozen interface forced fixes to stay inside the agreed surface.
-2. **Separate the author from the reviewer:** a fresh agent, given the code and not your conclusions.
-3. **Trust a test only after seeing it fail on the bug it targets,** and back that with mutants.
-4. **The human decides every design trade-off.** The AI's job is to surface the options and the evidence.
-5. **Log everything, including the AI's mistakes,** and record the model per phase as it happens.
-6. **Isolate destructive or long-running tools** (mutation, deep runs) and verify the source against HEAD afterwards.
+**Testing the tests.** Mutation testing deliberately breaks the engine and checks that the tests fail. It showed where our tests were weak. For example, removing the status check in cancellation (mutant C1, Phase 4) went unnoticed until we added a test that catches it.
+
+**Verification on a real chain.** The agent deployed the system on a scratch Anvil chain with Person 2's deploy script. It then replayed the brief's journey (placement, partial fill, cancel and a multi-party batch match) with real transactions, and later added cast journeys for the stop-limit orders. This confirmed that the factory, engine and scripts work together, not just in unit tests.
+
+### 8.2 Where AI failed or needed correction
+**Design decisions that looked fine but were not.**
+- **Small orders:** the agent first proposed rejecting orders whose total cost rounded to zero. That missed dust created by individual partial fills. We replaced it with lot and tick sizes, which make every fill cost exact and remove rounding from the engine.
+- **Stop-trigger budget:** it first proposed a fill budget per activated order (`maxCount × MAX_MATCHES_PER_TX`), which still allowed a long, expensive call. We changed it to one shared budget.
+
+**Understating severity.** In the spec, the agent described the stop-trigger denial of service (issue 006) as an occasional deep-book accident. Only when the reviewer ran it did it become clear that this was a cheap, permanent attack.
+
+**Inaccurate reporting.** The agent sometimes reported results incorrectly:
+- **A worst-case gas figure that was too low:** 1.28M instead of 1.78M. The reviewer corrected it.
+- **A deep invariant run reported as dead** while it was still running. It later completed and passed, and the agent corrected its report before merging.
+- **A commit message (`88cedf7`) that overstated** how many fuzz runs one test used. The agent flagged this itself in Phase 8.
+
+We learned to ask for raw tool output, not summaries, before trusting a claim.
+
+**Tests that did not test what they claimed.** These tests passed, but proved less than their names suggested:
+- **Unreached cases:** the original fuzz test never reached the fill cap or a crossed book (0 of 500 seeds, by the reviewer's replay). The agent's first replacement reached neither in 40 seeds until it was redesigned.
+- **Temporary behaviour pinned:** one test pinned behaviour from an earlier phase that the prompt had called temporary.
+- **Solidity mistakes:** one test aliased a memory struct.
+
+**Spec and code drifting apart.**
+- **Escrow order:** the agent once implemented an escrow order that contradicted `SPEC.md` because the prompt said otherwise (Phase 2b). It flagged the conflict itself, because we required it to check the spec.
+- **CEI exceptions:** a spec section claimed one exception to checks-effects-interactions when there were two. The independent reviewer caught this one (issue 002).
+
+### 8.3 What we would keep
+1. **Write the specification and freeze the interface before writing the logic.** It let two people work in parallel and kept the agent from inventing functions.
+2. **Plan mode first, then small phases.** Each phase was small enough to review, ended with green tests, and was merged separately. That kept the history readable for this report ([Figure 2](#figure-2)).
+3. **An independent reviewer for every significant change,** with no shared context, so the work is never graded by the agent that wrote it ([Figure 1](#figure-1)).
+4. **Mutation testing,** to measure test quality, not just test count.
+5. **Humans make design trade-offs.** The agent surfaced every fork clearly: keeping a crossed book, documenting dust griefing, auto-cancelling blocked stops, accepting issue 007. The decision and the responsibility stayed with us.
+6. **Log as you go.** Because the prompt log and the issue files were written during development, this report was a matter of assembly, not reconstruction.
+
+### 8.4 Recommendations for future AI-driven dApp development
+- **Treat every AI claim as unverified** until you have seen the command output that supports it.
+- **Ask the AI to attack its own design, not only to test it.** Our most serious finding came from a reviewer told to look for denial-of-service and economic attacks.
+- **Budget time for long verification runs.** The deep invariant run took about two hours (7,088 s), and heavy runs such as the full mutation set can exceed tool timeouts.
+- **Agree interfaces between teammates in writing, early.** Our verbal agreement held, but it left no record for the audit trail.
+- **Expect platform friction on Windows** (line endings, PATH, long file names), and fix it once, in project configuration.
+
+### 8.5 Person 2's lessons
+**[P2 to add]** the frontend and tooling lessons, for example transaction-replacement handling, chain-reset detection, and which tools were useful.
+
+**Person 2 material already in the record, kept from the earlier draft [P2 to confirm]:**
+- **Fresh-context reviewers** found P2-013 and P2-014, and 13 findings in P2-5. [P2 to confirm]
+- **Tests that proved only their own fakes:** P2-001 and P2-012.
+- **One component reasoned about at a time:** P2-003 and P2-004.
+- **Typical-case rather than hostile-case reasoning:** P2-013.
+- **README lines about tests that did not exist.** [P2 to confirm]
 
 **[P1 + P2 to confirm]:** the brief asks for the *team's* critical evaluation. Both teammates should edit this section in their own words.
 
@@ -559,6 +642,7 @@ Person 2's front-end limits are in `docs/FRONTEND.md`. [P2 to confirm]
 | Frontend handoff (signatures, flows, stale files) | [`docs/ENGINE_HANDOFF.md`](../ENGINE_HANDOFF.md) |
 | Demo replay script | [`contracts/script/demo-journey.sh`](../../contracts/script/demo-journey.sh) |
 | Person 2's audit and evidence | [`test-evidence/person2/`](../ai-audit/test-evidence/person2/) (P2-8A: `p2-8a-audit.md`, `p2-8a1-fixes.md`, `p2-8a2-liveness.md`) |
+| Original engine plan (pre-implementation scope) | [`docs/DEX_Trading_Engine_Plan.md`](../DEX_Trading_Engine_Plan.md) |
 | Person 2's earlier report draft | [`docs/ai-audit/ai-audit-report-draft.md`](../ai-audit/ai-audit-report-draft.md) |
 | Manual testing guide | [`docs/TESTING.md`](../TESTING.md) |
 | Section drafts (engine) | [`docs/report/2-…` to `8-…`](README.md) |

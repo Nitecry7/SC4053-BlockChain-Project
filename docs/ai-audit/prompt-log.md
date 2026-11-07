@@ -891,3 +891,41 @@ Each must be checked against the source before drawing. Use one colour-blind-saf
 - **Figure 9:** the first two-row layout reordered the phases. The problem was found only by looking.
 
 **What the human did:** set the scope (only `docs/report/`, facts checked against the source), the style rules and the inspection requirement.
+
+## 2026-11-08: Report Sections 1 and 8 replaced with the team's text
+**Phase:** wrap-up, report. **Branch:** `docs/sections-1-8`.
+
+**Prompt (summary):** merge the human-written Section 1 (scope) and Section 8 (lessons, Person 1's part plus shared recommendations) into `AI_AUDIT_REPORT.md`, replacing the existing text.
+- Keep Person 2's Section 8 material and every [P2 to confirm] marker.
+- Check every fact against the repo and report the corrections.
+- Keep the contents, the list of figures and the evidence index consistent, and link the figures.
+- Pull, commit, merge, push and log the session.
+
+**What the AI did:**
+- **Pull:** nothing new.
+- **Replacement:** Section 1 replaced, and Section 8 replaced as 8.1 to 8.4. A new 8.5 holds Person 2's earlier Section 8 points with their markers; 37 [P2 to confirm] markers before and after.
+- **Figure links:** Figures 3 to 8 in Section 1; Figures 1, 2, 9 and 10 in Section 8.
+- **Evidence index:** gained `docs/DEX_Trading_Engine_Plan.md`. The headings were adapted to the report's levels.
+
+**Facts checked against the repo, and the corrections made:**
+- **Interface freeze timing.** "Froze the interface before the first line of engine code" was not accurate. The draft was committed on 28 Oct (`cd35f8b`), but the freeze was in `63aee60` (1 Nov, Phase 2a), ten minutes after the Phase 1 skeleton (`7c73490`). The text now says frozen before any escrow, matching or bonus code.
+- **Who wrote the specification.** "The coding agent was only given the task after SPEC.md and CONTRACT_INTERFACE.md existed" was not accurate. Claude Code wrote `CLAUDE.md`, `SPEC.md` and the interface draft in its Phase 0 plan-mode session (this log, 28 Oct), and the plan is titled "built with Claude Code". The text now says Claude Code was asked for contract code only after those files existed. The two examples (buy escrow, `hasTradePrice`) are confirmed in the plan.
+- **Test count.** "The engine ships with 335 contract tests" is wrong: there are 245 engine tests, and 335 is the project total.
+- **Gas figure.** It was corrected by the reviewer, not by the agent itself (1,281,301 to 1,778,221, Phase 3b).
+- **Deep run.** It was reported dead while it was still running, not after it completed. It later passed.
+- **CEI exception.** The second exception (issue 002) was caught by the independent reviewer, not by the AI itself. The escrow-order conflict (Phase 2b) was flagged by the AI.
+- **Fuzz.** 0 of 500 seeds for the original test (reviewer's replay), and 0 of 40 for the AI's first replacement. Both are now stated.
+- **Confirmed unchanged:**
+  - issue 004 (73 tests; found by review F7)
+  - issue 006 (102 wei; the reviewer reproduced it in a scratch copy)
+  - mutant C1 (cancel status check)
+  - 100% line and branch coverage, and 128,000 invariant calls
+  - the deep run of 7,088 s (about two hours)
+  - the `88cedf7` commit-message overstatement
+  - the aliased memory struct, and the pinned temporary behaviour
+  - the out-of-scope list (SPEC section 1)
+  - Phase 0 human overrides (lot and tick sizes, the shared budget)
+
+**What the AI got wrong:** its first attempt to write the sections through a shell heredoc failed on quoting, so nothing was written. It switched to writing files directly.
+
+**What the human did:** wrote Sections 1 and 8.1 to 8.4 and set the checking rules.
