@@ -1,0 +1,105 @@
+== Starting a private Anvil on port 8546
+== Deploying with contracts/script/Deploy.s.sol (output redirected to a temp folder)
+   NTU  0xa16E02E87b7454126E5E10d957A927A7F5B5d2be
+   SGDx 0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968
+   market (OrderBook via MarketFactory) 0xCafac3dD18aC6c6e92c921884f9E4176737C052c
+   ---- balances after: deployment (Deploy.s.sol funds accounts 1 to 3 with 10,000 of each)
+   Alice    10000.000000000000000000 NTU 10000.000000000000000000 SGDx
+   Bob      10000.000000000000000000 NTU 10000.000000000000000000 SGDx
+   Carol    10000.000000000000000000 NTU 10000.000000000000000000 SGDx
+   Dan      970000.000000000000000000 NTU 970000.000000000000000000 SGDx
+   Keeper   0.000000000000000000 NTU 0.000000000000000000 SGDx
+   Market   0.000000000000000000 NTU 0.000000000000000000 SGDx
+
+== 1. Alice sells 100 NTU at 2. Bob buys 40 with a limit of 2.2: he trades at Alice's 2 and gets the difference back
+   Alice approve 100 NTU                                ok   tx 0xc4da35a5617c0aa6f0513c7b7c86b4762c7bc829825130d345399b48bccda2f8
+   Alice placeLimitOrder(Sell, 2, 100)                  ok   tx 0xa3b5d1d23f7179537293c0c1a2bba34ff5d3a758b4715efa020735de80bcb331
+   Bob approve requiredQuote(40, 2.2) = 88.000000000000000000 SGDx ok   tx 0x8b388634502c467412ae6621bbfc74d5161e1724b3d20506e27b3dbfaf066a36
+   Bob placeLimitOrder(Buy, 2.2, 40)                    ok   tx 0x6dc750ba1f5b8898622e51151363fc87ce5479ef3e4867af731e42fae9f56de2
+   order 1   PartiallyFilled
+   order 2   Filled
+   ---- balances after: partial fill
+   Alice    9900.000000000000000000 NTU 10080.000000000000000000 SGDx
+   Bob      10040.000000000000000000 NTU 9920.000000000000000000 SGDx
+   Carol    10000.000000000000000000 NTU 10000.000000000000000000 SGDx
+   Dan      970000.000000000000000000 NTU 970000.000000000000000000 SGDx
+   Keeper   0.000000000000000000 NTU 0.000000000000000000 SGDx
+   Market   60.000000000000000000 NTU 0.000000000000000000 SGDx
+   check Alice   9900 NTU, 10080 SGDx: ok
+   check Bob     10040 NTU, 9920 SGDx: ok
+   check Market  60 NTU, 0 SGDx: ok
+
+== 2. Alice cancels the unfilled 60 (Bonus 1). Bob cannot cancel her order
+   Bob cancelOrder(1)                                   reverted NotOrderOwner (as expected)
+   Alice cancelOrder(1)                                 ok   tx 0x80c23a0af033165851a83ff28a3fb641c4ffabf2b82e8917da12ade7e13e8254
+   order 1   Cancelled
+   ---- balances after: cancel
+   Alice    9960.000000000000000000 NTU 10080.000000000000000000 SGDx
+   Bob      10040.000000000000000000 NTU 9920.000000000000000000 SGDx
+   Carol    10000.000000000000000000 NTU 10000.000000000000000000 SGDx
+   Dan      970000.000000000000000000 NTU 970000.000000000000000000 SGDx
+   Keeper   0.000000000000000000 NTU 0.000000000000000000 SGDx
+   Market   0.000000000000000000 NTU 0.000000000000000000 SGDx
+   check Alice   9960 NTU, 10080 SGDx: ok
+   check Market  0 NTU, 0 SGDx: ok
+
+== 3. Batch matching (Bonus 2). Alice and Carol post 22 asks of 1 NTU at 2. Bob (limit 3) and Dan (limit 2.5)
+      each buy 11: each order fills the 10-fill cap and rests 1 NTU crossed. One keeper call settles all four
+   Alice approve 11 NTU                                 ok   tx 0x81fd3be21e2e4b574f7a3466497698f93e44e101ad2c83739bf0ad907fb8e013
+   Carol approve 11 NTU                                 ok   tx 0x3228c27c2b21d697c5ce2088ee6eb5e4a0244734db7a19b1585d16986183f776
+   22 asks placed (orders 3 to 24)
+   Bob approve 33 SGDx                                  ok   tx 0xeee354f4e1e2b0072e3b6812a0ee133c73e05677a1e1cdb022313e8c72b1355f
+   Bob placeLimitOrder(Buy, 3, 11): 10 fills, cap       ok   tx 0xe11c5994cfc99e16306e60e58cb6a034e5b9c9fb1f54b2d129587f5e701efbd9
+   Dan approve 27.5 SGDx                                ok   tx 0x300c24d223ee1ba91b318541c657730e278344f9b87153490663ef690377a096
+   Dan placeLimitOrder(Buy, 2.5, 11): 10 fills, cap     ok   tx 0x048a4e25aff180013258976ecc0c1cab1613c2a831a167117c2e316b4eafec85
+   best bid 3000000000000000000 [3e18]  best ask 2000000000000000000 [2e18]: crossed
+   keeper simulates matchOrders(10): 2 fills
+   Keeper matchOrders(10): one transaction              ok   tx 0x6f0d8a959ebf8ae6147c717c6dd99d7415ec3ca36910348178ba29e7f34becb9
+   order 23  Filled
+   order 24  Filled
+   order 25  Filled
+   order 26  Filled
+   ---- balances after: batch
+   Alice    9949.000000000000000000 NTU 10102.000000000000000000 SGDx
+   Bob      10051.000000000000000000 NTU 9898.000000000000000000 SGDx
+   Carol    9989.000000000000000000 NTU 10022.000000000000000000 SGDx
+   Dan      970011.000000000000000000 NTU 969978.000000000000000000 SGDx
+   Keeper   0.000000000000000000 NTU 0.000000000000000000 SGDx
+   Market   0.000000000000000000 NTU 0.000000000000000000 SGDx
+   check Alice   9949 NTU, 10102 SGDx: ok
+   check Carol   9989 NTU, 10022 SGDx: ok
+   check Bob     10051 NTU, 9898 SGDx: ok
+   check Dan     970011 NTU, 969978 SGDx: ok
+   check Keeper  0 NTU, 0 SGDx: ok
+   check Market  0 NTU, 0 SGDx: ok
+
+== 4. Stop-limit (Bonus 3). Alice protects 10 NTU: sell stop, trigger 1.8, limit 1.7. A trade at 1.8 drops the price;
+      a keeper triggers the stop and it sells into Bob's bid at 1.75
+   Alice approve 10 NTU                                 ok   tx 0x7956a4f6bd5c7fc3c0b11743d6309df2e0d4f63ca3348284c96fde4bd1dc95af
+   Alice placeStopLimitOrder(Sell, 1.8, 1.7, 10)        ok   tx 0xe4a712786acb8f31e99b5276b47056d53cca9b6fd0dc8e0822ba57a1415b8ec7
+   order 27  PendingTrigger
+   keeper simulates triggerStopOrders(10) at price 2: 0 triggered (not eligible yet)
+   Bob approve 19.3 SGDx                                ok   tx 0x03a42a454be4457efc9e7e1191fc4adfbdf07090126bc353bdb599589f7ae98c
+   Bob placeLimitOrder(Buy, 1.75, 10)                   ok   tx 0x4d2e407f4c525169a0e302450d1a5f97a29fe4f34c105274ba73559da3061e81
+   Bob placeLimitOrder(Buy, 1.8, 1)                     ok   tx 0x1908066bb91c410e7103e101d8505d1b0cab8598e5a91997322c5449b571202f
+   Carol approve 1 NTU                                  ok   tx 0x52ca818c30c1fcd39712aa494a989a10eb9481c4cc7ba4ff58759f794943ffae
+   Carol placeLimitOrder(Sell, 1.8, 1): trade at 1.8    ok   tx 0x683dd70907fd8e403e21f3bd3e8bbc4819f6616c870b8c9e8ac511996c3c8e7a
+   lastTradePrice 1.800000000000000000
+   keeper simulates triggerStopOrders(10): 1 triggered
+   Keeper triggerStopOrders(10)                         ok   tx 0x172dcc989d8b9de29463bd3450506ef45ca1c8a6f10d9eb278fad85ddab42a75
+   order 27  Filled
+   order 28  Filled
+   ---- balances after: stop-limit
+   Alice    9939.000000000000000000 NTU 10119.500000000000000000 SGDx
+   Bob      10062.000000000000000000 NTU 9878.700000000000000000 SGDx
+   Carol    9988.000000000000000000 NTU 10023.800000000000000000 SGDx
+   Dan      970011.000000000000000000 NTU 969978.000000000000000000 SGDx
+   Keeper   0.000000000000000000 NTU 0.000000000000000000 SGDx
+   Market   0.000000000000000000 NTU 0.000000000000000000 SGDx
+   check Alice   9939 NTU, 10119.5 SGDx: ok
+   check Bob     10062 NTU, 9878.7 SGDx: ok
+   check Carol   9988 NTU, 10023.8 SGDx: ok
+   check Keeper  0 NTU, 0 SGDx: ok
+   check Market  0 NTU, 0 SGDx: ok
+
+DEMO COMPLETE: every check passed

@@ -985,3 +985,46 @@ Each must be checked against the source before drawing. Use one colour-blind-saf
 **Open lead:** the gas report's maximum placement (1,808,075) is above `test_gas_worstCasePlacement` (1,778,221), yet a draft calls 1.78M "the worst measured". This goes to Phase 3 or 5.
 
 **What the human did:** chose to start Phases 0 to 2.
+
+## 2026-11-08: Report verification, Phases 3 to 7
+**Phase:** wrap-up, verification. **Branch:** `docs/report-verification-2`.
+
+**Prompt (summary):** continue with the remaining verification phases; commit, merge and push as needed. The human then went to sleep and asked for a phone notification when it was done.
+
+**What the AI did:**
+- **Phase 3:**
+  - **Review:** a fresh, read-only subagent checked about 190 claims and returned 25 problems.
+  - **Re-check:** the main session confirmed each against its cited source before editing.
+  - **Corrections:** all 25 were corrected in the report. Among them:
+    - reviews from Phase 3a, not Phase 1
+    - the escrow-order history
+    - three options for issue 006, not four
+    - an unsupported prompt quotation
+    - the cross-boundary edits (README engine section, `demo-journey.sh`, and `abis.ts` authorised by Person 1 only)
+    - issue 004 as injected mutants
+    - who surfaced the design forks
+    - Person 2 details
+    - the chat-assistant scope
+  - **Elsewhere:** the section drafts were marked superseded, and one line was fixed in `VIDEO_PLAN.md`.
+- **Phase 4:**
+  - **Code:** Figures 3, 4, 6, 7 and 8 were checked against the code. Figure 5's numbers were proven by a temporary test, then deleted.
+  - **Figure 10:** labels fixed (reviews found 5 of 7; the slow fuzz test).
+  - **Figure 9:** label fixed (injected bugs).
+  - **Legibility:** six figures were narrowed so that every figure prints at 7.3 pt or more on A4, up from about 5 pt.
+- **Phase 5:**
+  - **Full mutation set:** all 67, which had never been recorded. Result: 65 caught; R4 and P5q survived as documented equivalents. All the rewritten mutants are now caught.
+  - **Gas lead:** resolved. The 1.81M placement is `test_gas_worstCasePlacement` on the final code (1.78M at Phase 3b). SPEC O2 now gives both.
+- **Phase 6:**
+  - **Demo:** `demo-journey.sh` on a scratch Anvil on port 8546: every check passed, and the chain was stopped.
+  - **Front end:** `npm test`: 410 passed, 48 skipped.
+- **Phase 7:** brief 2.1 and 2.2 compliance confirmed. What remains open: the 40 Person 2 markers, the team evaluation, the plan title, and confirming on NTULearn whether a video is required.
+- **Evidence:** `docs/ai-audit/test-evidence/wrapup/report-verification.md` and `verification/`.
+
+**What the AI got wrong:**
+- **Its own Figure 10** claimed that the per-phase reviews found all 7 issues.
+- **The A4 requirement** set when the figures were first made was not checked numerically then. Four figures would have printed at about 5 to 6 pt.
+- **The first Figure 5 check** failed on the test's own wrong balance assumption, not on the figure.
+- **Twice, a heredoc append failed on shell quoting.** Nothing was written either time, and the append was redone with the file tools.
+- **Phase 3 showed that earlier sessions wrote several unsupported attributions into the report** (listed above). Each one is now corrected against its source.
+
+**What the human did:** asked for the phased plan and for it to be carried out, with commit, merge and push.

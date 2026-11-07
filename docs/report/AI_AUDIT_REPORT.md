@@ -17,7 +17,7 @@
 - **Two markers flag text that a teammate must confirm before submission:**
   - **[P2 to confirm]** marks text adapted from Person 2's records: [`docs/ai-audit/ai-audit-report-draft.md`](../ai-audit/ai-audit-report-draft.md), [`prompt-log-person2.md`](../ai-audit/prompt-log-person2.md), [`tooling-and-methodology.md`](../ai-audit/tooling-and-methodology.md) and the `p2-*` issue and evidence files.
   - **[P1 + P2 to confirm]** marks text that needs both teammates.
-- **One exception, marked where it appears:** statements about Person 1's claude.ai chat (Sections 1.6, 2.4 and 3.1) are Person 1's own account, because the chat transcript is not committed.
+- **One exception, marked where it appears:** statements about Person 1's claude.ai chat (the executive summary, 1.6, 2.2, 2.4, Figure 1, 3.1, 3.2 and 8.3 item 7) are Person 1's own account, because the chat transcript is not committed.
 - **Person 1's parts** come from [`docs/ai-audit/prompt-log.md`](../ai-audit/prompt-log.md), issues 001 to 007, and the engine evidence.
 
 ---
@@ -29,16 +29,16 @@
   - batched multi-party matching (`matchOrders`; 4 buyers and 4 sellers settled in one transaction)
   - conditional stop-limit orders (`placeStopLimitOrder`, `triggerStopOrders`)
 - **The bonus UI is not built yet (Person 2).** The regenerated ABI is already in `web/` (`e375ff6`). The app shows no bonus controls, and Person 2's local chain still needs a redeploy.
-- **AI use:** Person 1 also used Claude in the claude.ai chat, minimally, as planner and reviewer (Section 2.4), and both teammates used Claude Code throughout, steered by specification files read every session (`CLAUDE.md`, `SPEC.md`, the frozen `CONTRACT_INTERFACE.md`, per-phase prompts). The human made every design trade-off. A fresh, read-only AI reviewer checked each phase.
+- **AI use:** Person 1 also used Claude in the claude.ai chat, minimally, as planner and reviewer (Section 2.4), and both teammates used Claude Code throughout, steered by specification files read every session (`CLAUDE.md`, `SPEC.md`, the frozen `CONTRACT_INTERFACE.md`, per-phase prompts). The human made every design trade-off. From Phase 3a on, a fresh, read-only AI reviewer checked each phase.
 - **Problems found in AI output:** 22 issues are logged in the four-part format: 7 engine (001 to 007) and 15 Person 2 (P2-001 to P2-015).
-  - **Highest:** 006 (High availability: one 102-wei stop blocked every stop trigger, fixed) and 004 (High test quality: three matching bugs passed the suite, fixed). For Person 2, two Medium deployment-tooling defects (P2-013, P2-014, fixed).
+  - **Highest:** 006 (High availability: one 102-wei stop blocked every stop trigger, fixed) and 004 (High test quality: three injected matching bugs would have passed the suite; the code itself was correct). For Person 2, two Medium deployment-tooling defects (P2-013, P2-014, fixed).
   - **One Medium engine issue is accepted by design and pinned by a test:** 007 (a limit order can be sandwiched through the fill cap; the loss is bounded by the victim's limit).
 - **Validation:**
   - **Tests:** 335 Foundry tests (245 engine, 90 Person 2) and 410 front-end unit tests (48 gated).
   - **Invariants:** a stateful invariant suite with an independent reference ledger held for 1,000 runs × depth 128 (128,000 calls, 0 reverts).
   - **Coverage:** `OrderBook.sol` 100% on lines, statements, branches and functions.
   - **Static analysis:** Slither found 0 real issues in the engine.
-  - **Mutation testing:** caught every non-equivalent mutant per phase.
+  - **Mutation testing:** each phase's mutants were caught. The full set of 67 hand-written mutants, run once at the end, caught 65; the 2 survivors are documented equivalents.
   - **Reviews:** a final independent audit found no Critical or High.
   - **Real chain:** scratch-chain `cast` journeys and a one-command demo replay passed.
 - **Not proven:**
@@ -152,7 +152,7 @@ The resulting lifecycle is shown in [Figure 4](#figure-4).
   - **What it did:** Person 1 used one long chat, running from 28 Oct to 8 Nov, to stress-test the brief-based plan. The chat then rewrote it as the Person 1 engine plan, `docs/DEX_Trading_Engine_Plan.md`.
   - **What came out of that review:** buy orders are escrowed too, and the stop trigger has an explicit initial state (`hasTradePrice`). We decided both ourselves, and both are in the plan.
   - **Evidence:** this is the owner's account; the chat transcript is not in the repository. The plan file's title reads "Person 1, built with Claude Code". The repository agrees on the order of events: Claude Code's first session, on 28 Oct, opens by reading this plan, which was already in `docs/` but not yet committed (prompt log, Phase 0).
-- **The specification files.** `CLAUDE.md`, `SPEC.md` and the `CONTRACT_INTERFACE.md` draft were written in Claude Code's Phase 0 plan-mode session on 28 Oct (`cd35f8b`). The AI found seven specification gaps, (a) to (g), and the human replaced two of its fixes (Section 3.2).
+- **The specification files.** `CLAUDE.md`, `SPEC.md` and the `CONTRACT_INTERFACE.md` draft were written in Claude Code's Phase 0 plan-mode session on 28 Oct (`cd35f8b`). The AI found seven specification gaps, (a) to (g). The human replaced its fix for one, gap (b), and one other AI proposal, the trigger budget (Section 3.2).
 - **The first contract code.** Claude Code was asked to write it only on 1 Nov (Phase 1), after those files were committed. It therefore built against our specification rather than inventing one.
 
 **What predates AI use:** only the repository's initial commit (`095b2af`, 24 Oct, a one-line README).
@@ -168,17 +168,20 @@ The resulting lifecycle is shown in [Figure 4](#figure-4).
 | Shared (both must agree) | Both | `CLAUDE.md`, `CONTRACT_INTERFACE.md`, `contracts/foundry.toml` |
 
 - **The interface was the contract between the two halves.** It was frozen on 1 Nov (Person 2's approval was verbal, recorded in Person 1's log) and has not changed in signature since.
-- **Neither AI edited the other teammate's files.** Needed changes were written down instead: in Person 2's audit (`p2-8a-audit.md`) and in Person 1's handoff (`docs/ENGINE_HANDOFF.md`).
-- **The one cross-boundary change, with the owner's approval:** `web/lib/contracts/abis.ts` was regenerated with Person 2's own exporter (`e375ff6`).
+- **Cross-boundary edits were few and named.** Most needed changes were written down instead: in Person 2's audit (`p2-8a-audit.md`) and in Person 1's handoff (`docs/ENGINE_HANDOFF.md`).
+- **Person 1's sessions did edit three things in Person 2's area:**
+  - `web/lib/contracts/abis.ts`, regenerated with Person 2's own exporter (`e375ff6`). Person 1 authorised this; Person 2's approval is not recorded. [P2 to confirm]
+  - the engine section of `README.md` (`9c67419`, `5ca1b4a`)
+  - a new `contracts/script/demo-journey.sh` (`9c67419`)
 
 ### 2.2 Tools
 | Tool | Person 1 (engine) | Person 2 [P2 to confirm] |
 |---|---|---|
 | **Claude (claude.ai chat)** | Planner and reviewer, used minimally: one long chat, 28 Oct to 8 Nov (Section 2.4). Owner's account; the transcript is not in the repository | [P2 to confirm] whether a chat assistant was used |
 | **Claude Code** | Opus 5.5 (log header); plan mode for Phase 0. The implementer, which also ran the independent subagent reviews | Opus 5.5, Sonnet 5.5 and Haiku 5.5 by phase (models per phase: `tooling-and-methodology.md`; some not recorded) |
-| **Independent reviewer** | A fresh, read-only Claude Code subagent per phase (1 to 7), plus a final audit | Fresh-context subagents in P2-1 to P2-6 (none for P2-5 wrap-up, P2-6.1, P2-7) |
+| **Independent reviewer** | A fresh, read-only Claude Code subagent per phase from 3a to 7 (Phases 1 to 2b had none), plus a final audit | Fresh-context subagents in P2-1 to P2-6 (none for P2-5 wrap-up, P2-6.1, P2-7, the documentation sessions, P2-8A, P2-8A.1 and P2-8A.2) |
 | **Foundry 1.8.6** (`forge`, `anvil`, `cast`) | Unit, fuzz and invariant tests, gas, sizes, coverage, scratch-chain `cast` journeys | Contract tests, deploy script, scratch chains |
-| **Static analysis** | Slither 0.11.6 and `forge lint` on `OrderBook.sol` (Phase 8) | Slither 0.11.6 on Person 2's contracts and script; `forge lint` |
+| **Static analysis** | Slither 0.11.6 on `OrderBook.sol` (Phase 8); `forge lint` triaged in the wrap-up | Slither 0.11.6 on Person 2's contracts and script; `forge lint` |
 | **Libraries** | OpenZeppelin 5.7.0 (`SafeERC20`, `ReentrancyGuard`, `Math.mulDiv`); forge-std 1.17.0 | Next.js, RainbowKit, wagmi, viem, TanStack Query; Vitest; `playwright-core` with a mock wallet |
 | **Skills and MCPs** | Project commands `/review-engine` and `/log-issue` | Context7 (P2-3 to P2-5); shadcn and Awwwards MCPs; `frontend-design`, `ui-ux-pro-max`, `impeccable`, `taste-skill` (P2-4); `solidity-security` (P2-3, P2-8A); `react-best-practices` (P2-8A). The Playwright MCP was attempted but did not launch, and SkillSpector was not installed |
 | **Node.js** | 26.13.0, installed 7 Nov to run Person 2's tests and exporter against engine changes | Node 22.18 or newer |
@@ -188,7 +191,7 @@ The resulting lifecycle is shown in [Figure 4](#figure-4).
   - `CLAUDE.md` (source of truth, ownership, engine rules, "never weaken a failing test", "never claim something was run unless you ran it", log every session)
   - `SPEC.md` (accounting rules A1 to A8, lifecycle, per-function behaviour, known limitations)
   - the frozen `CONTRACT_INTERFACE.md`
-  - `docs/ENGINE_PHASES.md` (build order, plus the verbatim prompt for each phase)
+  - `docs/ENGINE_PHASES.md` (build order, plus the verbatim prompts for Phases 1 to 4; later prompts are summarised in the prompt log)
 - **Project commands** (`.claude/commands/`): `review-engine` (spawns an independent reviewer), `log-issue` (the four-part issue format, "use only output actually produced in this session") and `explain-diff`.
 - **Engine test infrastructure aimed at AI mistakes:**
   - `OrderBookHarness`, to see internal links without changing the interface
@@ -219,13 +222,13 @@ The resulting lifecycle is shown in [Figure 4](#figure-4).
 | One shared fill budget for `triggerStopOrders`, instead of `maxCount × MAX_MATCHES_PER_TX` | Phase 0 planning, 28 Oct (2) |
 | The `bookSeq` tie-break decided at once (O1), on the day it was found, before any code. SPEC.md had left it "to decide before Phase 6" | Phase 0 scaffold, 28 Oct: "Human decision, O1" |
 | Escrow order: follow SPEC.md, pulling escrow before matching, where the Phase 2b prompt said to pull last | Phase 2b, 1 Nov: "Human decisions" |
-| Issue 006: auto-cancel and refund, option (a) of the four | Phase 6, 7 Nov |
+| Issue 006: auto-cancel and refund, the review's option (a) of the three recorded | Phase 6, 7 Nov |
 | Issue 007: document and pin by a test rather than change the engine | Phase 8, 8 Nov: "Human decision on M-1" |
 
 <a id="figure-1"></a>
 ![Figure 1: AI-assisted workflow per phase](diagrams/01-ai-workflow.png)
 
-**Figure 1: AI-assisted workflow per phase (engine).** The human approves each phase prompt (`docs/ENGINE_PHASES.md`, drafted in the chat). Every AI change then passes real test output, a fresh read-only reviewer and mutation testing before it is logged and merged. A surviving mutant sends the work back to implementation.
+**Figure 1: AI-assisted workflow per phase (engine).** The human approves each phase prompt (`docs/ENGINE_PHASES.md`). Every AI change then passes real test output, a fresh read-only reviewer (from Phase 3a) and mutation testing before it is logged and merged. A surviving mutant sends the work back to implementation.
 
 Person 2 followed the same pattern [P2 to confirm]:
 1. a read-only planning session approved by the owner
@@ -249,19 +252,19 @@ Person 2 followed the same pattern [P2 to confirm]:
 | [`CLAUDE.md`](../../CLAUDE.md) | Standing rules loaded every session |
 | [`SPEC.md`](../../SPEC.md) | The behaviour contract. Prompts cite its sections, and code and tests cite its rules (A1 to A8) by name |
 | [`CONTRACT_INTERFACE.md`](../../CONTRACT_INTERFACE.md) | The frozen ABI. "Do not add any error, event or function that is not in the interface" forced fixes to stay inside the agreed surface (issues 001 and 006) |
-| [`docs/ENGINE_PHASES.md`](../ENGINE_PHASES.md) | The phase table and the verbatim prompts. Person 1 drafted the prompts in the claude.ai chat (Section 2.4) and refined them in Claude Code. Tests that reviews found missing were added to the rows of later phases |
+| [`docs/ENGINE_PHASES.md`](../ENGINE_PHASES.md) | The phase table and the verbatim prompts for Phases 1 to 4 (later prompts are summarised in the prompt log). Claude Code wrote the file in Phase 0. Person 1 drafted some prompts in the claude.ai chat (owner's account, Section 2.4). The log records Claude Code drafting the updated Phase 1 prompt and the Phase 3b and 4 prompts, and the Phase 3a prompt as the human's. Tests that reviews found missing were added to the rows of later phases |
 | [`docs/MARKET_FACTORY.md`](../MARKET_FACTORY.md), [`PRODUCT.md`](../../PRODUCT.md), [`DESIGN.md`](../../DESIGN.md) | Person 2's specifications [P2 to confirm] |
 
 ### 3.2 Representative prompt chains
 **Engine (Person 1; full text in `docs/ai-audit/prompt-log.md`):**
 1. **Phase 0 planning, 28 Oct (plan mode):**
-   - The AI found seven specification gaps, (a) to (g). The human accepted most of its fixes but **replaced two** (my corrections, drafted with the chat assistant):
+   - The AI found seven specification gaps, (a) to (g). The human accepted most of its proposals but **replaced two**: the fix for gap (b), and a separate trigger-budget proposal (my corrections, drafted with the chat assistant):
      - `AmountTooSmall` became lot and tick sizes, because the AI's fix only guarded the total cost, not each partial fill.
      - A per-activation trigger budget became one shared budget, because the AI's version multiplied the worst-case gas.
    - Writing SPEC exposed the order-ID tie problem, which led to `bookSeq` (O1).
-2. **Phase 3a, 2 Nov:** implementation, then a review with 11 findings, then each finding back to the AI as "fix with a regression test and show the failing then passing output". Result: issues 002, 003 and 004.
-3. **Phase 6, 7 Nov:** a review found a 102-wei denial of service (H1). The AI laid out four options and the human chose auto-cancel. The AI reproduced the bug on the old line (3 FAIL), fixed it (3 PASS), added mutants P6x and P6y, and logged issue 006.
-4. **Phase 7, 7 to 8 Nov:** a review of the AI's own tests found tautological ghost variables and a regression test that could not fail. The AI rebuilt the handler around an independent reference ledger, which mutants P7c to P7h prove.
+2. **Phase 3a, 2 Nov:** implementation, then a review with 11 findings. The phase prompt said "Log real findings with /log-issue, fix them with regression tests". Real defects became issues 002, 003 and 004. F2 and F3 were kept by human decision, and F5 and F6 were documented as limitations.
+3. **Phase 6, 7 Nov:** a review found a 102-wei denial of service (H1). The human chose the review's option (a), auto-cancel, over the other two recorded (document only, or a third list for blocked stops). The AI reproduced the bug on the old line (3 FAIL), fixed it (3 PASS), added mutants P6x and P6y, and logged issue 006.
+4. **Phase 7, 7 to 8 Nov:** a review of the AI's own tests found tautological ghost variables and a regression test that could not fail. The AI rebuilt the handler around an independent reference ledger. Mutants P7c to P7e prove the ledger catches wrong-recipient payouts; P7f to P7h prove the new matching-rule and auto-cancel checks.
 5. **Phase 8, 8 Nov:** the final audit found M-1. The human chose to document it rather than change the engine, and the AI reproduced it in the repo to the wei (issue 007).
 
 **Person 2 [P2 to confirm]** (full text in `prompt-log-person2.md`):
@@ -275,8 +278,8 @@ Person 2 followed the same pattern [P2 to confirm]:
 | P2-8A audit | plan, one owner refinement round | the coverage matrix and the first report draft |
 
 ### 3.3 Context management
-- **The prompt logs carried state between sessions.** The AI wrote them and the human reviewed them. Each session started by reading `CLAUDE.md`, SPEC and the log.
-- **A resumed session started with a recovery check, not code.** Person 1's 7 Nov session began with a read-only recovery and sync: uncommitted work, Person 2's 24 new commits, and a diff of the frozen files.
+- **The prompt logs carried state between sessions.** The AI wrote them. Phase prompts start by reading `CLAUDE.md` and `SPEC.md`, and the 1 Nov resume also read the log.
+- **A resumed session started with a recovery check, not code.** Person 1's 7 Nov session began with a recovery and sync: a WIP commit of the uncommitted work, Person 2's 24 new commits merged in, and a diff of the frozen files before any new code.
 - **Exact context-window contents are not preserved** and are not claimed.
 
 ---
@@ -327,20 +330,20 @@ Person 2 followed the same pattern [P2 to confirm]:
 **Figure 8: Multi-party batch match (Bonus 2).** This replays `test_batch_multiPartySettlesFourBuyersAndFourSellersInOneCall`. One `matchOrders` call settles four buyers and four sellers at the makers' price and refunds each buyer's price improvement. The keeper's balances stay at zero.
 
 ### 4.3 What the AI proposed, and what happened to it
-| Area | AI proposal (Phase 0, 28 Oct, unless stated) | Outcome |
+| Area | AI proposal (the plan or Phase 0, 28 Oct, unless stated) | Outcome |
 |---|---|---|
-| Market structure | One `OrderBook` per pair; immutable base and quote; 18 decimals only | Accepted. Person 2's AI later proposed `MarketFactory` (P2-2), which the owner accepted as the listing mechanism [P2 to confirm] |
+| Market structure | One `OrderBook` per pair; immutable base and quote; 18 decimals only | Accepted. Person 2's AI later proposed `MarketFactory` (Prompt 00, plan rev 3; built in P2-2), which the owner accepted as the listing mechanism [P2 to confirm] |
 | Book | Sorted doubly linked lists, best order at the head, insert bounded by `MAX_INSERT_SCAN` | Accepted |
 | Priority | Price, then order ID | **Changed by the human (O1):** price, then an internal `bookSeq` stamped when an order enters the book, so a late-triggered stop queues fairly |
-| Escrow order | Pull last (strict CEI) | **Changed (1 Nov):** pull before matching, which fills need. A second deviation, payouts during the match loop, was found by review (issue 002). Both are documented in SPEC section 5 |
+| Escrow order | SPEC (Phase 0): pull before matching. The Phase 2b prompt (1 Nov) said pull last (strict CEI) | **Human decision (1 Nov):** keep SPEC's order, pull before matching, which fills need. A second deviation, payouts during the match loop, was found by review (issue 002). Both are documented in SPEC section 5 |
 | Dust | `AmountTooSmall` | **Rejected:** `LOT_SIZE = TICK_SIZE = 1e9` makes every fill cost exact (A1) |
 | Buy escrow after a fill | (gap c) A5: re-lock `requiredQuote(remaining, limit)` and refund the rest | Accepted |
 | Settlement | Maker price, at most 10 fills per call, one `_settleFill` | Accepted; reused by batch and stops |
 | Stops | Two sorted stop lists | Accepted; in Phase 6 they reuse the book's list code |
 | Trigger budget | `maxCount × MAX_MATCHES_PER_TX` | **Changed by the human:** one shared budget per call |
-| Activation into a too-deep book | Revert (`BookTooDeep`) | **Changed after review (issue 006):** cancel and refund |
-| Interface helpers | `requiredQuote`; `getOrder` returns zeros for an unknown ID | Accepted |
-| Deployment and export | Script with an explicit deployer; an exporter tied to build artefacts and the live chain | AI proposals refined by review (P2-013, P2-014) [P2 to confirm] |
+| Activation into a too-deep book | Revert (`BookTooDeep`), Phase 6 implementation | **Changed after review (issue 006):** cancel and refund |
+| Interface helpers | `requiredQuote` (Phase 0); `getOrder` returns zeros for an unknown ID (Phase 2b) | Accepted |
+| Deployment and export | Script with an explicit deployer; an exporter tied to build artefacts and the live chain | Refined before and after review: the deployer design changed after a Context7 check of the Foundry docs; tying ABIs to deployed bytecode came from a Low-Medium review finding; P2-013 and P2-014 hardened the guard and the exporter [P2 to confirm] |
 | Front-end state | A pure lifecycle reducer (`web/lib/order-flow.ts`), shared by order, approval, token creation and listing, with runners that simulate, sign, wait and reconcile | [P2 to confirm] which parts were the AI's first proposal |
 
 ---
@@ -350,7 +353,7 @@ Person 2 followed the same pattern [P2 to confirm]:
 | ID | Area | Problem | Class | Severity | Status |
 |---|---|---|---|---|---|
 | [006](../ai-audit/issues/006-stop-activation-booktoodeep-blocks-all-triggers.md) | Engine | One unplaceable stop blocked every stop activation, on both sides, for 102 wei | Gas bound becomes denial of service | High (availability) | Fixed (`1adcc59`) |
-| [004](../ai-audit/issues/004-matching-test-gaps.md) | Engine tests | Three matching bugs (overfill, phantom fills, wrong Trade fields) passed the suite | Test quality | High (tests) | Fixed (`6d1d14c`) |
+| [004](../ai-audit/issues/004-matching-test-gaps.md) | Engine tests | Three injected matching bugs (overfill, phantom fills, wrong Trade fields) would have passed the suite; the code itself was correct | Test quality | High (tests) | Fixed (`6d1d14c`) |
 | [007](../ai-audit/issues/007-dust-sandwich-of-capped-limit-order.md) | Engine | A dust front-run sandwiches a limit order through the fill cap, so the victim pays up to their limit | Economic / ordering | Medium | **Accepted by design**; pinned by a test |
 | [002](../ai-audit/issues/002-undocumented-cei-deviation-in-matching.md) | Engine spec | Second CEI deviation (payouts during matching) undocumented | Reentrancy reasoning | Medium (docs) | Fixed |
 | [P2-013](../ai-audit/issues/p2-013-chain-id-guard-bypassed-by-forge-chain-override.md) | Deploy script | Chain-id guard bypassable with `--chain 31337` | Unsafe deployment | Medium | Fixed [P2 to confirm] |
@@ -374,7 +377,7 @@ The full text and the real before-and-after output are in each issue file.
 **006: one unplaceable stop blocked every trigger.**
 1. **Why the AI erred:** it reused the book's insert path, whose `BookTooDeep` revert is a gas bound, for stop activation. It missed that this reverts a permissionless call serving every stop, and that the failing stop stays at the head, so every later call fails too. It saw the revert but called it an accident.
 2. **Impact:** a self-owned stop with the lowest trigger, plus 101 one-lot bids at 1 wei of escrow each (102 wei in all), made every `triggerStopOrders` call revert permanently. No stop-loss on either side could fire.
-3. **Fix:** a non-reverting `_tryInsert`. An activated remainder that cannot enter the book is cancelled and refunded through the existing `OrderCancelled`. No ABI change. The human chose this option out of four.
+3. **Fix:** a non-reverting `_tryInsert`. An activated remainder that cannot enter the book is cancelled and refunded through the existing `OrderCancelled`. No ABI change. The human chose this option out of the three recorded.
 4. **Evidence:** on the pre-fix line, 3 FAIL with `BookTooDeep()`; after the fix, 3 PASS. Mutant P6x (the pre-fix code) is caught by the unit suite and by the invariant suite alone.
 
 **004: matching test gaps.**
@@ -411,7 +414,7 @@ The full text and the real before-and-after output are in each issue file.
 1. **Why:** the AI took `prev == 0` to mean "this order is the head", and left the precondition as a comment.
 2. **Impact:** one missed check would hide every resting order on that side, with its escrow still held.
 3. **Fix:** a link guard that reverts with the existing `OrderNotActive`, since the interface was frozen.
-4. **Evidence:** 3 FAIL (`0 != 1`), then 3 PASS.
+4. **Evidence:** 3 FAIL (one `0 != 1`, two missing reverts), then 3 PASS.
 
 ### 5.3 Person 2 issues in the four-part format [P2 to confirm]
 Adapted from Person 2's draft (section 5.1). Each row summarises an issue file holding the full analysis and the real before-and-after output.
@@ -434,7 +437,7 @@ Adapted from Person 2's draft (section 5.1). Each row summarises an issue file h
 | [P2-014](../ai-audit/issues/p2-014-exporter-accepted-a-partial-broadcast.md) exporter accepted a partial broadcast | "every check" left undefined | an interrupted deployment exported as complete | nothing pending, one receipt per transaction, all successful | unit tests; mutants E4 and E7 caught |
 | [P2-015](../ai-audit/issues/p2-015-stale-data-shown-as-live-after-the-rpc-died.md) stale data shown as live | freshness designed around events; a dead node produces none | old balances shown as current before signing | a health probe, "last known" labels, transactions disabled while offline | controlled reproduction before and after; 17 + 7 unit tests; browser 11 passed |
 
-Person 2's P2-3 review also logged two lower findings without issue files: ABIs not tied to the deployed bytecode, and `deployments.ts` not reproducible. Both were fixed (Person 2's draft, section 5.2). [P2 to confirm]
+Person 2's P2-3 review also logged five lower findings without issue files (one Low-Medium, four Low). Person 2's draft (section 5.2) details two of them, both fixed: ABIs not tied to the deployed bytecode, and `deployments.ts` not reproducible. [P2 to confirm]
 
 ### 5.4 Reviews, static analysis and audits
 - **Engine Slither 0.11.6:** 27 results, 0 real (13 false positives, 14 accepted). **`forge lint`:** 6 warnings, 0 real. See [`phase8/slither-triage.md`](../ai-audit/test-evidence/phase8/slither-triage.md).
@@ -449,7 +452,7 @@ Person 2's P2-3 review also logged two lower findings without issue files: ABIs 
   - three Low documentation fixes applied
   - Info notes passed to the handoff
   - See [`ENGINE_SECURITY_SUMMARY.md`](../ai-audit/ENGINE_SECURITY_SUMMARY.md).
-- **Person 2's P2-8A audit:** accessibility, RPC-cost and liveness findings, with their status (Person 2's draft, section 5.3). [P2 to confirm]
+- **Person 2's P2-8A audit and P2-8A.1:** accessibility and RPC-cost findings from the audit; the liveness gap (R9, later P2-015) found by testing in P2-8A.1 (Person 2's draft, section 5.3). [P2 to confirm]
 
 ### 5.5 Accepted limitations (not defects)
 Listed in SPEC section 8:
@@ -471,7 +474,7 @@ Person 2's front-end limits are in `docs/FRONTEND.md`. [P2 to confirm]
 | Engine reentrancy tests | Re-entry at every transfer reverts; swallow mode pays exactly once; view spies pin CEI | In the 245 |
 | Property fuzz | Random prices and sizes for place, cancel, batch and trigger, against reference arithmetic; `requiredQuote` differential checks (including 512-bit) | 20 fuzz tests (15 engine, 5 Person 2): 1,000 runs at the default profile and 10,000 at deep. One exception: `testFuzz_coarsePlacementsKeepSolvencyAndBookOrder`, which is slow, runs 25 at default and 200 at deep |
 | **Stateful invariants** | Solvency including pending stops; conservation; **an independent reference ledger equal to every balance**; order fields; lists; trade-price rules; uncrossed after `matchOrders` | All held: 256 × 64 (16,384 calls) and **1,000 × 128 (128,000 calls)**, 0 reverts |
-| Mutation testing | The tests catch real bugs | Every non-equivalent engine mutant caught per phase; the invariant suite alone caught 15 of 17. Person 2: 11 of 11 (P2-3), 5 of 5 (P2-6.1, P2-7) [P2 to confirm] |
+| Mutation testing | The tests catch real bugs | Every non-equivalent engine mutant caught: each phase's set, then the full set of 67 on 8 Nov (65 caught, the 2 survivors R4 and P5q documented as equivalent; [run](../ai-audit/test-evidence/wrapup/verification/mutants-full-set.txt)). The invariant suite alone caught 15 of 17. Person 2: 11 of 11 (P2-3), 5 of 5 (P2-6.1, P2-7) [P2 to confirm] |
 | Coverage | Which code the tests execute | **`OrderBook.sol` 100%** on lines (182/182), statements, branches (59/59) and functions |
 | Static analysis | Known vulnerability patterns | Engine: 0 real (Slither and lint). Person 2: accepted notes only [P2 to confirm] |
 | Real-chain runs | Person 2's deploy script on a scratch Anvil; `cast` journeys for cancel, batch and stop-limit; `contracts/script/demo-journey.sh` | Every balance check passed |
@@ -530,7 +533,7 @@ Person 2's front-end limits are in `docs/FRONTEND.md`. [P2 to confirm]
   - `matchOrders`: anyone may call it and the caller gains nothing; multi-party settlement in one transaction.
   - Stop-limit: escrow at placement; sorted stop lists; one shared fill budget; a fresh `bookSeq` at activation; auto-cancel when a stop cannot be placed.
 - **One settlement path** (`_settleFill`) and **one list implementation,** reused across features. Shared helpers instead of duplicated code (`_validate`, `_record`, `_pullEscrow`, `_closeAndRefund`).
-- **Guards the AI first left as comments,** now enforced in code (001, 005). `mulDiv` everywhere (003).
+- **A guard the AI first left as a comment,** now enforced in code (001); a missed zero-address case closed (005). `mulDiv` everywhere (003).
 - **SPEC section 6** answers tricky point 1:
   - The taker matches inside `placeLimitOrder`.
   - Anyone can call `matchOrders` and `triggerStopOrders`.
@@ -564,7 +567,7 @@ Person 2's front-end limits are in `docs/FRONTEND.md`. [P2 to confirm]
 - an invariant suite that held over 128,000 random calls
 
 **Independent review found real bugs.** After each phase, a separate reviewing agent with no context from the implementing session checked the work. This was the most valuable practice we used: it found faults that the implementing agent's own tests had missed ([Figure 9](#figure-9)). Two examples:
-- **Issue 004:** a partly filled order could be overfilled and paid out of other traders' escrow, and 73 existing tests did not notice. The reviewer found it by mutation testing.
+- **Issue 004:** the tests had real gaps. Three injected bugs, including one where a partly filled order is overfilled and paid out of other traders' escrow, would have passed all 73 existing tests. The code itself was correct; the reviewer found the gaps by mutation testing.
 - **Issue 006:** a High-severity design flaw. About 102 wei of dust could permanently block every stop-limit trigger. The reviewer proved it by running the attack in a scratch copy of the contracts.
 
 **Testing the tests.** Mutation testing deliberately breaks the engine and checks that the tests fail. It showed where our tests were weak. For example, removing the status check in cancellation (mutant C1, Phase 4) went unnoticed until we added a test that catches it.
@@ -573,13 +576,13 @@ Person 2's front-end limits are in `docs/FRONTEND.md`. [P2 to confirm]
 
 ### 8.2 Where AI failed or needed correction
 **Design decisions that looked fine but were not.**
-- **Small orders:** the agent first proposed rejecting orders whose total cost rounded to zero. That missed dust created by individual partial fills. We replaced it with lot and tick sizes, which make every fill cost exact and remove rounding from the engine.
+- **Small orders:** the agent first proposed rejecting orders whose total cost rounded to zero. That missed dust created by individual partial fills. We replaced it with lot and tick sizes, which make every fill cost exact. The rounding rules stay only as a safety net.
 - **Stop-trigger budget:** it first proposed a fill budget per activated order (`maxCount × MAX_MATCHES_PER_TX`), which still allowed a long, expensive call. We changed it to one shared budget.
 
 **Understating severity.** In the spec, the agent described the stop-trigger denial of service (issue 006) as an occasional deep-book accident. Only when the reviewer ran it did it become clear that this was a cheap, permanent attack.
 
 **Inaccurate reporting.** The agent sometimes reported results incorrectly:
-- **A worst-case gas figure that was too low:** 1.28M instead of 1.78M. The reviewer corrected it.
+- **An understated "worst case" gas figure:** 1.28M. The reviewer's worst-case test measured 1.78M at the time; on the final code the same test measures 1.81M.
 - **A deep invariant run reported as dead** while it was still running. It later completed and passed, and the agent corrected its report before merging.
 - **A commit message (`88cedf7`) that overstated** how many fuzz runs one test used. The agent flagged this itself in Phase 8.
 
@@ -591,7 +594,7 @@ We learned to ask for raw tool output, not summaries, before trusting a claim.
 - **Solidity mistakes:** one test aliased a memory struct.
 
 **Spec and code drifting apart.**
-- **Escrow order:** the agent once implemented an escrow order that contradicted `SPEC.md` because the prompt said otherwise (Phase 2b). It flagged the conflict itself, because we required it to check the spec.
+- **Escrow order:** the agent once implemented an escrow order that contradicted `SPEC.md` because the prompt said otherwise (Phase 2b). It flagged the conflict itself, citing SPEC, which `CLAUDE.md` names as the source of truth.
 - **CEI exceptions:** a spec section claimed one exception to checks-effects-interactions when there were two. The independent reviewer caught this one (issue 002).
 
 ### 8.3 What we would keep
@@ -599,16 +602,16 @@ We learned to ask for raw tool output, not summaries, before trusting a claim.
 2. **Plan mode first, then small phases.** Each phase was small enough to review, ended with green tests, and was merged separately. That kept the history readable for this report ([Figure 2](#figure-2)).
 3. **An independent reviewer for every significant change,** with no shared context, so the work is never graded by the agent that wrote it ([Figure 1](#figure-1)).
 4. **Mutation testing,** to measure test quality, not just test count.
-5. **Humans make design trade-offs.** The agent surfaced every fork clearly: keeping a crossed book, documenting dust griefing, auto-cancelling blocked stops, accepting issue 007. The decision and the responsibility stayed with us.
+5. **Humans make design trade-offs.** The independent reviewers and the final auditor surfaced the forks: keeping a crossed book, documenting dust griefing, auto-cancelling blocked stops, accepting issue 007. The decision and the responsibility stayed with us.
 6. **Log as you go.** Because the prompt log and the issue files were written during development, this report was a matter of assembly, not reconstruction.
 7. **Separate planning and review from implementation.** The claude.ai chat planned and reviewed; Claude Code implemented. That gave a second opinion at every step.
-   - **The chat assistant was not reliable either.** It made factual errors in the report drafts: in Sections 1 and 8, an engine test count of 335 instead of 245, and credits given to the wrong party (the gas fix, issue 002, and who wrote SPEC.md).
+   - **The chat assistant was not reliable either.** By the owner's account, it drafted the Section 1 and 8 text and made factual errors in it: in Sections 1 and 8, an engine test count of 335 instead of 245, and credits given to the wrong party (the gas fix, issue 002, and who wrote SPEC.md).
    - **The check against the repository caught them.** Claude Code compared the drafts with the repository before they were merged (prompt log, 8 Nov).
    - **So the second opinion needs checking too.** Neither tier is a source of truth; the repository is.
 
 ### 8.4 Recommendations for future AI-driven dApp development
 - **Treat every AI claim as unverified** until you have seen the command output that supports it.
-- **Ask the AI to attack its own design, not only to test it.** Our most serious finding came from a reviewer told to look for denial-of-service and economic attacks.
+- **Ask the AI to attack its own design, not only to test it.** Our most serious finding, the issue 006 denial of service, came from a reviewer, not from the implementing agent's own tests.
 - **Budget time for long verification runs.** The deep invariant run took about two hours (7,088 s), and heavy runs such as the full mutation set can exceed tool timeouts.
 - **Agree interfaces between teammates in writing, early.** Our verbal agreement held, but it left no record for the audit trail.
 - **Expect platform friction on Windows** (line endings, PATH, long file names), and fix it once, in project configuration.

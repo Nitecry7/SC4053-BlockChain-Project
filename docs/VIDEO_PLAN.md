@@ -127,7 +127,7 @@ Scroll to step 3 of its output:
 ### 6. AI workflow (about 45 s)
 - **Show `CLAUDE.md` and `SPEC.md`:** the AI reads them every session, and the interface is frozen, so the AI could not "fix" things by inventing an ABI.
 - **Show a phase prompt in `docs/ENGINE_PHASES.md`, then that phase's entry in `docs/ai-audit/prompt-log.md`:** "What the AI got wrong" and "Human decisions".
-- **Say:** each phase was reviewed by a fresh AI agent that never saw our reasoning. Every bug became an issue file with failing-then-passing proof. Mutants proved the tests catch real bugs.
+- **Say:** from Phase 3a on, each phase was reviewed by a fresh AI agent that never saw our reasoning. Every bug became an issue file with failing-then-passing proof. Mutants proved the tests catch real bugs.
 - **One lesson:** the AI's first invariant suite was green but could not fail. Only an independent review caught that.
 
 ## Fallback plan (if the UI or MetaMask misbehaves)

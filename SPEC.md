@@ -202,7 +202,7 @@ There is no background execution on-chain.
   |---|---|---|
   | Insert at full scan depth, distinct prices | 795,030 | `test_gas_insertAtMaxScanDepth` |
   | 10 fills with refunds, nothing rests | 1,007,730 | `test_gas_fullCapSweepWithRefunds` |
-  | Worst built: 10 fills with refunds, zero-to-nonzero balances, then a rest behind 100 equal-price orders | 1,778,221 | `test_gas_worstCasePlacement` |
+  | Worst built: 10 fills with refunds, zero-to-nonzero balances, then a rest behind 100 equal-price orders | 1,778,221 at Phase 3b; 1,808,075 at `engine-final` (later phases added work to placement; same command, 8 Nov) | `test_gas_worstCasePlacement` |
 
   The worst figure is the worst placement built so far, not a proven upper bound. It is well below Anvil's default 30M block gas limit.
 
