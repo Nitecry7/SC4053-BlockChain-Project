@@ -11,6 +11,8 @@ These drafts give the trading-engine side of the AI Audit Report that the brief 
 
 Commit hashes are on `main`. Nothing is invented. Where evidence is still being produced (Phase 8: Slither, coverage, the final audit), the text says so.
 
+**Figures.** The assembled report [`AI_AUDIT_REPORT.md`](AI_AUDIT_REPORT.md) embeds ten figures from [`diagrams/`](diagrams/). Each one has a Mermaid source (`NN-name.mmd`) rendered to SVG and a 2x PNG with the shared theme. To regenerate them, run `bash docs/report/diagrams/render.sh` from the repo root (it needs Node; see the script header for the browser setting).
+
 | Brief section | File | Status |
 |---|---|---|
 | 1. Initial Specification & System Scope | (Person 2's draft, section 1; the owner must state the pre-AI boundary) | Not drafted here |
