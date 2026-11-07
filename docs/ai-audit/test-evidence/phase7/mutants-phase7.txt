@@ -1,0 +1,39 @@
+# Phase 7 mutants, 2026-11-07T15:29:43Z
+
+## A. Unit, fuzz-free suite (default MUTANT_FORGE_ARGS: no fuzz, no invariant suite): smoke set + P7
+G   cancelOrder nonReentrant removed: CAUGHT 292 tests passed, 20 failed, 0 skipped (312 total tests) | e.g. test_reentrancy_cancelOtherOrderDuringRefundOfBuy test_reentrancy_cancelOtherOrderDuringRef
+Z   zero-address owner check removed (issue 005): CAUGHT 310 tests passed, 2 failed, 0 skipped (312 total tests) | e.g. test_cancel_zeroAddressCallerOnUnknownIdRevertsNotOrderOwner test_issue005_zeroA
+S1  zero-value refund guard in _settleFill removed: CAUGHT 311 tests passed, 1 failed, 0 skipped (312 total tests) | e.g. test_match_noRefundTransferWhenNoPriceImprovement 
+P7a hasTradePrice never set: CAUGHT 280 tests passed, 32 failed, 0 skipped (312 total tests) | e.g. test_briefJourney_issueListTradePartialCancelBatchStop test_cancel_activatedStopCancelsLikeALimitOrd
+P7b lastTradePrice set to the taker's limit, not the execution price: CAUGHT 291 tests passed, 21 failed, 0 skipped (312 total tests) | e.g. test_batch_makerFollowsBookSeqNotOrderId test_batch_olderAs
+P7c payouts swapped: base to the seller, quote to the buyer (Phase 7 review H1): CAUGHT 268 tests passed, 44 failed, 0 skipped (312 total tests) | e.g. test_batch_clearsBookLeftCrossedByCapOverSeveral
+P7d price-improvement refund paid to the seller (Phase 7 review H1): CAUGHT 288 tests passed, 24 failed, 0 skipped (312 total tests) | e.g. test_batch_fourBuyersFourSellersSettledInOneMatchOrders test
+P7e cancel and auto-cancel refunds paid to msg.sender (Phase 7 review H1): CAUGHT 309 tests passed, 3 failed, 0 skipped (312 total tests) | e.g. test_trigger_honestStopBehindTooDeepBookIsRefundedExact
+P7f placement treats an equal price as not crossing (Phase 7 review M1): CAUGHT 239 tests passed, 73 failed, 0 skipped (312 total tests) | e.g. test_batch_bothFilledAreBothUnlinked test_batch_capRespe
+P7g every activated stop is auto-cancelled (Phase 7 review M2): CAUGHT 296 tests passed, 16 failed, 0 skipped (312 total tests) | e.g. test_cancel_activatedStopCancelsLikeALimitOrder test_gas_triggerT
+P7h insert scan limit 10 instead of MAX_INSERT_SCAN (Phase 7 review M2): CAUGHT 292 tests passed, 20 failed, 0 skipped (312 total tests) | e.g. test_batch_capRespectedExactly test_batch_clearsBookLeft
+---
+caught=11 survived=0 other=0
+# elapsed: 453s
+
+## B. Invariant suite ONLY (OrderBookInvariantTest: 16 runs x depth 64; reach test excluded)
+S1  zero-value refund guard in _settleFill removed: SURVIVED | Ran 1 test suite in 50.20s (50.19s CPU time): 1 tests passed, 0 failed, 0 skipped (1 total tests)
+C4  cancel does not zero lockedQuote: CAUGHT | Ran 1 test suite in 145.80s (145.79s CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests) | e.g. [FAIL: closed order holds quote: 1319999993620
+N1  sell refund ignores filled: CAUGHT | Ran 1 test suite in 484.52s (484.51s CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests) | e.g. [FAIL: base held != unfilled base on active sells: 3
+N2  base refund sent to tx.origin: CAUGHT | Ran 1 test suite in 294.51ms (286.17ms CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests) | e.g. [FAIL: base ledger mismatch: 999999995000000000
+R1  quote refund skipped at 1 wei: SURVIVED | Ran 1 test suite in 46.65s (46.64s CPU time): 1 tests passed, 0 failed, 0 skipped (1 total tests)
+P5j filled taker in the book not unlinked: CAUGHT | Ran 1 test suite in 719.61s (719.60s CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests) | e.g. [FAIL: closed order keeps a prev link: 17
+P6m budget per activation, not shared: CAUGHT | Ran 1 test suite in 199.89s (199.88s CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests) | e.g. [FAIL: handler recorded a violation: 1 != 0] 
+P6s stop lists ignored (everything uses the book list): CAUGHT | Ran 1 test suite in 137.74s (137.73s CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests) | e.g. [FAIL: handler recorded a vi
+P6x unplaceable activated stop reverts the call (issue 006, pre-fix code): CAUGHT | Ran 1 test suite in 172.39s (172.38s CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests) | e.g. [FAIL: ha
+P7a hasTradePrice never set: CAUGHT | Ran 1 test suite in 153.19s (153.18s CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests) | e.g. [FAIL: handler recorded a violation: 1 != 0] invariant_
+P7b lastTradePrice set to the taker's limit, not the execution price: CAUGHT | Ran 1 test suite in 139.52s (139.51s CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests) | e.g. [FAIL: handler
+P7c payouts swapped: base to the seller, quote to the buyer (Phase 7 review H1): CAUGHT | Ran 1 test suite in 156.98s (156.97s CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests) | e.g. [FA
+P7d price-improvement refund paid to the seller (Phase 7 review H1): CAUGHT | Ran 1 test suite in 159.91s (159.90s CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests) | e.g. [FAIL: quote le
+P7e cancel and auto-cancel refunds paid to msg.sender (Phase 7 review H1): CAUGHT | Ran 1 test suite in 188.39s (188.38s CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests) | e.g. [FAIL: qu
+P7f placement treats an equal price as not crossing (Phase 7 review M1): CAUGHT | Ran 1 test suite in 171.68s (171.67s CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests) | e.g. [FAIL: hand
+P7g every activated stop is auto-cancelled (Phase 7 review M2): CAUGHT | Ran 1 test suite in 658.96s (658.95s CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests) | e.g. [FAIL: base held != 
+P7h insert scan limit 10 instead of MAX_INSERT_SCAN (Phase 7 review M2): CAUGHT | Ran 1 test suite in 16.17s (16.17s CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests) | e.g. [FAIL: handle
+---
+caught=15 survived=2 other=0
+# elapsed: 3812s

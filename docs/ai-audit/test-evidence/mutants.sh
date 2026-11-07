@@ -15,6 +15,11 @@
 #
 # A mutant that SURVIVES means no test notices that bug: add a test, or explain why it is equivalent.
 set -u
+set -f # no glob expansion: MUTANT_FORGE_ARGS may contain test/invariant/*
+
+# Default: unit tests only (no fuzz, no invariant suite), for speed. Override to aim mutants at another suite, e.g.
+#   MUTANT_FORGE_ARGS='--match-path test/invariant/*' FOUNDRY_INVARIANT_RUNS=32 bash .../mutants.sh "^C4"
+MUTANT_FORGE_ARGS="${MUTANT_FORGE_ARGS:---no-match-test testFuzz --no-match-path test/invariant/*}"
 
 FILTER="${1:-.}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -38,7 +43,8 @@ run() {
   sed -i "$expr" "$SRC"
   if cmp -s "$BAK" "$SRC"; then echo "$name: NOT APPLIED (pattern missing)"; other=$((other + 1)); return; fi
   local out summary failed
-  out=$(forge test --no-match-test "testFuzz" 2>&1)
+  # shellcheck disable=SC2086 # word splitting of MUTANT_FORGE_ARGS is intended
+  out=$(forge test $MUTANT_FORGE_ARGS 2>&1)
   summary=$(echo "$out" | grep -E "tests passed" | tail -1)
   failed=$(echo "$out" | grep -E "^\[FAIL" | sed -E 's/^\[FAIL.*\] ([A-Za-z0-9_]+)\(.*/\1/' | sort -u | head -5 | tr '\n' ' ')
   if echo "$out" | grep -q "Compiler run failed"; then
@@ -68,13 +74,13 @@ run "C4  cancel does not zero lockedQuote" \
 run "C5  cancel does not set Cancelled" \
   's/^        order.status = Status.Cancelled;$//'
 run "C6  cancel transfers before state (CEI broken)" \
-  '/if (refundBase != 0) IERC20(baseToken).safeTransfer(msg.sender, refundBase);/d; /if (refundQuote != 0) IERC20(quoteToken).safeTransfer(msg.sender, refundQuote);/d; s/^        _unlink(orderId);$/        if (refundBase != 0) IERC20(baseToken).safeTransfer(msg.sender, refundBase);\n        if (refundQuote != 0) IERC20(quoteToken).safeTransfer(msg.sender, refundQuote);\n        _unlink(orderId);/'
+  '/^        if (refundBase != 0) IERC20(baseToken).safeTransfer(trader, refundBase);$/d; /^        if (refundQuote != 0) IERC20(quoteToken).safeTransfer(trader, refundQuote);$/d; s/^        order.status = Status.Cancelled;$/        if (refundBase != 0) IERC20(baseToken).safeTransfer(trader, refundBase);\n        if (refundQuote != 0) IERC20(quoteToken).safeTransfer(trader, refundQuote);\n        order.status = Status.Cancelled;/'
 run "N1  sell refund ignores filled" \
   's/order.amount - order.filled : 0;/order.amount : 0;/'
 run "N2  base refund sent to tx.origin" \
-  's/safeTransfer(msg.sender, refundBase)/safeTransfer(tx.origin, refundBase)/'
+  's/safeTransfer(trader, refundBase)/safeTransfer(tx.origin, refundBase)/'
 run "N3  OrderCancelled reports refundQuote as 0" \
-  's/emit OrderCancelled(orderId, msg.sender, refundBase, refundQuote);/emit OrderCancelled(orderId, msg.sender, refundBase, 0);/'
+  's/emit OrderCancelled(orderId, trader, refundBase, refundQuote);/emit OrderCancelled(orderId, trader, refundBase, 0);/'
 run "N4  buy cancel also refunds base" \
   's/order.side == Side.Sell ? order.amount - order.filled : 0;/order.amount - order.filled;/'
 run "R1  quote refund skipped at 1 wei" \
@@ -174,5 +180,22 @@ run "P6x unplaceable activated stop reverts the call (issue 006, pre-fix code)" 
   's/if (_orders\[orderId\].status != Status.Filled \&\& !_tryInsert(orderId)) _closeAndRefund(orderId);/if (_orders[orderId].status != Status.Filled) _insert(orderId);/'
 run "P6y unplaceable activated stop silently dropped (no refund)" \
   's/\&\& !_tryInsert(orderId)) _closeAndRefund(orderId);/\&\& !_tryInsert(orderId)) {}/'
+# --- Phase 7: trade-price bookkeeping (aimed at the invariant suite as well as the unit suite) ---
+run "P7a hasTradePrice never set" \
+  's/^        hasTradePrice = true;$//'
+run "P7b lastTradePrice set to the taker's limit, not the execution price" \
+  's/^        lastTradePrice = price;$/        lastTradePrice = taker.price;/'
+run "P7c payouts swapped: base to the seller, quote to the buyer (Phase 7 review H1)" \
+  's/IERC20(baseToken).safeTransfer(buyOrder.trader, qty);/IERC20(baseToken).safeTransfer(sellOrder.trader, qty);/; s/IERC20(quoteToken).safeTransfer(sellOrder.trader, cost);/IERC20(quoteToken).safeTransfer(buyOrder.trader, cost);/'
+run "P7d price-improvement refund paid to the seller (Phase 7 review H1)" \
+  's/if (refund != 0) IERC20(quoteToken).safeTransfer(buyOrder.trader, refund);/if (refund != 0) IERC20(quoteToken).safeTransfer(sellOrder.trader, refund);/'
+run "P7e cancel and auto-cancel refunds paid to msg.sender (Phase 7 review H1)" \
+  's/safeTransfer(trader, refundBase)/safeTransfer(msg.sender, refundBase)/; s/safeTransfer(trader, refundQuote)/safeTransfer(msg.sender, refundQuote)/'
+run "P7f placement treats an equal price as not crossing (Phase 7 review M1)" \
+  's/taker.price >= maker.price : taker.price <= maker.price/taker.price > maker.price : taker.price < maker.price/'
+run "P7g every activated stop is auto-cancelled (Phase 7 review M2)" \
+  's/\&\& !_tryInsert(orderId)) _closeAndRefund(orderId);/\&\& (!_tryInsert(orderId) || true)) _closeAndRefund(orderId);/'
+run "P7h insert scan limit 10 instead of MAX_INSERT_SCAN (Phase 7 review M2)" \
+  's/if (steps == MAX_INSERT_SCAN) return false;/if (steps == 10) return false;/'
 echo "---"
 echo "caught=$caught survived=$survived other=$other"

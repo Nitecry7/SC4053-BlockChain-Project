@@ -702,3 +702,70 @@ Their frontend tests' assertions about the placement cap stay correct.
 - The first `cmp` compared against the CRLF working copies, which reported a false difference at byte 90 of both files. It was redone against the committed blobs.
 - `--check` against `web/lib/contracts/` failed on `deployments.ts` for the same CRLF reason. This is a real Windows-only quirk of the check (`core.autocrlf=true`, a byte comparison, and no `.gitattributes` rule for `*.ts`). It is recorded in the handoff for Person 2, and their files were not changed.
 - The AI first said 11 names differed, and corrected that to 10.
+
+---
+
+## 2026-11-07 to 08: Phase 7, the verification suite
+
+**Prompt (summary):**
+- an invariant handler with 5 actors and bounded random actions, plus ghost variables
+- invariants checked after every call: solvency including pending stops, conservation, order fields, sorted and linked lists, list membership by status, the trade-price rules, and uncrossed after `matchOrders`
+- a call summary proving reach
+- runs at the default and `deep` profiles
+- fuzz tests with exact balances and a differential check of `requiredQuote`
+- one regression test per issue 001 to 006, plus the brief's journey
+- `DEBUGGING.md` and saved evidence
+- stop and notify if a real bug is found
+- the standard finish, running only the relevant P7 mutants plus the smoke set
+
+**What the AI produced:**
+- **`test/invariant/Handler.sol`:**
+  - **Participants:** 5 actors, plus a `duster` (bursts of one-lot makers, so cap hits and crossed books are common) and a `flooder` (101 one-lot bids at 1.7, placed in setUp outside the 1.8 to 2.2 cluster, so a buy stop limited at 1.7 takes the issue 006 path).
+  - **Reference model:** an **independent reference model** that records each order from the handler's own inputs and replays every `Trade` and `OrderCancelled` with its own arithmetic (A2 to A7) into a per-address ledger.
+  - **Revert policy:** only legitimate reverts are tolerated, and those are verified (a `BookTooDeep` or auto-cancel needs more than `MAX_INSERT_SCAN` orders ranked ahead).
+  - **Per-call checks:** return values against events, `Trade` at the maker's price with the reference cost, a placement taker never resting while it still crosses below the cap, and `StopOrderTriggered` carrying the current price.
+- **`test/invariant/OrderBookInvariant.t.sol`:**
+  - invariants: solvency, conservation, ledger equal to balances, order fields (reference ceiling, status and fill consistency, no links on closed orders), lists, and handler checks
+  - `afterInvariant`: `matchOrders` until uncrossed, then re-checks
+  - `OrderBookInvariantReachTest`: 600 uniform seeded steps, with every invariant checked every 25 steps, asserting that every path is reached
+- **`test/OrderBook.Fuzz.t.sol` (8 tests):**
+  - crossing fills, cancels (including a partly filled taker remainder after price improvement), batch, sell and buy stop triggers, all with exact balances
+  - `requiredQuote` differential checks: against a ceiling reference, and in 512-bit precision using `mulmod`
+- **`test/OrderBook.Regression.t.sol`:** `test_issue001` to `test_issue006`, plus `test_briefJourney_issueListTradePartialCancelBatchStop` on the factory stack.
+- **Docs and tooling:**
+  - `docs/ai-audit/test-evidence/DEBUGGING.md`
+  - `mutants.sh` now takes `MUTANT_FORGE_ARGS` (by default the invariant suite is excluded); N2, N3 and C6 were rewritten for `_closeAndRefund`; P7a to P7h were added.
+
+**Independent review (fresh subagent, read-only, could not run anything):** no engine bug, and no new engine defect. The real weaknesses were in the AI's first version of the suite:
+
+| Finding | Outcome |
+|---|---|
+| **H1:** the ghost flows were tautological. They summed the same Transfer events that move the balances, so no invariant could see a payment going to the wrong address | Replaced by the independent reference ledger and `invariant_ledgerMatchesBalances`. Mutants P7c, P7d and P7e (wrong recipients) are caught by the invariant suite alone |
+| **H2:** the fuzzer rarely reached the hard paths; flood wasted 1/6 of the calls; the reach test used different weights and checked invariants only at the end | Bursts from the duster; a setUp flood outside the cluster; a uniform-weight reach test checking every 25 steps. Last-run summary: cap hits, crossed books and auto-cancels now occur within single fuzzer runs (see the evidence) |
+| M1: no invariant checked matching rules | `Trade` at the maker's price, the reference cost, and no resting while crossing below the cap. P7f is caught by the invariant suite alone |
+| M2: `BookTooDeep` and auto-cancel were accepted unchecked | Each is now verified; a `BookTooDeep` from `placeStop` is a violation. P7g and P7h are caught |
+| **M3: the issue 004(a) regression would have passed on the pre-fix code** | The second taker is now larger than the maker's remainder. Shown failing on the pre-fix line (`ERC20InsufficientBalance`, because the book tries to pay 3 base while holding 2), and passing on the current code |
+| M4: fuzz bounds left out key regions | Added a partly filled taker remainder cancel and a buy stop filling across two makers or resting. A bid-maker batch fuzz already exists in `OrderBook.Batch.t.sol` |
+| L1 to L5: the misleading scripted tail, orderFields using the engine's own `requiredQuote`, unchecked event amounts, stale mutant patterns, DEBUGGING.md inaccuracies | All fixed |
+
+**What the AI got wrong:**
+- **The first suite (H1, H2, M3 above).** It was green, but blind to payout recipients, and one regression test could not fail.
+- **Test code:**
+  - a stack-too-deep error in two fuzz tests, fixed with a struct and a helper
+  - bounds that let escrow exceed funding (`ERC20InsufficientBalance`, a test bug)
+  - `MemoryOOG`, then the gas limit, in the long reach test, fixed with external chunks and `vm.pauseGasMetering`
+  - two garbage lines in the first regression draft
+  - event `.selector` used in `constant` declarations, which does not compile in 0.8.24
+- **Process incident:**
+  - Stopping the first P7 mutant run killed only the outer shell. The inner `mutants.sh` kept running as an orphan and swapped mutants into `OrderBook.sol` for about 20 minutes.
+  - Symptoms: a fuzz failure, "order in the book is not live", and a journey failure, `10 != 2`. The AI found mutant P5j applied, killed the exact orphan PIDs (the exit trap restored the file), and verified that `contracts/src` equals HEAD.
+  - The affected suites passed on the clean source. Results collected in that window (the first reworked reach run and a 16-run smoke run) were treated as void and re-collected. No engine change resulted.
+  - DEBUGGING.md now explains how to stop a mutant run safely.
+- **Wrong status report:** the AI told the human that the deep run had died. A process listing had not shown it, and its file was header-only because the output is buffered. It was in fact alive (Windows `tasklist` showed `forge.exe` using CPU, at about 40 MB of memory), and the AI corrected this before merging. The human's instruction to record it as died, and to start a reduced run, was based on that wrong report. With the human's intent kept, the full deep run continues, and its output will be committed when it ends.
+
+**Real outputs** in `docs/ai-audit/test-evidence/phase7/`:
+- **`forge-test-default.txt`:** `forge test` at the default profile gave **334 passed, 0 failed, 0 skipped** (26 suites, 836 s, while the deep run was competing for CPU). All 6 invariants plus `afterInvariant` passed at **256 runs × depth 64 = 16,384 calls, 0 reverts**. Per-selector metrics: burst 2,737, cancel 2,717, matchOrders 2,756, and so on.
+- **`mutants-phase7.txt`:** part A, the unit suite, **11/11**. Part B, the invariant suite alone, **15/17**; the S1 and R1 survivors are explained in MUTANTS.md.
+- **`forge-test-deep.txt`:** the full `FOUNDRY_PROFILE=deep` run (1,000 × 128), running in an isolated copy of `contracts/` since 23:15. Not complete at merge time; it is committed when it ends.
+
+**Result:** no real engine bug found. Every invariant held, including the independent payout ledger.
