@@ -1,11 +1,12 @@
 # 5. Problems Discovered & Vulnerability Analysis (engine)
 
-Fits Person 2's draft section 5.6. Six engine issues were logged in the brief's four-part format (section 2.2), each in its own file under [`docs/ai-audit/issues/`](../ai-audit/issues/), with the full before-and-after output. They are ranked here by severity. Every one is in AI-written code or AI-written tests; none was found in production. Each has a named regression test in [`contracts/test/OrderBook.Regression.t.sol`](../../contracts/test/OrderBook.Regression.t.sol) (Phase 7), as well as its original test.
+Fits Person 2's draft section 5.6. Seven engine issues were logged in the brief's four-part format (section 2.2), each in its own file under [`docs/ai-audit/issues/`](../ai-audit/issues/), with the full before-and-after output. They are ranked here by severity. Every one is in AI-written code or AI-written tests; none was found in production. Each has a named regression test in [`contracts/test/OrderBook.Regression.t.sol`](../../contracts/test/OrderBook.Regression.t.sol) (Phase 7), as well as its original test.
 
 ## Inventory
 
 | # | Issue | Class | Severity | Found by | Fixed in |
 |---|---|---|---|---|---|
+| 007 | A dust front-run sandwiches an honest limit order through the fill cap, so the victim pays up to their limit | Economic (ordering and front-running) | Medium | Final independent audit (M-1), confirmed by PoC and reproduced in the repo | **Accepted by human decision, 8 Nov.** Documented and pinned by a test, not fixed |
 | 006 | One unplaceable stop blocked every stop activation, on both sides, for 102 wei | Unhandled gas bound, so a denial of service | **High** (availability) | Independent Phase 6 review, reproduced by running | Phase 6, `1adcc59` |
 | 004 | Phase 3a tests passed with three serious matching bugs in the code | Test quality: overfill (fund loss), phantom fills, wrong Trade fields | **High** (tests) | Phase 3a review, by mutation | Phase 3a, `6d1d14c` |
 | 002 | SPEC understated the CEI deviation in placement (payouts during the match loop) | Documentation of reentrancy reasoning | Medium | Phase 3a review (a reviewer token read views mid-payout) | Phase 3a |
@@ -14,6 +15,12 @@ Fits Person 2's draft section 5.6. Six engine issues were logged in the brief's 
 | 001 | `_unlink` could empty one side of the book | Data-structure integrity (latent) | Latent | AI flagged it; the human required a code guard | Phase 2a, `dfe7318` |
 
 ## Each issue in four parts (summary; full text in the issue files)
+
+### 007: limit-order sandwich through the fill cap ([file](../ai-audit/issues/007-dust-sandwich-of-capped-limit-order.md)), accepted
+1. **Why the AI erred:** two accepted limitations were analysed separately: a capped placement can rest crossed (O4), and dust uses up a taker's fills. Their combination, an attacker *causing* the crossing against a plain limit order, was only written up for stop orders.
+2. **Impact:** a buy at limit 2.0 meant for an ask at 1.5 is made to pay about 2.0. The PoC loss was 20e18 − 5.01e9 instead of 15e18, and the attacker made about 5e18, for 10 lots plus gas. The loss is bounded by the victim's limit, and solvency holds.
+3. **Handling:** the human chose to document it rather than change O4 at the end of the project. It is in SPEC section 8, together with the mitigations not built and advice to use tight limits.
+4. **Evidence:** `test_issue007_dustSandwichMakesAHonestBuyPayItsLimit` reproduces it in the repo and pins the outcome to the wei. It matches the auditor's independent PoC.
 
 ### 006: unplaceable stop blocks all triggers ([file](../ai-audit/issues/006-stop-activation-booktoodeep-blocks-all-triggers.md))
 1. **Why the AI erred:** it reused the book's insert path, which reverts with `BookTooDeep` as a gas bound, for stop activation. It missed that in `triggerStopOrders` the revert rolls back a permissionless call that serves *every* stop, and that the failing stop stays at the head, so every later call hits it. It had noticed the revert, but described it as an accident.
@@ -78,4 +85,5 @@ These were reviewed and deliberately kept, not left unfixed:
 - **Self-trades allowed.**
 
 ## Static analysis and final audit
-> **PLACEHOLDER (Phase 8):** any real finding from Slither or the final independent audit, added to the inventory above in the four-part format, or "none" with a link to the triage. Slither 0.11.6 has not yet been run on `OrderBook.sol`.
+- **Slither 0.11.6:** 27 results, **0 real** (13 false positives, 14 accepted). See the [triage](../ai-audit/test-evidence/phase8/slither-triage.md).
+- **Final independent audit:** no Critical or High finding. Its one Medium (M-1) is issue 007 above. Its three Low documentation findings were fixed, and its Info notes went to the handoff. See the summary in [`ENGINE_SECURITY_SUMMARY.md`](../ai-audit/ENGINE_SECURITY_SUMMARY.md).

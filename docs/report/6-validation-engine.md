@@ -28,7 +28,7 @@ Fits Person 2's draft section 6. All numbers are from committed evidence: [`docs
 | `OrderBook.Batch` (+ payout views, reentrancy) | 24 + 1 + 6 |
 | `OrderBook.Stop` (+ reentrancy) | 39 + 3 |
 | `OrderBook.Fuzz` | 8 |
-| `OrderBook.Regression` (issues and journey) | 6 + 1 |
+| `OrderBook.Regression` (issues, journey, and the issue 007 limitation, added in Phase 8) | 6 + 1 + 1 |
 | `Integration.Factory` | 6 |
 | Constructor (`OrderBookBase`) | 8 |
 | Invariant suite and reach test | 1 + 1 |
@@ -68,7 +68,12 @@ Fits Person 2's draft section 6. All numbers are from committed evidence: [`docs
 
 **Deep profile** (1,000 runs × depth 128, plus fuzz at 10,000 runs):
 
-> **PLACEHOLDER: deep run result.** Started 7 Nov at 23:15 in an isolated copy of `contracts/`. To fill in from `phase7/forge-test-deep.txt`: pass or fail per invariant, runs and calls, reverts, the per-selector metrics, the last-run `SUMMARY`, elapsed time, and the deep fuzz results. If the run is stopped at 02:45, record it as "not completed" with its elapsed time.
+- **Result: all 6 invariants plus `afterInvariant` held.** 1,000 runs × depth 128 = **128,000 calls, 0 reverts**, in 7,088 s, run in an isolated copy of `contracts/` with the engine at HEAD.
+- **Calls per action:** burst 21,186, cancel 21,080, matchOrders 21,580, placeLimit 21,377, placeStop 21,278, triggerStops 21,499.
+- **Last run's summary:** 3 cap hits, 47 crossed-book calls, 8 activations, 1 auto-cancel, 0 violations.
+- **Deep fuzz:** 20/20 fuzz tests passed: 19 at 10,000 runs, and `testFuzz_coarsePlacementsKeepSolvencyAndBookOrder` at its own 200-run deep setting.
+- **Evidence:** [`phase7/forge-test-deep.txt`](../ai-audit/test-evidence/phase7/forge-test-deep.txt).
+- **A wrong status report along the way:** the run was at one point reported as dead, because a process listing missed it. It had kept running, and it completed.
 
 ## Mutation testing (summary)
 - **Per-phase sets were all caught,** except provably equivalent mutants:
@@ -91,13 +96,30 @@ Fits Person 2's draft section 6. All numbers are from committed evidence: [`docs
 Every loop is bounded: at most 10 fills per call, `MAX_INSERT_SCAN` = 100 insert steps, and at most 10 activations per trigger call.
 
 ## Static analysis (Slither)
-> **PLACEHOLDER: Slither.** Slither 0.11.6 on `contracts/src/OrderBook.sol`. To fill in: the command, the number of findings by detector and severity, and a triage of each (real, false positive or accepted risk, with a one-line reason). Fixes come with regression tests. Evidence file: `docs/ai-audit/test-evidence/phase8/slither*.txt`.
+- **Run:** Slither 0.11.6 (102 detectors) on `OrderBook.sol` and `IOrderBook.sol`.
+- **Result: 27 results, 0 real.**
+  - `uninitialized-state` ×2: **false positive.** The heads are written through the storage alias that `_heads()` returns, which Slither does not follow.
+  - `incorrect-equality` ×5: **false positive.** These compare an enum and a price tie, so exact equality is intended.
+  - `timestamp` ×6: **false positive.** No comparison reads `block.timestamp`. The taint comes from the stored `createdAt`.
+  - `costly-loop` ×9: **accepted.** Storage writes in loops bounded at 10.
+  - `naming-convention` ×5: **accepted.** The constant names come from the frozen interface.
+- **No reentrancy, access-control, arbitrary-send or unchecked-transfer detector fired.**
+- **Evidence:** [`phase8/slither.txt`](../ai-audit/test-evidence/phase8/slither.txt), [`phase8/slither-triage.md`](../ai-audit/test-evidence/phase8/slither-triage.md).
 
 ## Coverage
-> **PLACEHOLDER: coverage.** `forge coverage --report summary` for `OrderBook.sol`: line, statement, branch and function percentages. Name any uncovered branch that matters, and the test added for it. Evidence file: `docs/ai-audit/test-evidence/phase8/coverage*.txt`.
+- **Run:** `forge coverage --report summary --no-match-path 'test/invariant/*'`. All 332 tests passed under coverage instrumentation.
+- **Result: `OrderBook.sol` has 100% coverage on every measure:** lines 182/182, statements 246/246, branches 59/59, functions 25/25.
+- **No uncovered branch was left, so no test was added for coverage.**
+- **The lower repo-wide total comes from** the excluded invariant handler (not run here) and Person 2's deploy script.
+- **Evidence:** [`phase8/coverage-summary.txt`](../ai-audit/test-evidence/phase8/coverage-summary.txt).
+- **Gas and sizes** were saved alongside it: [`gas-report.txt`](../ai-audit/test-evidence/phase8/gas-report.txt) and [`sizes.txt`](../ai-audit/test-evidence/phase8/sizes.txt). Over the unit suites, the maximums were placement 1.81M, `matchOrders` 0.78M and `triggerStopOrders` 2.00M.
 
 ## Final independent audit
-> **PLACEHOLDER: final audit.** A fresh subagent with no prior context audits `OrderBook.sol` end to end: loss of funds, stuck funds, access control, reentrancy, rounding, unbounded loops, griefing, and interface drift. To fill in: its findings and the outcome of each. Summary in `docs/ai-audit/ENGINE_SECURITY_SUMMARY.md`.
+- **Run:** a fresh subagent, with no prior context, audited `OrderBook.sol` end to end, with proofs of concept in a scratch copy.
+- **Result: no Critical or High finding.** Every class was clean (funds, access control, reentrancy, rounding, loops, permanent denial of service, priority, stops, lists, interface), and issues 001 to 006 still hold.
+- **One Medium:** the dust sandwich of a limit order through the fill cap. **Accepted by human decision** as issue 007, documented in SPEC section 8, and pinned by a regression test reproduced to the wei.
+- **Three Low documentation fixes** were applied. The Info notes went to the handoff.
+- **Details:** [`ENGINE_SECURITY_SUMMARY.md`](../ai-audit/ENGINE_SECURITY_SUMMARY.md).
 
 ## What this does not prove
 - Tests prove only the scenarios and properties they check. Invariants are checked on random sequences up to depth 64 (default), not exhaustively.

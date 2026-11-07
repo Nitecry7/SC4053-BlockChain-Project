@@ -37,4 +37,5 @@ Commit hashes are on `main`. Nothing is invented. Where evidence is still being 
 | Stage 3 | Factory integration, scratch-chain verification, handoff part 1 | `aaf6385` |
 | 6 | Stop-limit orders (Bonus 3), issue 006 fix | `1adcc59` |
 | ABI | `abis.ts` regenerated with Person 2's exporter | `e375ff6` |
-| 7 | Invariant, fuzz and regression suites | `5f2e860` |
+| 7 | Invariant, fuzz and regression suites; full deep run passed | `5f2e860` (deep evidence `88cedf7`) |
+| 8 | Slither (0 real), coverage (100% of OrderBook.sol), final audit (issue 007 accepted), security summary, demo script | tag `engine-final` |

@@ -216,10 +216,17 @@ Anyone can press it, and the caller's balances never change apart from gas. Afte
 
 **Errors to add** to `web/lib/errors.ts`, beyond Part 1: none new. `InvalidMaxCount` (Part 1) covers `triggerStopOrders`, and `BookTooDeep` already has text. Consider a stop-specific wording for `BookTooDeep` from `placeStopLimitOrder`: "Too many stop orders on this side rank ahead of this trigger."
 
+### Notes from the final engine audit (8 Nov) for the frontend and the factory
+- **Auto-cancel versus owner cancel:** `OrderCancelled` names the order's owner as `trader` in both cases. To tell them apart, check the transaction: a `StopOrderTriggered` for the same order earlier in that transaction means an auto-cancel.
+- **Price-improvement refunds have no event of their own.** Work them out per fill as the buyer's escrow before the fill, minus the cost, minus the escrow after (SPEC A5). Or compare `lockedQuote` before and after.
+- **`createdAt` is the placement time**, even for an activated stop. Book priority uses an internal sequence stamped at activation, so do not sort the book by `createdAt`; `getBook` already returns it in priority order.
+- **Factory, for Person 2:** `createMarket` is permissionless and rejects the reversed pair. Anyone who creates (SGDx, NTU) first would make `Deploy.s.sol`'s `createMarket(NTU, SGDx)` revert with `MarketExists`, leaving the market with inverted prices. This is only possible on a chain where someone acted before the deploy; a fresh Anvil is unaffected. Any 18-decimal token can be listed, which puts only that market's traders at risk.
+
 ### Known limitations to show or mention (SPEC section 8)
 - `lastTradePrice` is set by any single trade, even 1 lot. An attacker can move it to set off stops, so they are for teaching purposes only.
 - If a trigger call's shared 10-fill budget runs out, an activated stop can rest crossed. A fast trader can then fill it at its **limit** price before anyone presses Match orders. It never trades worse than its limit.
 - An activated stop behind more than 100 better-priced orders is cancelled and refunded rather than resting.
+- **Any limit order** can be sandwiched through the 10-fill cap ([issue 007](ai-audit/issues/007-dust-sandwich-of-capped-limit-order.md), accepted). An attacker who front-runs with 10 one-lot orders can make it pay up to its own limit price. **The ticket should encourage a tight limit**, for example by warning when the limit is far from the best opposite price, since the limit is the most a buyer can pay.
 
 ### Verified on a scratch chain
 Run on Anvil port 8546. The Phase 6 build was deployed with `Deploy.s.sol`, unchanged, and the addresses were the usual fresh-chain values. The flow then ran with `cast`, and every check passed:

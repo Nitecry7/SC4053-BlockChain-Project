@@ -38,7 +38,7 @@ Non-custodial: no admin or owner role exists. Escrowed tokens leave the contract
 | Priority | Bids by price descending, asks by price ascending; ties go to the lower `bookSeq` (the order that entered the book first) |
 | Book sequence | Internal `bookSeq` per order, from a counter that only increases. It is stamped when the order enters the book: at placement for limit orders, at activation for stop orders. It is not in the interface or the `Order` struct. For plain limit orders it gives the same order as the order ID |
 | Book storage | One sorted doubly linked list of order IDs per side; the best order is the head. Pending stop orders are in a separate sorted stop list per side (section 5), which shares the same link storage and code; an order is in at most one list |
-| Insertion | Walk from the head; revert with `BookTooDeep` after `MAX_INSERT_SCAN` steps. The same bound applies to the stop lists and to an activated stop entering the book |
+| Insertion | Walk from the head; after `MAX_INSERT_SCAN` steps past orders that rank ahead, placement (limit or stop) reverts with `BookTooDeep`. An activated stop that hits the same bound is cancelled and refunded instead of reverting (section 5, `triggerStopOrders`; issue 006) |
 | Matching on placement | Up to `MAX_MATCHES_PER_TX` fills, then the remainder rests (even if still crossed) |
 | Self-trade | Allowed. A trader's order can fill against their own order; settlement is still correct. Documented, not prevented |
 | Token transfers | OpenZeppelin `SafeERC20`; `ReentrancyGuard` on every state-changing external; CEI, with the exceptions in `placeLimitOrder` documented in section 5 |
@@ -123,6 +123,8 @@ Known limit: the guard does not cover view functions. A token callback can read 
 - during a payout: the current fill already settled, but a partly filled taker not yet in the book and later fills not yet made
 
 `test_payout_viewsShowFillSettledAndRemainderNotYetRested` pins what views show during a payout. Nothing should treat views read during a token callback as final.
+
+The same applies during the payouts inside `triggerStopOrders`, which matches activated stops in a loop. A callback can see an activated stop that shows Open or PartiallyFilled but is in no list yet, or a stop about to be auto-cancelled that still shows PartiallyFilled. Writes are blocked by `nonReentrant`, as everywhere else (final audit, L-3).
 
 ### cancelOrder(orderId)
 - Caller must be the order's trader, else `NotOrderOwner`.
@@ -232,6 +234,19 @@ There is no background execution on-chain.
 - The minimum order size and price granularity are 1e-9 of a whole token.
 - Self-trades are allowed.
 - A capped placement can leave the book crossed, and `matchOrders` clears it. Until then, price-time priority does not hold across the crossing: a new sell can fill at once against a resting bid, ahead of an older, better-priced ask. `test_match_crossedBookNewTakerFillsOppositeHeadAheadOfOlderOrder` pins this.
+- **Plain limit orders can be sandwiched through the fill cap** (final audit M-1, accepted 8 Nov, issue 007). This combines two limitations above: the crossed book (O4) and dust using up a taker's fills.
+  - **Example:**
+    1. Bob rests an ask of 10 at 1.5.
+    2. Carol sends a buy of 10 at limit 2.0, expecting to fill against Bob at 1.5.
+    3. An attacker front-runs her with `MAX_MATCHES_PER_TX` one-lot asks at 1.499.
+    4. Carol's 10 fills are spent on the dust, and her remainder rests as a bid at 2.0, crossed with Bob's ask.
+    5. The attacker sells into Carol at 2.0 (she is now the maker, so her price applies), then buys Bob's ask at 1.5.
+  - **Result:** Carol pays 20e18 - 5.01e9 for 10 base instead of 15e18, and the attacker makes 5e18 - 5.01e9.
+  - **Bound:** the victim's own limit price. Solvency and list integrity hold.
+  - **Cost:** gas plus 10 lots (about 1.5e-8 quote).
+  - **Mitigations not built:** clear any crossing before a new order matches; do not rest a remainder that still crosses after the cap; a minimum fill size. All three change O4 or the dust rules and were judged too risky to change at the end of the project.
+  - **Test:** `test_issue007_dustSandwichMakesAHonestBuyPayItsLimit` pins this behaviour.
+  - **Advice for users:** use a tight limit price.
 - **Stops can be sniped through the shared fill budget.** `triggerStopOrders` can leave the book crossed in the same way, and the caller chooses when that happens.
   - **Example:** the last trade was at 2. Bob has a bid of 10 at 2.0, and Carol has a sell stop with trigger 2, limit 1.0 and size 10.
     1. An attacker places 10 dust bids at 2.1 and calls `triggerStopOrders(1)`.
@@ -240,7 +255,7 @@ There is no background execution on-chain.
   - **Bound:** the fill can never be worse than her `limitPrice`, which is what a stop-limit promises, but a wide limit can lose much more than she expected. The independent Phase 6 review reproduced this.
   - **Mitigations not built:** clearing crossings inside `placeLimitOrder` before the new order takes, a minimum fill size, or not activating once the budget is used up (which would only limit later stops).
 - **Stop-list insertion can be griefed.** 101 stops at trigger T (1 wei of escrow each for a buy stop at a 1-tick limit) make every later buy stop with a trigger at or above T revert with `BookTooDeep` until those stops activate. Sell stops can be griefed the same way. This is the dust-griefing limitation above, applied to the stop lists.
-- Dust griefing is cheap. `MAX_INSERT_SCAN` + 1 minimum-size orders make any worse-priced resting order revert with `BookTooDeep`, and `MAX_MATCHES_PER_TX` minimum-size orders use up a taker's fills. The cost is gas plus almost no capital. Tuning the constants does not remove this.
+- Dust griefing is cheap. `MAX_INSERT_SCAN` + 1 minimum-size orders at price P make any new order at P or worse revert with `BookTooDeep` (equal-priced orders rank behind earlier ones), and `MAX_MATCHES_PER_TX` minimum-size orders use up a taker's fills. The cost is gas plus almost no capital. Tuning the constants does not remove this.
 - Payouts are pushed, so a token that can refuse a transfer to one address (a blocklist or a hook) would let a maker block every taker that crosses it. Plain demo tokens are not affected.
 - Tokens sent directly to the contract are stranded, because no function can recover them. Trader escrow is not affected.
 - `matchOrders` pays no reward to its caller, so a crossed book stays crossed until someone chooses to pay the gas to clear it (section 6).
