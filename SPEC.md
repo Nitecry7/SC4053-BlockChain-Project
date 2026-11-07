@@ -132,8 +132,10 @@ Known limit: the guard does not cover view functions. A token callback can read 
 - `maxMatches` must be between 1 and `MAX_MATCHES_PER_TX`, else `InvalidMaxCount`.
 - While best bid price >= best ask price and the fill count is below the cap, fill the two heads.
 - The maker is the head with the lower `bookSeq` (it entered the book first), and execution is at the maker's price. Settlement uses the same internal `_settleFill` as placement, applying A4 and A5.
-- Returns the number of fills. Returns 0 when the book is not crossed (no revert).
-- Anyone can call it.
+- Both orders are in the book, so whichever is filled leaves it. `_settleFill` unlinks a filled maker, and, when called from `matchOrders`, a filled taker too, before that fill's transfers (CEI per fill; `test_matchPayout_viewsShowBothFilledOrdersAlreadyUnlinked`). A partly filled order keeps its place.
+- Returns the number of fills. Returns 0 when the book is not crossed or a side is empty (no revert, no events).
+- Anyone can call it. The caller pays gas only: it sends and receives no tokens, and no order is recorded for it.
+- The same payouts-during-the-loop deviation as placement applies (section 5, placeLimitOrder): fill N's transfers come before fill N+1's state changes, under `nonReentrant`.
 
 ### placeStopLimitOrder(side, triggerPrice, limitPrice, amount)
 - Validates like a limit order, with `triggerPrice` also non-zero and tick-aligned.
@@ -164,10 +166,19 @@ Known limit: the guard does not cover view functions. A token callback can read 
 - `getBestBid` and `getBestAsk`: return `(0, 0)` when that side is empty.
 
 ## 6. Who triggers execution (brief's tricky point 1)
-Execution only happens inside a transaction:
-- the taker's own `placeLimitOrder`, where the taker pays the gas
-- anyone's `matchOrders`, to clear crossings left by the cap or by triggered stops
-- anyone's `triggerStopOrders`
+A contract cannot run by itself: nothing executes unless someone sends a transaction, and that sender pays the gas. So every match happens inside one of three calls.
+
+| Who | How | How often |
+|---|---|---|
+| The taker | `placeLimitOrder` matches the new order against the opposite side straight away (section 5), up to `MAX_MATCHES_PER_TX` fills | Every placement that crosses. This is the normal path, and most orders never need anything else |
+| Anyone (a trader, the frontend, a keeper bot) | `matchOrders(maxMatches)` fills the two heads while the book is crossed, up to `maxMatches` fills (at most `MAX_MATCHES_PER_TX`) | Only when the book is left crossed: after a placement hit the cap, or (Phase 6) after triggered stops ran out of fill budget. Call it repeatedly until it returns 0. It is a cheap no-op otherwise |
+| Anyone | `triggerStopOrders(maxCount)` activates eligible stop orders and matches them (Phase 6) | After trades move `lastTradePrice` across a trigger price |
+
+Design points:
+- **Bounded work per call.** Every path shares the `MAX_MATCHES_PER_TX` cap, so no call's gas grows with the size of the book. Large crossings are cleared over several calls.
+- **Permissionless and harmless to call.** Callers of `matchOrders` cannot choose prices, pick orders or skip the queue: fills follow price-time priority (bookSeq), at the maker's price. The caller sends and receives no tokens (`test_batch_thirdPartyCallerGainsAndLosesNothing`).
+- **No caller reward.** There is no fee or keeper incentive, so clearing relies on someone who benefits: usually a trader whose order is crossed, or the frontend offering a "match" button when best bid >= best ask. This is listed in section 8.
+- **Multi-party batching (Bonus 2).** One `matchOrders` call can settle many different traders on both sides in a single transaction; `test_batch_multiPartySettlesFourBuyersAndFourSellersInOneCall` settles four buyers and four sellers at once.
 
 There is no background execution on-chain.
 
@@ -185,6 +196,8 @@ There is no background execution on-chain.
   | Worst built: 10 fills with refunds, zero-to-nonzero balances, then a rest behind 100 equal-price orders | 1,778,221 | `test_gas_worstCasePlacement` |
 
   The worst figure is the worst placement built so far, not a proven upper bound. It is well below Anvil's default 30M block gas limit.
+
+  Phase 5 added `matchOrders(10)`: 10 fills with price-improvement refunds use 765,646 gas, measured with `gasleft()` inside `test_gas_matchOrdersFullCapWithRefunds` (not `--isolate`). This is a typical case, not a worst case: one seller and one buyer who already hold balances, so storage is warm. Ten distinct sellers receiving quote for the first time cost more (each first write to a zero balance is a cold, zero-to-nonzero store). Like placement, it is bounded by `MAX_MATCHES_PER_TX`, with constant work per fill and no escrow pull or insert.
 - **O3.** The Bonus 2 "multi-party" interpretation: confirm with the TA.
 - **O4 (resolved 2 Nov).** On a crossed book, section 5 step 4 (match the opposite head) takes precedence over section 2 (Priority). The behaviour is kept and listed in section 8.
 
@@ -199,3 +212,4 @@ There is no background execution on-chain.
 - Dust griefing is cheap. `MAX_INSERT_SCAN` + 1 minimum-size orders make any worse-priced resting order revert with `BookTooDeep`, and `MAX_MATCHES_PER_TX` minimum-size orders use up a taker's fills. The cost is gas plus almost no capital. Tuning the constants does not remove this.
 - Payouts are pushed, so a token that can refuse a transfer to one address (a blocklist or a hook) would let a maker block every taker that crosses it. Plain demo tokens are not affected.
 - Tokens sent directly to the contract are stranded, because no function can recover them. Trader escrow is not affected.
+- `matchOrders` pays no reward to its caller, so a crossed book stays crossed until someone chooses to pay the gas to clear it (section 6).
