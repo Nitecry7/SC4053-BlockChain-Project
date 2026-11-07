@@ -950,3 +950,14 @@ Each must be checked against the source before drawing. Use one colour-blind-saf
 **What the AI got wrong / flagged:** nothing new was invented. The plan file's own title says "built with Claude Code", while the owner says the plan was written in the chat before Claude Code was engaged. The report quotes the title and gives the owner's account; it does not resolve the difference.
 
 **What the human did:** stated the chat's role and dates, and the attribution rule.
+
+## 2026-11-08: Report, the chat assistant marked as minimal use
+**Phase:** wrap-up, report. **Branch:** `docs/chat-minimal`.
+
+**Prompt (summary):** the same request as the previous entry, re-sent with one new fact: the claude.ai chat was used "very minimally".
+
+**What the AI did:**
+- **Not redone:** the previous merge (`5a81a33`) already carried every requested change, so it was not repeated.
+- **"Used minimally" added in five places:** the executive summary, the 1.6 plan bullet, the 2.2 tools row, the 2.4 tier table, and the 2.4 introduction. The introduction now also says that all of the code was written through Claude Code.
+
+**What the human did:** stated that the chat was used very minimally.
