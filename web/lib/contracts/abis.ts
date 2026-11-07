@@ -745,7 +745,7 @@ export const orderBookAbi = [
     "name": "cancelOrder",
     "inputs": [
       {
-        "name": "",
+        "name": "orderId",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -986,14 +986,14 @@ export const orderBookAbi = [
     "name": "matchOrders",
     "inputs": [
       {
-        "name": "",
+        "name": "maxMatches",
         "type": "uint256",
         "internalType": "uint256"
       }
     ],
     "outputs": [
       {
-        "name": "",
+        "name": "matchesDone",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -1034,29 +1034,29 @@ export const orderBookAbi = [
     "name": "placeStopLimitOrder",
     "inputs": [
       {
-        "name": "",
+        "name": "side",
         "type": "uint8",
         "internalType": "enum IOrderBook.Side"
       },
       {
-        "name": "",
+        "name": "triggerPrice",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "",
+        "name": "limitPrice",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "",
+        "name": "amount",
         "type": "uint256",
         "internalType": "uint256"
       }
     ],
     "outputs": [
       {
-        "name": "",
+        "name": "orderId",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -1105,14 +1105,14 @@ export const orderBookAbi = [
     "name": "triggerStopOrders",
     "inputs": [
       {
-        "name": "",
+        "name": "maxCount",
         "type": "uint256",
         "internalType": "uint256"
       }
     ],
     "outputs": [
       {
-        "name": "",
+        "name": "triggered",
         "type": "uint256",
         "internalType": "uint256"
       }

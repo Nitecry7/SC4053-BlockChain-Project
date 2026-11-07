@@ -681,3 +681,24 @@ Their frontend tests' assertions about the placement cap stay correct.
 **ABI export:** not run. `export-web.mjs` has no ABI-only mode: it needs a complete broadcast file and a live chain whose bytecode matches `contracts/out`, and it writes `abis.ts` and `deployments.ts` together. Under the human's rule ("if it needs a deployment, don't run it"), the command is left for Person 2 in the handoff.
 
 **Results before commit:** `forge test`: 317 passed, 0 failed (21 suites). `forge fmt --check`: clean.
+
+---
+
+## 2026-11-07: ABI regeneration on a scratch chain
+
+**Prompt (summary):** Regenerate `web/lib/contracts/abis.ts` with Person 2's exporter on a scratch chain, without touching the local chain or its broadcast record. Confirm `deployments.ts` is byte-identical, copy only `abis.ts`, run `--check` and Person 2's tests, update the handoff, commit on main, and stop the Anvil.
+
+**What the AI did:**
+- Confirmed ports 8540 to 8549 were free, in a step of its own before starting Anvil. Started `anvil --port 8546` and confirmed chain 31337 at block 0.
+- Deployed with `FOUNDRY_BROADCAST` and `FOUNDRY_CACHE_PATH` redirected. The repo's `broadcast/` was confirmed absent afterwards.
+- Ran `export-web.mjs --rpc-url http://127.0.0.1:8546 --broadcast-file <scratch> --out <scratch>/export`.
+- `deployments.ts` was byte-identical to `git show HEAD:web/lib/contracts/deployments.ts`. The `abis.ts` diff is 20 lines, which are 10 parameter and return names on `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders`.
+- Copied only `abis.ts`.
+- `--check` on LF copies printed `up to date` (exit 0). The control, the old `abis.ts`, printed `out of date: abis.ts` (exit 1).
+- `npm test`: 410 passed and 48 skipped. `npx tsc --noEmit`: exit 0. Exporter tests: 21 passed.
+- Stopped the Anvil: the port refuses connections and no process remains.
+
+**What the AI got wrong:**
+- The first `cmp` compared against the CRLF working copies, which reported a false difference at byte 90 of both files. It was redone against the committed blobs.
+- `--check` against `web/lib/contracts/` failed on `deployments.ts` for the same CRLF reason. This is a real Windows-only quirk of the check (`core.autocrlf=true`, a byte comparison, and no `.gitattributes` rule for `*.ts`). It is recorded in the handoff for Person 2, and their files were not changed.
+- The AI first said 11 names differed, and corrected that to 10.
