@@ -1,0 +1,26 @@
+---
+config:
+  flowchart:
+    wrappingWidth: 900
+---
+flowchart TB
+  classDef head fill:#0072B2,stroke:#0072B2,color:#FFFFFF,stroke-width:2px
+  classDef bid fill:#E6F0F8,stroke:#0072B2,stroke-width:2px,color:#1A1A1A
+  classDef ask fill:#FFF1D6,stroke:#E69F00,stroke-width:2px,color:#1A1A1A
+  classDef stop fill:#F5E1EE,stroke:#CC79A7,stroke-width:2px,stroke-dasharray:5 3,color:#1A1A1A
+  classDef note fill:#FFFFFF,stroke:#9A9A9A,stroke-width:1px,color:#1A1A1A
+
+  subgraph BOOK["BOOK: live orders (Open, PartiallyFilled), returned by getBook"]
+    direction LR
+    HB["BIDS head<br/>price high to low"]:::head --> B7["#7 bid 2.2<br/>seq 7"]:::bid --> B3["#3 bid 2.0<br/>seq 3"]:::bid -->|"tie at 2.0:<br/>lower seq first"| B5["#5 bid 2.0<br/>seq 5"]:::bid --> B2["#2 bid 1.9<br/>seq 2"]:::bid
+    HA["ASKS head<br/>price low to high"]:::head --> A4["#4 ask 2.3<br/>seq 4"]:::ask --> A6["#6 ask 2.4<br/>seq 6"]:::ask
+  end
+
+  subgraph STOPS["STOP LISTS: PendingTrigger orders, NOT in getBook"]
+    direction LR
+    HSB["BUY STOPS head<br/>trigger low to high"]:::head --> S8["#8 buy stop<br/>trigger 2.5"]:::stop --> S9["#9 buy stop<br/>trigger 2.6"]:::stop
+    HSS["SELL STOPS head<br/>trigger high to low"]:::head --> S10["#10 sell stop<br/>trigger 1.8"]:::stop --> S11["#11 sell stop<br/>trigger 1.7"]:::stop
+  end
+
+  BOOK ~~~ STOPS
+  STOPS ~~~ N["All four lists share one next/prev map. An order's status selects its list.<br/>bookSeq is stamped when an order enters the book (placement or stop activation), never by order ID."]:::note

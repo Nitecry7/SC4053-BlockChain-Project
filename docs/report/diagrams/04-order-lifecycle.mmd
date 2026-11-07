@@ -1,0 +1,35 @@
+---
+config:
+  layout: elk
+---
+flowchart TB
+  classDef pending fill:#F5E1EE,stroke:#CC79A7,stroke-width:2px,color:#1A1A1A
+  classDef live fill:#E6F0F8,stroke:#0072B2,stroke-width:2px,color:#1A1A1A
+  classDef done fill:#E3F4EE,stroke:#009E73,stroke-width:2px,color:#1A1A1A
+  classDef cancelled fill:#FBE3D6,stroke:#D55E00,stroke-width:2px,color:#1A1A1A
+  classDef decide fill:#FFFFFF,stroke:#555555,stroke-width:2px,color:#1A1A1A
+  classDef entry fill:#FFFFFF,stroke:#555555,stroke-width:1.5px,stroke-dasharray:4 3,color:#1A1A1A
+
+  S(["placeStopLimitOrder"]):::entry
+  L(["placeLimitOrder"]):::entry
+  PT["PendingTrigger<br/>escrowed, not in book"]:::pending
+  M{"match against<br/>the book"}:::decide
+  subgraph BOOK[" "]
+    direction LR
+    O["Open<br/>in book, no fills yet"]:::live
+    PF["PartiallyFilled<br/>in book, some fills"]:::live
+    O -->|"partial fill"| PF
+  end
+  F["Filled<br/>final"]:::done
+  C["Cancelled<br/>final, remainder refunded"]:::cancelled
+
+  S --> PT
+  L --> M
+  PT -->|"triggerStopOrders,<br/>fresh bookSeq"| M
+  PT -->|"owner cancelOrder"| C
+  M -->|"no fill"| O
+  M -->|"some fills"| PF
+  M -->|"fully filled"| F
+  M -->|"activated stop cannot<br/>enter book (issue 006)"| C
+  BOOK -->|"fills complete it"| F
+  BOOK -->|"owner cancelOrder"| C

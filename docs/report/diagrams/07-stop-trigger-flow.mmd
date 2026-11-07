@@ -1,0 +1,29 @@
+---
+config:
+  flowchart:
+    wrappingWidth: 360
+---
+flowchart TB
+  classDef step fill:#E6F0F8,stroke:#0072B2,stroke-width:2px,color:#1A1A1A
+  classDef decide fill:#FFFFFF,stroke:#555555,stroke-width:2px,color:#1A1A1A
+  classDef stop fill:#F4F4F4,stroke:#666666,stroke-width:1.5px,color:#1A1A1A
+  classDef good fill:#E3F4EE,stroke:#009E73,stroke-width:2px,color:#1A1A1A
+  classDef warn fill:#FBE3D6,stroke:#D55E00,stroke-width:2px,color:#1A1A1A
+
+  A["triggerStopOrders(maxCount), anyone may call"]:::step --> G{{"maxCount in 1..10?"}}:::decide
+  G -- "no" --> R1["revert InvalidMaxCount"]:::warn
+  G -- "yes" --> H{{"hasTradePrice?"}}:::decide
+  H -- "no" --> Z["return 0: nothing triggers before the first trade"]:::stop
+  H -- "yes" --> B["budget = 10 fills, shared by the whole call"]:::step
+  B --> L{{"triggered < maxCount AND an eligible stop head?<br/>buy: lastTradePrice >= trigger<br/>sell: lastTradePrice <= trigger (buy side first)"}}:::decide
+  L -- "no" --> E["return triggered"]:::stop
+  L -- "yes" --> ACT["activate: unlink from stop list, status Open,<br/>fresh bookSeq, emit StopOrderTriggered"]:::step
+  ACT --> M["match with the remaining budget<br/>budget -= fills (fills may move lastTradePrice)"]:::step
+  M --> T{{"remainder left?"}}:::decide
+  T -- "no: Filled" --> INC["triggered += 1"]:::step
+  T -- "yes" --> FIT{{"fits in book?<br/>at most 100 orders ahead"}}:::decide
+  FIT -- "yes" --> REST["rests as a limit order<br/>(budget spent: may rest crossed)"]:::good
+  FIT -- "no" --> AC["auto-cancel and refund,<br/>emit OrderCancelled (issue 006)"]:::warn
+  REST --> INC
+  AC --> INC
+  INC -->|"next stop"| L

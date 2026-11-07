@@ -1,0 +1,20 @@
+flowchart TB
+  classDef spec fill:#F5E1EE,stroke:#CC79A7,stroke-width:2px,color:#1A1A1A
+  classDef ai fill:#E6F0F8,stroke:#0072B2,stroke-width:2px,color:#1A1A1A
+  classDef human fill:#FFF1D6,stroke:#E69F00,stroke-width:2px,color:#1A1A1A
+  classDef check fill:#E3F4EE,stroke:#009E73,stroke-width:2px,color:#1A1A1A
+  classDef decide fill:#FFFFFF,stroke:#555555,stroke-width:2px,color:#1A1A1A
+
+  S["Spec files<br/>CLAUDE.md, SPEC.md,<br/>frozen interface"]:::spec --> P["Phase prompt<br/>(plan mode in Phase 0)<br/>[human approves]"]:::human
+  P --> I["AI implements<br/>code + tests together"]:::ai
+  I --> T["forge build / test / fmt<br/>real output reported"]:::check
+  T --> R["Independent review<br/>fresh AI agent, read-only"]:::ai
+  R --> D{"Finding?"}:::decide
+  D -- "bug" --> FX["Fix + regression test<br/>issue file: fail, then pass"]:::ai
+  D -- "design trade-off" --> HD["Human decides"]:::human
+  FX --> MU
+  HD --> MU
+  D -- "none" --> MU["Mutation testing<br/>tests must catch bugs"]:::check
+  MU -- "mutant survives" --> I
+  MU --> M["Log, commit,<br/>merge --no-ff"]:::human
+  M -. "next phase" .-> P

@@ -1,0 +1,31 @@
+---
+config:
+  layout: elk
+  elk:
+    nodePlacementStrategy: NETWORK_SIMPLEX
+---
+flowchart TB
+  classDef engine fill:#E6F0F8,stroke:#0072B2,stroke-width:2px,color:#1A1A1A
+  classDef p2 fill:#FFF1D6,stroke:#E69F00,stroke-width:2px,color:#1A1A1A
+  classDef neutral fill:#F4F4F4,stroke:#666666,stroke-width:1.5px,color:#1A1A1A
+  classDef good fill:#E3F4EE,stroke:#009E73,stroke-width:2px,color:#1A1A1A
+
+  FE["Next.js frontend<br/>wagmi + viem, no backend<br/>[Person 2]"]:::p2
+  MM["MetaMask<br/>holds keys, signs<br/>[user]"]:::neutral
+  K["Any caller<br/>keeper or trader<br/>[anyone]"]:::good
+
+  subgraph CHAIN[" "]
+    OB["OrderBook, one per pair<br/>holds ALL escrow<br/>matches and settles<br/>[Person 1 engine]"]:::engine
+    TB["ON-CHAIN (Anvil 31337)<br/>trust boundary: no owner,<br/>admin, pause or upgrade"]:::neutral
+    MF["MarketFactory<br/>one market per pair<br/>[Person 2]"]:::p2
+    TK["DemoToken ERC20s<br/>fixed supply<br/>[Person 2]"]:::p2
+    TF["TokenFactory<br/>[Person 2]"]:::p2
+  end
+
+  FE -->|"1 asks to sign"| MM
+  FE -->|"reads"| OB
+  MM -->|"2 signed orders, cancels"| OB
+  K -->|"matchOrders, triggerStopOrders"| OB
+  MF -->|"deploys"| OB
+  OB <-->|"escrow in, payouts out"| TK
+  TF -->|"createToken"| TK

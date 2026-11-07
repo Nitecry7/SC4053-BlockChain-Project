@@ -857,3 +857,37 @@ Commit and notify after each step.
 - **Blocked tool:** it tried to download the Mermaid CLI to render the diagrams. The permission classifier blocked running external code, so it did not work around it. It linted the diagram syntax instead: every label quoted, quotes balanced. Rendering is not machine-verified.
 - **Orphan processes, again:** stopping the dev server's task left an orphaned `node.exe` listening on port 3999 (the same pattern as the Phase 7 mutant orphan). The AI identified it by its command line as the scratch clone's server and killed only that process tree.
 - **Windows path limit:** the README's `git submodule update --init --recursive` failed in the deep scratch path ("Filename too long"). Recorded as an environment finding and worked around with `core.longpaths`, not reported as a README bug.
+
+## 2026-11-08: Report diagrams (publication quality)
+**Phase:** wrap-up, report figures. **Branch:** `docs/figures`.
+
+**Prompt (summary):** make the report's diagrams publication-quality, working only in `docs/report/`. There are ten diagrams:
+- architecture, lifecycle, the partial-fill sequence, book structure, the stop trigger, the batch match
+- AI workflow, a Gantt from git dates, the evidence map, issues by phase
+
+Each must be checked against the source before drawing. Use one colour-blind-safe theme with text labels, kept readable at A4. Render to SVG and a 2x PNG with the Mermaid CLI, open every PNG and fix the layout, embed the figures with captions, update the contents, commit, push, and list the figures.
+
+**What the AI did:**
+- **Sources:** `docs/report/diagrams/NN-name.mmd` (01 to 10, numbered in report order), a shared `mermaid-config.json` (Okabe-Ito palette, Arial 16 px), and `render.sh`. Rendered with `@mermaid-js/mermaid-cli@11.4.2` through Edge, because Puppeteer had no bundled Chrome.
+- **Facts checked before drawing:**
+  - lifecycle transitions against `placeLimitOrder`, `placeStopLimitOrder`, `triggerStopOrders` and `_closeAndRefund`
+  - the Figure 5 numbers (22 escrow, re-lock 13.2, refund 0.8)
+  - Figure 8 against `test_batch_multiPartySettlesFourBuyersAndFourSellersInOneCall`
+  - Gantt dates and merge hashes from `git log`
+  - evidence numbers from Sections 5 and 6
+- **Every PNG opened and inspected, then fixed and re-rendered:**
+  - crossing edges and edges through titles (Figures 3, 4): ELK layout, blank group titles
+  - a 3,800 px lifecycle redesigned around a "match" decision
+  - overflowing sequence notes (Figures 5, 8)
+  - an upside-down ELK workflow: back to dagre
+  - Gantt gridlines through labels, plus a white "today" line
+  - an evidence map first 3,000 px tall, then 5,600 px wide: four columns
+  - an issues chart first 4,800 px wide, then out of phase order: one row per phase
+- **Report:** the three inline Mermaid blocks were replaced by Figures 1 to 10. Each figure has a "Figure N" caption and a one-line explanation. A list of figures was added under Contents, plus a new section 2.5 (Timeline). The 4.2 call graph became a bullet list, so no fact was lost.
+
+**What the AI got wrong:**
+- **Figure 8 note, first draft:** said the loop ended because the best bid was below the best ask. The test asserts both sides of the book are empty. Caught by reading the test before rendering, and fixed.
+- **ELK flipped Figure 1** (the workflow) to bottom-up because of its loop-back edges. The problem was found only by looking at the PNG.
+- **Figure 9:** the first two-row layout reordered the phases. The problem was found only by looking.
+
+**What the human did:** set the scope (only `docs/report/`, facts checked against the source), the style rules and the inspection requirement.

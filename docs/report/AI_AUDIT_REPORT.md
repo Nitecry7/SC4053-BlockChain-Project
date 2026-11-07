@@ -58,6 +58,23 @@
 - [Requirements traceability](#requirements-traceability)
 - [Evidence index](#evidence-index)
 
+**List of figures**
+
+| Figure | Title | Section |
+|---|---|---|
+| [1](#figure-1) | AI-assisted workflow per phase | [2.4](#24-workflow-per-phase) |
+| [2](#figure-2) | Engine timeline from git and log dates | [2.5](#25-timeline) |
+| [3](#figure-3) | System architecture and trust boundary | [4.1](#41-system) |
+| [4](#figure-4) | Order lifecycle | [4.2](#42-engine-internals) |
+| [5](#figure-5) | A buy that partly fills, then rests | [4.2](#42-engine-internals) |
+| [6](#figure-6) | Order book and stop-list structure | [4.2](#42-engine-internals) |
+| [7](#figure-7) | `triggerStopOrders` flow | [4.2](#42-engine-internals) |
+| [8](#figure-8) | Multi-party batch match in one transaction | [4.2](#42-engine-internals) |
+| [9](#figure-9) | Engine issues 001 to 007 by phase and severity | [5.1](#51-inventory-most-severe-first) |
+| [10](#figure-10) | Verification evidence map | [6.1](#61-layers) |
+
+Every figure is drawn from the committed code, tests, logs and git history. The Mermaid sources and the render script are in [`diagrams/`](diagrams/).
+
 ---
 
 ## 1. Initial Specification and System Scope
@@ -137,25 +154,23 @@ The first interface draft (`cd35f8b`) already listed every function, event and e
   - a mock-wallet browser harness (`web/e2e/mock-wallet.mjs`)
 
 ### 2.4 Workflow per phase
-```mermaid
-flowchart LR
-  A["Human writes or approves the phase prompt<br/>(docs/ENGINE_PHASES.md)"] --> B["AI implements code and tests together"]
-  B --> C["forge build, test, fmt<br/>real output reported"]
-  C --> D["Fresh read-only AI reviewer<br/>(no session context)"]
-  D --> E{"Real finding?"}
-  E -- "bug" --> F["Fix plus regression test<br/>issue file with failing-then-passing output"]
-  E -- "design choice" --> G["Human decides"]
-  F --> H["Mutants: the new tests must catch them"]
-  G --> H
-  E -- "none" --> H
-  H --> I["Log the session, commit,<br/>merge into main --no-ff"]
-```
+<a id="figure-1"></a>
+![Figure 1: AI-assisted workflow per phase](diagrams/01-ai-workflow.png)
+
+**Figure 1: AI-assisted workflow per phase (engine).** The human approves each phase prompt (`docs/ENGINE_PHASES.md`). Every AI change then passes real test output, a fresh read-only reviewer and mutation testing before it is logged and merged. A surviving mutant sends the work back to implementation.
+
 Person 2 followed the same pattern [P2 to confirm]:
 1. a read-only planning session approved by the owner
 2. implementation, with tests written alongside the code
 3. mutation checks and real-chain runs
 4. for most phases, a fresh-context review
 5. the session, including the AI's mistakes, logged in `prompt-log-person2.md`
+
+### 2.5 Timeline
+<a id="figure-2"></a>
+![Figure 2: Engine timeline from git and log dates](diagrams/02-engine-gantt.png)
+
+**Figure 2: Engine timeline from git and prompt-log dates.** Each bar is a calendar day with that phase's merge hash. Commit times are not working hours, so the bars show *when* the work landed, not how long it took. Phase 4 was written on 2 Nov but committed only after the 7 Nov recovery. Person 2's bar is approximate; their log has the detail. [P2 to confirm]
 
 ---
 
@@ -200,40 +215,48 @@ Person 2 followed the same pattern [P2 to confirm]:
 
 ## 4. AI-Generated Architecture
 ### 4.1 System
-```mermaid
-flowchart LR
-  Trader["Trader (browser)"] --> UI["Next.js app<br/>RainbowKit, wagmi, viem"]
-  UI -->|"reads: JSON-RPC"| Chain
-  UI -->|"writes: signature request"| Wallet["MetaMask (signs only)"]
-  Wallet -->|"signed transaction"| Chain
-  subgraph Chain["Anvil, chain 31337"]
-    TF["TokenFactory"] -->|"createToken"| Tokens["DemoToken ERC20s<br/>NTU, SGDx, ..."]
-    MF["MarketFactory"] -->|"new OrderBook(base, quote)"| OB["OrderBook per token pair<br/>holds escrow"]
-    OB -->|"escrow and settlement"| Tokens
-  end
-  Script["Deploy.s.sol (local only)"] -.->|"deploys, lists NTU/SGDx"| MF
-  Keeper["Anyone: trader, keeper, UI button"] -->|"matchOrders, triggerStopOrders"| OB
-```
-This is adapted from Person 2's README diagram, with the keeper path for the bonuses added. [P2 to confirm]
+<a id="figure-3"></a>
+![Figure 3: System architecture and trust boundary](diagrams/03-system-architecture.png)
+
+**Figure 3: System architecture and trust boundary.** Everything inside the box is on-chain with no owner or admin. The front end only reads and asks MetaMask to sign, and any caller can drive `matchOrders` and `triggerStopOrders`. The labels in brackets show who owns each part.
+
+- **Deployment:** `Deploy.s.sol` (local only) deploys the factories and lists NTU/SGDx. The front end has no backend.
+- **Source:** adapted from Person 2's README diagram, with the keeper path for the bonuses added. [P2 to confirm]
 
 ### 4.2 Engine internals
-```mermaid
-flowchart TB
-  P["placeLimitOrder"] --> V["_validate, _record, _pullEscrow"]
-  PS["placeStopLimitOrder"] --> V
-  V --> MT["_matchTaker (fill budget)"]
-  MT --> SF["_settleFill: the only settlement path<br/>maker price, A4 and A5 refund"]
-  MO["matchOrders"] --> SF
-  TR["triggerStopOrders<br/>one shared budget"] --> MT
-  C["cancelOrder"] --> CR["_closeAndRefund"]
-  TR -->|"remainder cannot enter book"| CR
-  SF --> BK[("Book lists: bids desc, asks asc<br/>ties by bookSeq")]
-  PS --> SL[("Stop lists: buy asc, sell desc by trigger")]
-  TR --> SL
-```
+- **Call paths:**
+  - `placeLimitOrder` and `placeStopLimitOrder` share `_validate`, `_record` and `_pullEscrow`.
+  - `placeLimitOrder` and `triggerStopOrders` match through `_matchTaker` (with a fill budget).
+  - `_matchTaker` and `matchOrders` both settle through `_settleFill`, the only settlement path (maker price, A4 and the A5 refund).
+  - `cancelOrder`, and an activated stop that cannot enter the book, both close through `_closeAndRefund`.
 - **State:** `_orders`; the book heads with shared next and prev links; `_stopHead`; `_bookSeq`; `lastTradePrice`; `hasTradePrice`.
 - **An order is in at most one list,** and its status says which: PendingTrigger orders are in a stop list, Open and PartiallyFilled orders in the book.
 - **Size:** OrderBook 8,461 B runtime and MarketFactory 10,508 B, against the 24,576 B limit (`phase8/sizes.txt`).
+
+<a id="figure-4"></a>
+![Figure 4: Order lifecycle](diagrams/04-order-lifecycle.png)
+
+**Figure 4: Order lifecycle.** A limit order is matched at once. A stop-limit order waits as PendingTrigger until `triggerStopOrders` activates it with a fresh `bookSeq`. Filled and Cancelled are final, and a cancel always refunds the remainder, including the issue 006 auto-cancel.
+
+<a id="figure-5"></a>
+![Figure 5: A buy that partly fills, then rests](diagrams/05-partial-fill-sequence.png)
+
+**Figure 5: A buy that partly fills, then rests (rule A5).** Bob escrows 22 SGDx for 10 NTU at 2.2 and fills 4 against Alice's ask at her price of 2.0. Settlement re-locks ceil(6 × 2.2) = 13.2 and refunds 0.8 before the 6 NTU remainder rests in the book.
+
+<a id="figure-6"></a>
+![Figure 6: Order book and stop-list structure](diagrams/06-book-structure.png)
+
+**Figure 6: Order book and stop-list structure.** There are four sorted linked lists over one shared next/prev map. Price ties go to the lower `bookSeq` (orders #3 and #5 at 2.0). Stop orders are held apart and are not returned by `getBook` until they activate.
+
+<a id="figure-7"></a>
+![Figure 7: triggerStopOrders flow](diagrams/07-stop-trigger-flow.png)
+
+**Figure 7: `triggerStopOrders` flow.** One budget of 10 fills is shared by the whole call. The buy side is checked first. An activated remainder that cannot be placed within 100 insert steps is cancelled and refunded instead of reverting the call (the issue 006 fix).
+
+<a id="figure-8"></a>
+![Figure 8: Multi-party batch match in one transaction](diagrams/08-batch-match.png)
+
+**Figure 8: Multi-party batch match (Bonus 2).** This replays `test_batch_multiPartySettlesFourBuyersAndFourSellersInOneCall`. One `matchOrders` call settles four buyers and four sellers at the makers' price and refunds each buyer's price improvement. The keeper's balances stay at zero.
 
 ### 4.3 What the AI proposed, and what happened to it
 | Area | AI proposal (Phase 0, 28 Oct, unless stated) | Outcome |
@@ -271,6 +294,11 @@ flowchart TB
 | [005](../ai-audit/issues/005-cancel-zero-address-owner-check.md) | Engine | `address(0)` treated as the owner of unknown orders | Access-control edge | Low | Fixed (`dab79f8`) |
 | [001](../ai-audit/issues/001-unlink-empties-book-side.md) | Engine | `_unlink` could empty one side of the book | List integrity | Latent | Fixed (`dfe7318`) |
 | [P2-002](../ai-audit/issues/p2-002-fill-cap-hides-crossed-remainder.md), [P2-004](../ai-audit/issues/p2-004-switch-network-no-guidance-in-ticket.md), [P2-010](../ai-audit/issues/p2-010-creation-flow-review-findings.md), [P2-011](../ai-audit/issues/p2-011-duplicate-key-ghost-row-on-market-switch.md) | Front end | Crossed-remainder warning missed; no network-switch guidance; creation-flow findings; ghost row | UI correctness | Low (P2-002: Low to Medium) | Fixed [P2 to confirm] |
+
+<a id="figure-9"></a>
+![Figure 9: Engine issues 001 to 007 by phase and severity](diagrams/09-issues-by-phase.png)
+
+**Figure 9: Engine issues by the phase that found them.** The border shows severity (thick vermillion High, orange Medium, blue Low, dashed Latent), and every box also states it in words. Six issues are fixed, and issue 007 is accepted and pinned by a test.
 
 ### 5.2 Engine issues in the four-part format (Person 1)
 The full text and the real before-and-after output are in each issue file.
@@ -383,6 +411,11 @@ Person 2's front-end limits are in `docs/FRONTEND.md`. [P2 to confirm]
 | Front-end real-chain and browser tests | Runners on a scratch chain; the UI in Chromium with a **mock** wallet | Real chain 48 passed; browser suites 13 / 14 / 14 / 9 / 11 passed [P2 to confirm] |
 | Independent AI reviews | A fresh-context reviewer per phase, plus a final engine audit | Findings are in Section 5 |
 | Manual MetaMask | The real wallet | **Owner-reported only:** Tests 1 to 4 and a DTT trade; most steps and every negative case not performed (`docs/TESTING.md`, Section F) [P2 to confirm] |
+
+<a id="figure-10"></a>
+![Figure 10: Verification evidence map](diagrams/10-evidence-map.png)
+
+**Figure 10: Verification evidence map for `OrderBook.sol` at `engine-final`.** The evidence comes in four independent kinds: dynamic tests, static analysis, real-chain runs and AI review. Each figure is the latest recorded result, and the files are listed in the [Evidence index](#evidence-index).
 
 ### 6.2 Engine invariant suite
 - **Handler:** 5 actors, a `duster` (bursts of one-lot makers, so cap hits and crossed books are common) and a `flooder` (101 one-lot bids outside the price cluster, which exercises the issue 006 path).
