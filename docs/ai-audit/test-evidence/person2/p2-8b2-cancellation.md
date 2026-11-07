@@ -95,22 +95,58 @@ Mutation checks (kept in this phase's session, not committed): seven deliberate 
 - `Remaining`, `Locked collateral` and statuses come from `getOrder`; **My orders lists the latest 50 orders** (`MY_ORDERS_LIMIT`), so an older cancellable order may not appear.
 - A pending stop's trigger price is not shown yet (stop UI is a later phase). The engine's auto-cancel of an activated stop (`OrderCancelled` inside `triggerStopOrders`) is not specially labelled.
 - Color contrast is not verified for the new text; it uses the existing lilac link colour.
-- `docs/SUBMISSION_CHECKLIST.md`, `PRODUCT.md` and `DESIGN.md` still describe cancellation as pending or forbid a cancel control. They were **not edited** (outside this phase's documentation list and shared or approved design files); see section 7.
+- `docs/SUBMISSION_CHECKLIST.md`, `PRODUCT.md` and `DESIGN.md` still describe cancellation as pending or forbid a cancel control. `PRODUCT.md` and `DESIGN.md` were **not edited** (approved files; see section 7). `SUBMISSION_CHECKLIST.md` B1 was corrected in the follow-up (section 9).
 
 ## 6. What to check manually on localhost (with MetaMask, on the owner's chain)
-The owner's chain on 8545 already runs the new engine (checked read-only in P2-8B.1), but the app on 3000 must be restarted or rebuilt to pick up these changes. Procedure only, not performed:
+The owner's chain on 8545 already runs the new engine (checked read-only in P2-8B.1), but the app on 3000 must be restarted or rebuilt to pick up these changes. Procedure; the happy path was later performed by the owner (section 9), the rejection and account-switch steps were not:
 1. Place a sell of 10 NTU at 2 as account A, and a buy of 4 NTU at 2.2 as account B (a partial fill, as in Test 4).
 2. As A, open `/trade`: A's order shows **Partly filled** with 6 NTU and a **Cancel** link; B's filled order shows none.
 3. Press **Cancel**: the panel says you get back 6 NTU, that no approval is needed, and offers **Confirm cancel** / **Keep order**.
-4. Confirm: MetaMask shows **one** transaction to the order book (no approval). After it is mined the result says "Order #… cancelled", refund 6 NTU, links the transaction; A's NTU balance rose by exactly 6; the row reads Cancelled with no Cancel link and 0 remaining; the order is gone from Buyers / sellers.
+4. Confirm: MetaMask shows **one** transaction to the order book (no approval). After it is mined the result says "Order #… cancelled", refund 6 NTU, links the transaction; A's NTU balance rose by exactly 6; the row reads Cancelled with no Cancel link and 0 remaining; the order is gone from the Order book.
 5. Reject a cancel in MetaMask: "You rejected the cancel request", nothing sent. Switch account in MetaMask mid-request: "Your account or network changed".
 6. Open the cancel transaction's page: it shows "Order #… cancelled by …: refund 6 NTU".
 Screenshots still needed for the report (not recorded here): the confirmation, MetaMask's single prompt, and the result.
 
 ## 7. Documentation inconsistencies found (not silently rewritten)
 - `PRODUCT.md` (lines about "cannot yet cancel", the engine stubs) and `DESIGN.md` ("do not add a cancel control while the engine's `cancelOrder` reverts") are now out of date for cancellation. Proposed wording is for the owner to approve.
-- `docs/SUBMISSION_CHECKLIST.md` item B1 and the Person 2 to-do for the Cancel button are now done in code; mock-wallet verified only.
+- `docs/SUBMISSION_CHECKLIST.md` item B1 was corrected in the follow-up (section 9).
 - `docs/ENGINE_HANDOFF.md` ("Stale frontend files") is Person 1's file and was not edited; the cancel items in it are now addressed here.
 
 ## 8. Tools used
 `vitest`, `tsc`, `eslint`, `next build`, `forge`/`anvil`/`cast`, `node` with viem and `playwright-core` (mock wallet), axe-core 4.14.0 (temporary). The independent Opus review was not run (reserved for the completed integration).
+
+## 9. Follow-up, 2026-11-08: owner-run MetaMask verification, nonce incident, label fixes
+Three kinds of statement are kept apart: **owner-reported** (what the owner saw in the UI and MetaMask), **cross-checked** (read by the AI from the owner's chain on 8545 with `cast call` and `cast logs` only, no transaction sent), and **pending**.
+
+### 9.1 Owner-reported journey (real MetaMask, chain 31337, localhost:3000)
+Alice (account 0) sold 5 NTU at 2 SGDx. Bob (account 1) bought 2 NTU at a limit of 2.2. It executed at the maker's price of 2: 2 NTU filled, 4 SGDx paid, 0.4 SGDx returned, Bob's order Filled, Alice's order PartiallyFilled with 3 NTU locked. Alice then used **Cancel**: the confirmation expected a 3 NTU refund; after the MetaMask transaction confirmed the app showed order #1 Cancelled, expected refund 3 NTU, `OrderCancelled` refund 3 NTU, token transfer to Alice 3 NTU, escrow remaining 0, unfilled quantity remaining 0, the order gone from the active book but kept in My orders. The final dashboard showed Alice with 969,998 NTU and 970,004 SGDx.
+
+### 9.2 Cross-check against the chain (read-only, 8545, head block 16)
+| Claim | Chain reading | Result |
+|---|---|---|
+| Order 1: Alice's sell of 5 at 2, filled 2, cancelled | `getOrder(1)`: trader `0xf39F…2266` (account 0), side Sell, price 2e18, amount 5e18, filled 2e18, lockedQuote 0, status 3 (Cancelled) | Consistent |
+| Order 2: Bob's buy of 2 at 2.2, Filled | `getOrder(2)`: trader `0x7099…79C8` (account 1), side Buy, price 2.2e18, amount 2e18, filled 2e18, lockedQuote 0, status 2 (Filled) | Consistent |
+| Trade at the maker price | `Trade` log in block 15: maker order 1, taker order 2, price 2e18, base 2e18, quote 4e18 | Consistent |
+| Cancel refund 3 NTU | `OrderCancelled` log in block 16: refundBase 3e18, refundQuote 0 | Consistent |
+| Escrow remaining 0 | NTU and SGDx balance of the market: 0 and 0 | Consistent |
+| Alice's wallet | NTU 969,998 and SGDx 970,004 (exact) | Consistent |
+| Bob's wallet | NTU 10,002 and SGDx 9,996; allowance to the market 0 | Consistent with paying 4 and getting 0.4 of a 4.4 escrow back |
+| Event sequence | Logs: `OrderPlaced` block 13; `OrderPlaced` and `Trade` in block 15 (same transaction); `OrderCancelled` block 16 | Consistent |
+
+The 0.4 SGDx price improvement is **inferred** (Bob's net change is exactly 4 SGDx, the escrow for 2 at 2.2 is 4.4, and the market holds nothing). It was not read from a refund event. What the chain cannot show: the MetaMask prompts, what the UI displayed, and any timings. **No full transaction hashes or screenshots are recorded here;** the owner can supply them.
+
+### 9.3 Still not manually verified
+MetaMask rejection of a cancel, an account switch during an in-flight cancel, cancelling a buy order, an RPC outage and a chain reset during a cancel. These remain covered by mock-wallet and unit tests only.
+
+### 9.4 MetaMask nonce incident (development environment, not a contract defect)
+After Anvil was restarted the chain was at block 0 with no contracts or earlier custom market. The owner rebuilt, redeployed, exported and got `scripts/check-local.sh` ready, but MetaMask kept nonces from the earlier session: for account 0 Anvil expected nonce 11 while MetaMask used 15 (and 16 for another transaction); for account 1 Anvil expected 0 while MetaMask used 8. The transactions were known to Anvil but stayed pending because the earlier nonces were never filled. The owner inspected them with `eth_getTransactionByHash` and `eth_getTransactionCount`, removed the identified stuck transactions from Anvil's pool, cleared the relevant MetaMask activity and nonce data, and the approvals and trades then succeeded. (Owner-reported; the nonce numbers and the removal were not re-observed by the AI, and the pool is empty now.)
+- **Cause:** wallet and node nonce state out of sync after a local restart. Not Solidity, not the engine, not the front end.
+- **Distinct from** the P2-8B preflight contamination (`p2-8b01-preflight.md`), where a leftover ERC20 allowance on a scratch chain broke the Trade browser test. Different cause, different layer, different fix.
+- **Action taken:** documentation only (`README.md` troubleshooting, `docs/DEPLOYMENT.md` "Troubleshooting a local chain"). No application code was changed to compensate for stale wallet state, and no audit issue was filed because no defect in the project's code was found.
+- `anvil_dropTransaction` was checked on a scratch Anvil (8546) with a hash not in the pool: it answered `null` and changed nothing. Dropping a real pending transaction was not repeated by the AI.
+
+### 9.5 Label fixes made in the follow-up
+- The Dashboard book panel was titled "Buyers / sellers (NTU / SGDx)"; it shows resting orders, so it is now **Order book (NTU / SGDx)**, and the side pills read **Buy (bid)** and **Sell (ask)**. Rows, amounts, prices, data source and the Market Depth chart are unchanged.
+- The Dashboard strip said "Cancelling orders is not available yet: the engine does not implement it" and listed "Cancel orders" as a planned feature. It now says to use Cancel in My orders and links to Trade (keeping the selected market). No cancel flow was duplicated on the Dashboard.
+- A source comment in `lib/order-plan.ts` called `matchOrders` a stub; it now says it is implemented on-chain but has no UI control yet. `order-result.tsx` still says `matchOrders` is "not available yet", which is true of the UI and was left alone.
+- **Applied after the owner's explicit approval (2026-11-08):** `PRODUCT.md` (the bonus-features bullet, the "cannot yet" paragraph, the engine-status line and the manual-MetaMask line) now says all three bonus features are implemented in the engine, only cancellation has a UI and was manually verified on its happy path, Bonus 2 and 3 have no frontend controls, and the negative and recovery scenarios are untested; `DESIGN.md` replaces "do not add a cancel control" with: show Cancel only for eligible orders on a verified chain using the existing design system. The Market Depth legend wording ("Buyers (bids)" / "Sellers (asks)", `DESIGN.md` lines 164, 183, 288) was deliberately left unchanged.

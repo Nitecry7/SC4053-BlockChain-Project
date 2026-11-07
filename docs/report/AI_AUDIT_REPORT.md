@@ -420,6 +420,9 @@ Person 2's front-end limits are in `docs/FRONTEND.md`. [P2 to confirm]
 - **Mock-wallet runs are not MetaMask.**
 - **No human security audit was done.** All reviews were AI subagents.
 
+### 6.5 Manual MetaMask evidence for Bonus 1 (2026-11-08)
+Kept apart by source. **Owner-reported (real MetaMask, chain 31337):** Alice sold 5 NTU at 2; Bob bought 2 NTU at a limit of 2.2; it executed at the maker price of 2 (2 NTU, 4 SGDx, 0.4 SGDx returned); Bob's order Filled, Alice's PartiallyFilled with 3 NTU locked; Alice cancelled, the app showed the expected and event refund of 3 NTU, the transfer to Alice, escrow 0, and the order kept in My orders; the final wallet held 969,998 NTU and 970,004 SGDx. **Cross-checked read-only by the AI against the owner's chain (8545):** order 1 Cancelled with filled 2e18, order 2 Filled, one `Trade` at 2e18 for 2e18 base and 4e18 quote, `OrderCancelled` refund 3e18, market escrow 0, both wallets' balances as stated (the 0.4 refund is inferred from the balances, not read from an event). **Not performed manually:** rejection, account switch during an in-flight request, cancelling a buy, RPC outage, chain reset. **Outstanding:** screenshots and transaction hashes [P2 to supply]. Source: `person2/p2-8b2-cancellation.md` section 9.
+
 ---
 
 ## 7. Improvements and Refinements
@@ -451,6 +454,7 @@ Person 2's front-end limits are in `docs/FRONTEND.md`. [P2 to confirm]
 - **`MarketFactory`** as the listing mechanism.
 - **Multi-market dashboard.**
 - **Accessibility, RPC-cost and liveness fixes** (P2-8A.1 and .2).
+- **Local-deployment troubleshooting (follow-up to P2-8B.2):** a MetaMask nonce gap after an Anvil restart (the wallet kept the former chain's nonces, so transactions stayed pending) was diagnosed in the development environment. It is a wallet and node synchronisation issue, not a contract vulnerability, and is separate from the earlier leftover-allowance test contamination. The response was documentation only: `README.md` and `docs/DEPLOYMENT.md` now separate starting Anvil, `forge build`, deploying, exporting, `scripts/check-local.sh` and starting the frontend, and give read-only `cast` diagnostics and a recovery order (inspect first; drop an identified pending transaction and clear wallet activity only on a disposable local chain).
 
 ---
 
@@ -470,6 +474,11 @@ Person 2's front-end limits are in `docs/FRONTEND.md`. [P2 to confirm]
 - **Typical-case reasoning instead of hostile cases** (005; P2-013).
 - **Unsupported status claims.** A "worst case" gas figure that was not one (Phase 3b). A deep run reported as dead that was alive (Phase 7). In Person 2's work, README lines about tests that did not exist [P2 to confirm].
 - **Process slips.** An orphaned mutation script swapped mutants into the source for about 20 minutes, causing false failures. It was diagnosed and recorded, and DEBUGGING.md now explains how to stop a run safely.
+
+**Lessons about wallet simulation (P2-8B.2 follow-up):**
+- **A mock wallet checks the app's logic, not the wallet.** All 13 cancel browser tests passed against an injected stand-in, yet the real MetaMask run exposed an environment problem no test could: the wallet's own nonce cache after an Anvil restart left approvals pending. It was not a code defect, and a mock cannot expose it.
+- **Keep three kinds of evidence apart:** automated tests, owner-observed manual runs (cross-checked read-only against the chain where the chain can show it), and what is still outstanding. The chain confirmed order states, events and balances; it could not confirm what MetaMask or the UI displayed.
+- **Two failures that look alike have different causes.** A leftover ERC20 allowance contaminated one test run (test isolation); a stale wallet nonce blocked real transactions (environment synchronisation). Neither is a contract vulnerability, and each was documented with its own cause and fix.
 
 **Recommendations:**
 1. **Specification files as the contract,** read every session, and a frozen interface. That frozen interface forced fixes to stay inside the agreed surface.
@@ -493,7 +502,7 @@ Person 2's front-end limits are in `docs/FRONTEND.md`. [P2 to confirm]
 | M5 | Partial fulfilment | same; A5 refunds | `test_match_*PartlyFilled*`, fuzz | `phase7`; demo step 1 | Done |
 | M6 | Self-custody, non-custodial | no admin; escrow leaves only to the counterparty or the owner | invariants (ledger, conservation); Slither | `ENGINE_SECURITY_SUMMARY.md` | Done |
 | M7 | Simple front end | `web/` | 410 unit, 48 real-chain, browser suites | `person2/p2-4` to `p2-8a2` | Done (baseline) [P2 to confirm] |
-| B1 | Bonus 1: cancel unfilled amounts | `cancelOrder`, `_closeAndRefund` | `OrderBook.Cancel.t.sol` (52), regression 005 | issue 005; scratch-chain cast; demo step 2 | **Engine done. UI: built and verified with a mock wallet on a scratch chain in P2-8B.2** (Person 2; [evidence](../ai-audit/test-evidence/person2/p2-8b2-cancellation.md)); **MetaMask not tested** |
+| B1 | Bonus 1: cancel unfilled amounts | `cancelOrder`, `_closeAndRefund` | `OrderBook.Cancel.t.sol` (52), regression 005 | issue 005; scratch-chain cast; demo step 2 | **Engine done. UI: built and verified with a mock wallet on a scratch chain in P2-8B.2** (Person 2; [evidence](../ai-audit/test-evidence/person2/p2-8b2-cancellation.md)); **MetaMask:** the happy path was run by the owner on 2026-11-08 (section 6.5); other manual cases pending |
 | B2 | Bonus 2: batched multi-party matching | `matchOrders` | `OrderBook.Batch.t.sol` (31), `test_batch_multiParty*` (4 + 4 traders, one transaction) | demo step 3; handoff | **Engine done; UI pending** |
 | B3 | Bonus 3: conditional orders | `placeStopLimitOrder`, `triggerStopOrders` | `OrderBook.Stop.t.sol` (42), regression 006 | issue 006; demo step 4 | **Engine done; UI pending** |
 | T1 | Tricky point: who triggers execution, and how often | SPEC section 6 | `test_batch_thirdPartyCallerGainsAndLosesNothing`, trigger tests | SPEC section 6 | Answered |

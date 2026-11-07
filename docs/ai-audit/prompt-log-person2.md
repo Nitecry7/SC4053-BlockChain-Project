@@ -419,6 +419,15 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 
 **Evidence:** [`test-evidence/person2/p2-8b2-cancellation.md`](test-evidence/person2/p2-8b2-cancellation.md).
 
+## 2026-11-08: P2-8B.2 follow-up: MetaMask evidence, local-dev troubleshooting, two Dashboard label fixes
+
+**Model:** Sonnet 5.5 (Medium requested; the session effort setting could not be read). **Prompt (summary):** record the owner's real MetaMask trade-and-cancel journey and a MetaMask nonce incident, improve README and DEPLOYMENT troubleshooting, rename the Dashboard "Buyers / sellers" panel to an order book, replace outdated "cancelling is not available" Dashboard text, and update the audit records; no Bonus 2 or 3, no protected-file edits, no state change on 8545.
+**What the AI did:** read the owner's chain on 8545 with `cast call` and `cast logs` only (no transaction) to cross-check the reported journey; changed `market-panels.tsx` (heading, side pills "Buy (bid)" / "Sell (ask)"), `side-panels.tsx` and `dashboard.tsx` (cancel wording and a link to Trade), one stale comment in `lib/order-plan.ts`; wrote the README and DEPLOYMENT sections and updated TESTING, FRONTEND, BONUS_INTEGRATION, SUBMISSION_CHECKLIST (B1 row), the evidence file (section 9) and the audit report (sections 6.5, 7, 8).
+**What the AI got wrong or nearly got wrong:** (1) my first read of `getOrder` decoded the tuple with the wrong field order and printed nonsense; I re-read the interface struct before using any value. (2) My first draft would have described the 0.4 SGDx refund as observed; the chain shows only Bob's net 4 SGDx and an empty escrow, so it is recorded as inferred. (3) A batch TESTING edit matched four identical status lines and was refused; it was redone with unique context. None of these reached a committed result.
+**What the human did:** ran the real MetaMask journey and the nonce recovery, supplied the observations and numbers, and set the scope. Screenshots and hashes are still to be supplied. **No audit issue was filed:** the nonce gap is a development-environment and wallet synchronisation matter, not a defect in the project's code.
+**Later the same day (owner approval):** after reviewing the follow-up the owner explicitly authorised narrow corrections to `PRODUCT.md` and `DESIGN.md`; they were made (see evidence section 9.5) and nothing else in those files changed.
+**Skills and MCPs:** `solidity-security` was not needed (no Solidity change). Context7, shadcn MCP, Playwright MCP and the design skills were not invoked; the change is two labels and a link under the existing design.
+
 ## Requirements traceability
 Current status through P2-7 (2026-11-06). Earlier statuses are in the phase entries above.
 

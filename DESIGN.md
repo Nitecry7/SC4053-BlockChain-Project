@@ -326,7 +326,7 @@ Motion is minimal and functional: colour and background transitions on interacti
 ### Don't:
 - **Don't** redesign, re-theme or add a light mode; the approved design is dark-only.
 - **Don't** show a USD value, a 24h change, a price history or any figure the contracts and `Trade` events cannot produce.
-- **Don't** make a disabled or unbuilt control look functional, and do not add a cancel control while the engine's `cancelOrder` reverts.
+- **Don't** make a disabled or unbuilt control look functional (Match orders and stop-limit controls do not exist yet). Show **Cancel** only for the connected account's own eligible orders (Open, PartiallyFilled or PendingTrigger) and only on a verified chain, built from the existing design system: the lilac link style, the glass panel and the shared wallet-waiting, status and failure components.
 - **Don't** convey buy or sell, or any status, by colour alone.
 - **Don't** round chain values for display or use floating-point arithmetic for token amounts.
 - **Don't** add tracked uppercase eyebrow labels above headings.

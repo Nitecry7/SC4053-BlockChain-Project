@@ -12,7 +12,7 @@ State on 8 Nov: `main` includes the `engine-final` tag (`fd8869a`) and the docum
 | M5 | Partial fulfilment | ✅ Done | A5 refunds; partial-fill tests; demo step 1 |
 | M6 | Self-custody / non-custodial | ✅ Done | No admin; `ENGINE_SECURITY_SUMMARY.md`; ledger and conservation invariants |
 | M7 | Simple front end | ✅ Done (baseline) | `web/`; 410 unit tests; browser suites (mock wallet) |
-| B1 | Bonus 1: cancel unfilled amounts | ✅ **Engine** · ⏳ **UI (Person 2)** | `cancelOrder`; `OrderBook.Cancel.t.sol` (52); demo step 2 |
+| B1 | Bonus 1: cancel unfilled amounts | ✅ **Engine** · ✅ **UI (Person 2): cancel from My orders; mock-wallet tests plus one owner-run MetaMask happy path, other manual cases pending** | `cancelOrder`; `OrderBook.Cancel.t.sol` (52); demo step 2 |
 | B2 | Bonus 2: batched multi-party matching | ✅ **Engine** · ⏳ **UI (Person 2)** | `matchOrders`; 4 + 4 traders in one transaction (`OrderBook.Batch.t.sol`, demo step 3) |
 | B3 | Bonus 3: conditional orders | ✅ **Engine** · ⏳ **UI (Person 2)** | `placeStopLimitOrder`, `triggerStopOrders`; `OrderBook.Stop.t.sol` (42); demo step 4 |
 | T1 | Tricky point: who triggers execution, and how often | ✅ Answered | `SPEC.md` section 6 |

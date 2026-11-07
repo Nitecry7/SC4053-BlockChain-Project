@@ -249,7 +249,7 @@ cd web && npm ci && cd ..             # run in web/ (exact versions from package
 
 ### Every working session
 
-Anvil keeps its state **only while it runs**. A restart gives a new, empty chain at block 0. Use three WSL terminals:
+Anvil keeps its state **only while it runs**. A restart gives a new, empty chain at block 0, and everything on the former chain (contracts, custom tokens, market listings, balances, orders) is gone. **Starting Anvil does not deploy anything**, and **rebuilding or merging source code does not upgrade contracts that are already deployed.** The six separate steps are start Anvil, `forge build`, deploy with `Deploy.s.sol`, export ABIs and addresses, `scripts/check-local.sh`, and `npm run dev`; [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#the-local-flow-one-step-at-a-time) says what each does and does not do. Use three WSL terminals:
 
 | Terminal | Directory | Command | Stays running? |
 |---|---|---|---|
@@ -395,6 +395,8 @@ Read the **Action** column first: it says whether to restart, reconnect, check, 
 | Why does an order need two confirmations? | An ERC20 `approve` and the order (`placeLimitOrder`) are two transactions. The token must allow the OrderBook to move funds before the OrderBook can escrow them | **Expected.** Confirm both. Approvals are separate from the order |
 | Transaction status is unknown or pending | The app waits in bounded windows. A transaction can still be mined later, or the node can drop it | **Check** *My orders* and the transaction page before placing the order again. Do not repeat an order just because a card says "not confirmed yet" |
 | A notice says the local chain was reset | Anvil restarted (block identity changed). The app shows the evidence | **Reload** the page. If the contracts are gone, **deploy** and **export** |
+| MetaMask transaction pending indefinitely, especially right after you restarted Anvil | A nonce gap: MetaMask kept the former chain's nonces, so the new chain is waiting for earlier nonces. Compare `cast nonce <account>` (latest) with `cast nonce <account> --block pending` and the nonce in MetaMask | **Inspect first**, with read-only `cast` commands. Only on a disposable local chain, after confirming the transaction is pending, drop that one transaction and clear MetaMask's activity data for the network. Never reset a live chain as the default fix. Steps: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#troubleshooting-a-local-chain) |
+| App and MetaMask show different balances or blocks, though both say chain 31337 | The chain id is the same but the RPC URLs differ (for example 8545 and a second Anvil on 8546), so they are different nodes | **Check** `cast block-number --rpc-url` on each URL. Point the app (`NEXT_PUBLIC_RPC_URL`) and MetaMask at the same node |
 | Command fails with "no such file" or "not a project" | Wrong terminal directory. `npm` needs `web/`, `forge` needs `contracts/`, `check-local.sh` runs from the repo root | **Change directory** (see the table in Quickstart) |
 | Next.js: port 3000 already in use | Another dev server is running | **Stop** that `npm run dev` (find it with `ss -ltnp \| grep :3000`). Do not stop Anvil |
 | Hydration warning mentioning an attribute such as `cz-shortcut-listen` | A browser extension changes the page before React loads. Recorded in `docs/TESTING.md`, section E | **Ignore** it or test in a window without extensions. It is not an app error |

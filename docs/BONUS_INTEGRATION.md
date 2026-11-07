@@ -46,6 +46,8 @@ Until then the control is **absent**, not disabled-looking-functional.
 
 > **P2-8B.2 update (2026-11-08):** the cancel parts of section B (steps 1 to 5 as they apply to cancel, and the cancel row of section C) were carried out; the boxes below are left as written on 2026-11-06 and were not ticked retroactively. Which of them were done, with evidence, is in [`p2-8b2-cancellation.md`](ai-audit/test-evidence/person2/p2-8b2-cancellation.md). Batch and stop-limit items are untouched.
 
+> **Follow-up, 2026-11-08:** Bonus 1 now has **automated verification** (unit, real scratch chain, mock-wallet browser) **and one owner-run MetaMask happy path** (sell 5 NTU at 2, buy 2 at 2.2, cancel the 3 NTU remainder; chain readings agree: order 1 Cancelled, `OrderCancelled` refund 3e18, escrow 0). Not yet performed manually: MetaMask rejection, account switch mid-request, cancelling a buy, RPC outage and chain reset during a cancel; screenshots and transaction hashes are still to be supplied. See `TESTING.md` Test 12 and `p2-8b2-cancellation.md` section 9. Bonus 2 and Bonus 3 have no frontend controls.
+
 ## Pre-integration checklist (written in P2-8A, 2026-11-06)
 
 **Every box below is unchecked: none of these checks has been performed, because none of the bonus functions is implemented.** Baseline recorded at commit `c23c6a3`: `forge test` 185 passed; `MarketFactory` 8,358 B runtime and 8,387 B initcode; `OrderBook` 6,325 B and 6,974 B; `contracts/test/invariant/` does not exist. See [`p2-8a-audit.md`](ai-audit/test-evidence/person2/p2-8a-audit.md).

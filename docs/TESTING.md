@@ -230,7 +230,7 @@ Remember: an **ERC20 approval** and **placing the order** are two *different* bl
 
    > **Screenshot to supply:** `images/manual-testing/10-metamask-confirm-place-sell.png`.
 
-**Expected result:** the card **Order #1 confirmed: Resting** (a fresh book gives id 1). *Executed in this transaction*: Filled `0.0000 NTU of 10.0000`, Remaining unfilled `10.0000 NTU`. *Still locked in escrow*: Collateral (NTU) `10.0000 NTU`. *In your wallet now*: NTU `969,990.0000` (a drop of exactly 10 from 970,000) and an allowance left of `0.0000` (the approval was exactly the amount and the order used it). The depth chart and the **Buyers / sellers** book show a **Sell** row at `2.0000` for `10.00`, and **My orders** lists `#1`, `Sell`, status `Resting`.
+**Expected result:** the card **Order #1 confirmed: Resting** (a fresh book gives id 1). *Executed in this transaction*: Filled `0.0000 NTU of 10.0000`, Remaining unfilled `10.0000 NTU`. *Still locked in escrow*: Collateral (NTU) `10.0000 NTU`. *In your wallet now*: NTU `969,990.0000` (a drop of exactly 10 from 970,000) and an allowance left of `0.0000` (the approval was exactly the amount and the order used it). The depth chart and the **Order book** shows a **Sell (ask)** row at `2.0000` for `10.00`, and **My orders** lists `#1`, `Sell`, status `Resting`.
 
    > Reference render (mock wallet): a resting sell result.
    > ![Resting sell order](ai-audit/test-evidence/person2/p2-5-screens/order-result-resting-desktop.jpg)
@@ -274,7 +274,7 @@ Remember: an **ERC20 approval** and **placing the order** are two *different* bl
 **Status: not separately reported by the owner. The chain state below was checked read-only (see Section F); the on-screen steps are a procedure.**
 
 1. Switch MetaMask back to the `0xf39F…` account (as in Test 3).
-2. On the Trade page look at **My orders** (and the **Buyers / sellers** book).
+2. On the Trade page look at **My orders** (and the **Order book**).
 
 **Expected:** order `#1`, `Sell`, `2.0000`, Amount `10.0000`, Filled `4.0000`, Remaining `6.0000`, Locked collateral `6.0000 NTU`, status **`Partly filled`**. The book shows a Sell row of `6.00` at `2.0000`. Alice's SGDx rose by 8 (to `970,008.0000` on a fresh deployment) and her NTU is `969,990.0000`; the market contract holds the 6 NTU.
 
@@ -407,7 +407,7 @@ After 7f or 7g you may need to reset MetaMask's cached nonce (Section E, item 1)
 
 ## Test 12: cancel an order (P2-8B.2)
 
-**Status: PROCEDURE ONLY. Not performed with MetaMask.** The same behaviour passed a mock-wallet browser run and a real-chain suite on a scratch chain (see `ai-audit/test-evidence/person2/p2-8b2-cancellation.md`). The engine on your chain must be the new one (the owner's 8545 chain was checked read-only on 2026-11-08), and the app must be restarted or rebuilt to include this feature. The expected numbers assume the Test 2 and Test 4 orders (Alice sold 10 NTU at 2; Bob bought 4 NTU at 2.2, so Alice's order is partly filled with 6 NTU left); other balances will differ.
+**Status: the happy path (12a to 12f) was performed by the owner with MetaMask on 2026-11-08 (owner-reported, cross-checked read-only against the chain); the rest is procedure only.** The owner's journey used different numbers from the table below: Alice (account 0) sold 5 NTU at 2; Bob (account 1) bought 2 NTU at a limit of 2.2; the trade executed at 2 (2 NTU, 4 SGDx, 0.4 SGDx returned to Bob); Alice's order was PartiallyFilled with 3 NTU left; Alice cancelled it, the confirmation said 3 NTU, and the result reported event refund 3 NTU, transfer to Alice 3 NTU, escrow remaining 0, with the order kept in My orders. **Still not performed manually:** 12g (MetaMask rejection), 12h (account switch while a request is open), 12i (cancelling a buy order), an RPC outage and a chain reset during a cancel. **Evidence still to collect:** screenshots and transaction hashes (none are recorded in this repository). Details and the cross-check: `ai-audit/test-evidence/person2/p2-8b2-cancellation.md`, section 9. The same behaviour passed a mock-wallet browser run and a real-chain suite on a scratch chain (see `ai-audit/test-evidence/person2/p2-8b2-cancellation.md`). The engine on your chain must be the new one (the owner's 8545 chain was checked read-only on 2026-11-08), and the app must be restarted or rebuilt to include this feature. The expected numbers assume the Test 2 and Test 4 orders (Alice sold 10 NTU at 2; Bob bought 4 NTU at 2.2, so Alice's order is partly filled with 6 NTU left); other balances will differ.
 
 | # | Do this | Expect |
 |---|---|---|
@@ -415,7 +415,7 @@ After 7f or 7g you may need to reset MetaMask's cached nonce (Section E, item 1)
 | 12b | Press **Cancel** on order #1 | A panel "Cancel order #1?" says **You get back (NTU) 6.0000 NTU**, that no token approval is needed and only gas is spent, with **Confirm cancel** and **Keep order** |
 | 12c | Press **Keep order** | The panel closes; nothing was sent (MetaMask shows no request) |
 | 12d | Press **Cancel** again, then **Confirm cancel** | The pending-wallet notice appears, and MetaMask shows **one** transaction to the order book (no approval). Nothing says "cancelled" yet |
-| 12e | Confirm in MetaMask | After the block: "Order #1 cancelled", "Status on-chain now: Cancelled", refund reported by the event **6.0000 NTU**, equal to the expected and to the amount moved to your wallet; the transaction is linked; Alice's NTU balance rose by exactly 6; the row reads **Cancelled** with 0 remaining and no Cancel link; the order has left Buyers / sellers |
+| 12e | Confirm in MetaMask | After the block: "Order #1 cancelled", "Status on-chain now: Cancelled", refund reported by the event **6.0000 NTU**, equal to the expected and to the amount moved to your wallet; the transaction is linked; Alice's NTU balance rose by exactly 6; the row reads **Cancelled** with 0 remaining and no Cancel link; the order has left the Order book |
 | 12f | Open the linked transaction | The page shows "Order #1 cancelled by 0x…: refund 6 NTU" and the NTU transfer from the order book to Alice |
 | 12g | Cancel another open order, but press **Reject** in MetaMask | "You rejected the cancel request", nothing sent, the order is still open; **Try again** returns to the confirmation |
 | 12h | Start a cancel and, while MetaMask is open, switch MetaMask to the other account | "Your account or network changed"; no result is shown for either account |
@@ -514,7 +514,8 @@ There is no background process. Matching happens **inside the transaction of a n
 | 8j. DTT trade (partial sell fill, maker-price settlement) | **Reported by the owner**, not checked step by step against 8j | Owner report of a partially filled sell at the maker's price. The chain reads above are consistent with a trade at 2 but do not by themselves show the fill amounts. No transaction hashes or screenshots are recorded in this repository. **Update, 2026-11-06 (P2-8A):** a later read-only audit read both orders and the `Trade` log from the owner's chain: order 1 a sell of 10 at 2 (4 filled, PartiallyFilled), order 2 a buy of 4 at a limit of 2.2 (Filled), and one trade of 4 at 2 for 8 quote. See [`p2-8a-audit.md`](ai-audit/test-evidence/person2/p2-8a-audit.md) section 5.5. The MetaMask prompts and any screenshots are still not recorded |
 | 9 and 10. Dashboard selector, speed-up and cancel (of a transaction) | **No** | Procedures only |
 | 11. The node stops and comes back | **No** | Procedure only |
-| 12. Cancel an order (P2-8B.2) | **No** | Procedure only. Mock-wallet and real-chain evidence: `ai-audit/test-evidence/person2/p2-8b2-cancellation.md` |
+| 12. Cancel an order (P2-8B.2), happy path (12a to 12f) | **Yes, by the owner, 2026-11-08** (a different journey: sell 5 NTU at 2, buy 2 at 2.2, cancel the 3 NTU remainder) | Owner report; chain read-only on 8545: order 1 Cancelled, filled 2e18, `OrderCancelled` refund 3e18; Alice 969,998 NTU and 970,004 SGDx; market escrow 0. No screenshots or hashes recorded yet |
+| 12g to 12i, outage and chain reset during a cancel | **No** | Procedures only. Mock-wallet and real-chain evidence: `ai-audit/test-evidence/person2/p2-8b2-cancellation.md` |
 
 The orders were created on-chain at 2026-11-05 15:00:21 UTC (order 1) and 15:29:48 UTC (order 2); the owner reported the result on 2026-11-06. The same SPEC example also passed in the automated mock-wallet browser run and in the real-chain suite on a scratch Anvil: see [`ai-audit/test-evidence/person2/p2-5-trading.md`](ai-audit/test-evidence/person2/p2-5-trading.md).
 

@@ -242,7 +242,7 @@ function BookRow({ level, side }: { level: BookLevel; side: "Buy" | "Sell" }) {
     <tr className="border-b border-white/[0.06] last:border-0">
       <td className="py-1.5">
         <span className={cn("inline-block rounded-full px-2.5 py-0.5 text-[0.6875rem] font-semibold", side === "Buy" ? "bg-buy/15 text-buy" : "bg-sell/15 text-sell")}>
-          {side}
+          {side === "Buy" ? "Buy (bid)" : "Sell (ask)"}
         </span>
       </td>
       <td className="tabular py-1.5 text-right">
@@ -265,7 +265,7 @@ export function BookPanel({ state, levels = 4 }: { state: DashboardState; levels
   const bids = snap ? snap.bids.slice(0, levels) : [];
   const empty = snap && asks.length === 0 && bids.length === 0;
   return (
-    <Panel id="book" title={`Buyers / sellers (${state.pair.base.symbol} / ${state.pair.quote.symbol})`} className="min-h-[16rem]">
+    <Panel id="book" title={`Order book (${state.pair.base.symbol} / ${state.pair.quote.symbol})`} className="min-h-[16rem]">
       {!state.live ? (
         <EmptyState title="Order book unavailable" className="py-8">
           The book is read from the market contract once the deployment is found.

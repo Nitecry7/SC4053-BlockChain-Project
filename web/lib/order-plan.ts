@@ -36,7 +36,7 @@ export type ExecutionEstimate = {
   remainingBase: bigint;
   /** Collateral still escrowed for the resting remainder: buy = ceil(remaining * limit), sell = remaining base. */
   lockedAfter: bigint;
-  /** The fill cap was hit while the next maker still crosses: the remainder rests crossed (matchOrders is a stub). */
+  /** The fill cap was hit while the next maker still crosses: the remainder rests crossed (matchOrders is implemented on-chain, but the UI has no control for it yet). */
   crossedRemainder: boolean;
   /** The snapshot ended while the order could still cross: the book may hold more makers than were read. */
   bookSnapshotExhausted: boolean;

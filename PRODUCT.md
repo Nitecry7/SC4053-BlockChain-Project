@@ -43,7 +43,7 @@ An exchange whose interface shows only what the chain says. Every figure is read
 - **Order book trading:** limit orders for both sides, automatic matching, partial fills, execution at the maker's price, price-time priority (the earlier order at an equal price fills first).
 - **Order lifecycle visibility:** distinguish wallet authorization, a submitted transaction, receipt confirmation and success, decoded trade execution and the current order status. A confirmed order may already be filled or partly filled.
 - **Balances:** show wallet balance and escrowed amount as different quantities.
-- **Bonus engine features named in the brief** (cancelling the remainder of an order, batched multi-party matching, conditional stop-limit orders) are part of the course scope but are Person 1's engine work and are not yet working (see below).
+- **Bonus engine features named in the brief** (cancelling the remainder of an order, batched multi-party matching, conditional stop-limit orders) are part of the course scope. All three are implemented in the Solidity engine (Person 1). In the web app only Bonus 1 (cancellation) has a UI; batch matching and stop-limit orders have no frontend control yet (see below).
 
 ### Implemented today (through P2-7)
 
@@ -57,7 +57,7 @@ Since P2-6.1 the Dashboard also has a **market selector** (any market in the Mar
 
 Since P2-7 the order runner, and the token and market flows that share it, follow a **sped-up, cancelled or replaced transaction** to what was actually mined (viem is given the sender and nonce, so the wait can see a replacement). A cancelled or replaced transaction is reported as a failure under the hash that was mined, never as a placed order. A **local chain reset** (Anvil restarted or a snapshot reverted) is detected from block identity, not from a missing transaction alone; the app then re-reads every query and shows the evidence. Narrow layout fixes keep the connected-wallet header usable at 375 and 390 px.
 
-The web app **cannot yet**: cancel or match orders or place stop-limit orders. The deployed engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` revert, so the UI offers none of them. Do not describe any of these as functional until they are built and verified. Wallet behaviour is verified against a mock wallet and a scratch chain. The project owner has performed the SPEC worked example with real MetaMask accounts (`docs/TESTING.md`), and has reported creating DTT, listing DTT/SGDx and a trade on that market, which the owner's chain state supports; the remaining manual cases are procedures not yet performed.
+**Bonus 1, cancellation, is built in the web app:** Trade, My orders offers **Cancel** on the connected account's own Open, PartiallyFilled and PendingTrigger orders (P2-8B.2); the Dashboard links to it. Its happy path was performed by the owner with real MetaMask on 2026-11-08 (a partly filled sell, then a cancel with a 3 NTU refund; `docs/TESTING.md` Test 12). The web app **cannot yet**: match orders (Bonus 2, `matchOrders`: no frontend control) or place or trigger stop-limit orders (Bonus 3, `placeStopLimitOrder` and `triggerStopOrders`: no frontend controls). All of these are implemented in the engine. Do not describe Bonus 2 or Bonus 3 as available in the UI until they are built and verified. Wallet behaviour is verified against a mock wallet and a scratch chain. The project owner has performed the SPEC worked example with real MetaMask accounts (`docs/TESTING.md`), and has reported creating DTT, listing DTT/SGDx and a trade on that market, which the owner's chain state supports; the remaining manual cases, including the cancel rejection, account-switch, outage and chain-reset scenarios, are procedures not yet performed.
 
 ### Contract facts the interface must respect
 
@@ -69,7 +69,7 @@ The web app **cannot yet**: cancel or match orders or place stop-limit orders. T
 
 ### Current engine status (verified in `contracts/src/OrderBook.sol`)
 
-`placeLimitOrder`, matching, partial fills, refunds and all view functions are implemented. `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` currently contain a bare `revert()` (stubs). The front end must not present them as working.
+`placeLimitOrder`, matching, partial fills, refunds and all view functions are implemented. `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` are implemented as well (Person 1; `docs/ENGINE_HANDOFF.md`). The front end uses `cancelOrder` only; it must not present `matchOrders`, `placeStopLimitOrder` or `triggerStopOrders` as available until their controls are built.
 
 ### Architecture constraints
 
@@ -82,7 +82,7 @@ The web app **cannot yet**: cancel or match orders or place stop-limit orders. T
 ### Explicitly open
 
 - Person 1 was notified of the MarketFactory architecture. No separate review or signed approval is recorded.
-- Manual MetaMask: the SPEC worked example (NTU/SGDx) was performed by the project owner. The DTT/SGDx creation, listing and trade were reported by the owner; their transaction hashes and screenshots are not recorded in this repository. The negative, recovery and speed-up/cancel cases in `docs/TESTING.md` have not been performed manually.
+- Manual MetaMask: the SPEC worked example (NTU/SGDx) was performed by the project owner. The DTT/SGDx creation, listing and trade were reported by the owner; their transaction hashes and screenshots are not recorded in this repository. The cancel-order happy path (Test 12) was performed by the owner on 2026-11-08, cross-checked read-only against the chain; its screenshots and hashes are not recorded here. The negative, recovery and speed-up/cancel-of-a-transaction cases in `docs/TESTING.md`, and the cancel rejection, account-switch, outage and chain-reset cases, have not been performed manually.
 
 ## Verification status
 
