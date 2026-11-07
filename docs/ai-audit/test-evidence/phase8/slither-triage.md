@@ -19,3 +19,13 @@
 | `naming-convention` | 5 | **Accepted (frozen interface)** | `PRICE_SCALE()`, `LOT_SIZE()`, `TICK_SIZE()`, `MAX_MATCHES_PER_TX()` and `MAX_INSERT_SCAN()` are public constants whose names are part of the frozen `CONTRACT_INTERFACE.md`, and the frontend calls them by these names |
 
 **Interpretation.** Slither found nothing the engine's tests had not already covered. The detectors for the classes that matter most in this design all stayed silent, consistent with `nonReentrant` on every external write, owner checks in `cancelOrder`, `SafeERC20` everywhere, and `mulDiv` for every `qty × price`. Slither does not reason about economic or ordering properties (price-time priority, solvency, stop-trigger griefing). Those are covered by the invariant suite, the mutation tests and the independent reviews.
+
+## `forge lint` on `OrderBook.sol` (Person 2's audit, finding I-4)
+**Command** (from `contracts/`): `forge lint src/OrderBook.sol` (Foundry 1.8.6). **Result: 6 warnings, 0 real.**
+
+| Lint | Where | Verdict | Reason |
+|---|---|---|---|
+| `reentrancy-events` | `OrderBook.sol:65` (`OrderPlaced`), `:84` (`StopOrderPlaced`) | Accepted (documented) | Each event follows its order's escrow pull, the only external call, by design (SPEC section 5). Every external write is `nonReentrant`, so a callback cannot fabricate or reorder engine events; the reentrancy tests revert every re-entry |
+| `reentrancy-events` | `:235` (`OrderCancelled` in `_closeAndRefund`), `:294` (`Trade` in `_settleFill`) | Accepted (documented) | Inside one cancel or one fill the event comes *before* that call's transfers (pinned by `test_cancel_*EmitsBeforeRefund*` and `test_payout_tradeEmittedBeforeTransfers`). The lint flags them because, in a loop (fills, or a trigger auto-cancel), an earlier iteration's transfers precede them. This is the documented payouts-during-the-loop deviation, under `nonReentrant` |
+| `require-revert-in-loop` | `:354` (`_unlink`'s `OrderNotActive` guard) | Accepted | The issue 001 guard. It is reached inside bounded loops (fills, activations) but never fires on a valid path. If it ever did, reverting is the correct behaviour |
+| `unsafe-typecast` | `:207` (`uint64(block.timestamp)`) | Accepted | `createdAt` is informational and never compared. A `uint64` second counter overflows after about 584 billion years |

@@ -17,7 +17,7 @@ Fits Person 2's draft section 6. All numbers are from committed evidence: [`docs
 | Frontend compatibility | Person 2's suites re-run after each engine change: `npm test` gave 410 passed and 48 skipped (gated); `tsc --noEmit` clean; exporter 21 passed; `export-web --check` up to date after the ABI regeneration | Prompt log, 7 Nov |
 
 ## Test counts (default profile, 7 Nov)
-**334 passed, 0 failed, 0 skipped** across 26 suites: 244 engine tests and 90 of Person 2's.
+**334 passed, 0 failed, 0 skipped** across 26 suites: 244 engine tests and 90 of Person 2's. Phase 8 added one test (issue 007), giving **335 (245 engine) on `engine-final`**, the figure used in the assembled report.
 
 | Engine suite | Tests |
 |---|---|
