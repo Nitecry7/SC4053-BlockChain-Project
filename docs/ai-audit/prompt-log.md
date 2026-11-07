@@ -961,3 +961,27 @@ Each must be checked against the source before drawing. Use one colour-blind-saf
 - **"Used minimally" added in five places:** the executive summary, the 1.6 plan bullet, the 2.2 tools row, the 2.4 tier table, and the 2.4 introduction. The introduction now also says that all of the code was written through Claude Code.
 
 **What the human did:** stated that the chat was used very minimally.
+
+## 2026-11-08: Report verification, Phases 0 to 2
+**Phase:** wrap-up, verification. **Branch:** `docs/report-verification`.
+
+**Prompt (summary):** the human asked for a phased plan to verify the report, the diagrams and any other logic. The AI proposed seven phases. The human said to start Phases 0 to 2, and while those ran, asked what else could be done.
+
+**What the AI did:**
+- **Phase 0:** baseline `e868f2a`, clean tree.
+- **Phase 1:** re-ran the Phase 8 commands in sequence: Slither, lint, sizes, coverage, gas and the full `forge test`. Every figure in the report matches:
+  - **tests:** 335 passed (245 engine, 90 Person 2)
+  - **coverage:** 182/182 and 59/59
+  - **gas:** all four maximums
+  - **sizes:** OrderBook 8,461 B, MarketFactory 10,508 B
+  - **Slither:** 27 results
+  - **lint:** 6 warnings
+- **Phase 2:** a checker script found 0 broken links or anchors (143), 0 unknown hashes, matching dates, and all 22 issue IDs with files and matching severities. It also exported the 39 teammate markers.
+- **Phase 5 leads, done while forge ran:** the two brief PDFs are byte-identical; the 334 and 244 mentions are labelled Phase 7 figures; the key figures agree across documents.
+- **Evidence:** `docs/ai-audit/test-evidence/wrapup/report-verification.md` plus `verification/`.
+
+**What the AI got wrong:** in the earlier figures session, Figure 2's Person 2 bar ended on 6 Nov. The verification compared it with `git log` and found that Person 2's commits run to 7 Nov (`dd60588`). The bar and the caption were fixed and the figure re-rendered.
+
+**Open lead:** the gas report's maximum placement (1,808,075) is above `test_gas_worstCasePlacement` (1,778,221), yet a draft calls 1.78M "the worst measured". This goes to Phase 3 or 5.
+
+**What the human did:** chose to start Phases 0 to 2.
