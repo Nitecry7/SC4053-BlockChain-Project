@@ -66,7 +66,9 @@ Fits Person 2's draft section 6. All numbers are from committed evidence: [`docs
 | Issue 006 auto-cancels | 6 |
 | Violations | 0 |
 
-**Deep profile** (1,000 runs × depth 128, plus fuzz at 10,000 runs): started 7 Nov at 23:15, in an isolated copy of `contracts/`. Still running when this draft was written; the result will be added to `phase7/forge-test-deep.txt`.
+**Deep profile** (1,000 runs × depth 128, plus fuzz at 10,000 runs):
+
+> **PLACEHOLDER: deep run result.** Started 7 Nov at 23:15 in an isolated copy of `contracts/`. To fill in from `phase7/forge-test-deep.txt`: pass or fail per invariant, runs and calls, reverts, the per-selector metrics, the last-run `SUMMARY`, elapsed time, and the deep fuzz results. If the run is stopped at 02:45, record it as "not completed" with its elapsed time.
 
 ## Mutation testing (summary)
 - **Per-phase sets were all caught,** except provably equivalent mutants:
@@ -88,10 +90,14 @@ Fits Person 2's draft section 6. All numbers are from committed evidence: [`docs
 
 Every loop is bounded: at most 10 fills per call, `MAX_INSERT_SCAN` = 100 insert steps, and at most 10 activations per trigger call.
 
-## Pending (Phase 8)
-- **Slither** on `OrderBook.sol`, with each finding triaged.
-- **Coverage:** `forge coverage` line and branch figures for `OrderBook.sol`.
-- **A final independent end-to-end audit.**
+## Static analysis (Slither)
+> **PLACEHOLDER: Slither.** Slither 0.11.6 on `contracts/src/OrderBook.sol`. To fill in: the command, the number of findings by detector and severity, and a triage of each (real, false positive or accepted risk, with a one-line reason). Fixes come with regression tests. Evidence file: `docs/ai-audit/test-evidence/phase8/slither*.txt`.
+
+## Coverage
+> **PLACEHOLDER: coverage.** `forge coverage --report summary` for `OrderBook.sol`: line, statement, branch and function percentages. Name any uncovered branch that matters, and the test added for it. Evidence file: `docs/ai-audit/test-evidence/phase8/coverage*.txt`.
+
+## Final independent audit
+> **PLACEHOLDER: final audit.** A fresh subagent with no prior context audits `OrderBook.sol` end to end: loss of funds, stuck funds, access control, reentrancy, rounding, unbounded loops, griefing, and interface drift. To fill in: its findings and the outcome of each. Summary in `docs/ai-audit/ENGINE_SECURITY_SUMMARY.md`.
 
 ## What this does not prove
 - Tests prove only the scenarios and properties they check. Invariants are checked on random sequences up to depth 64 (default), not exhaustively.

@@ -77,5 +77,5 @@ These were reviewed and deliberately kept, not left unfixed:
 - **18-decimal tokens only.**
 - **Self-trades allowed.**
 
-## Static analysis
-**Pending (Phase 8).** Slither 0.11.6 has not yet been run on `OrderBook.sol`. Results and their triage go here, and into `docs/ai-audit/test-evidence/`.
+## Static analysis and final audit
+> **PLACEHOLDER (Phase 8):** any real finding from Slither or the final independent audit, added to the inventory above in the four-part format, or "none" with a link to the triage. Slither 0.11.6 has not yet been run on `OrderBook.sol`.
