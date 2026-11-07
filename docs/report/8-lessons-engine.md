@@ -8,7 +8,7 @@ Fits Person 2's draft section 8. Every example below is from the prompt log or a
   - Reentrancy at every transfer point, with a configurable hostile token.
   - View spies that pin CEI ordering.
   - Exact-balance assertions to the wei.
-  - 244 engine tests, plus an invariant suite with an independent reference model.
+  - 245 engine tests, plus an invariant suite with an independent reference model.
 - **Independent review as a separate agent.** Fresh subagents with no session context repeatedly found what the authoring session missed:
   - the second CEI deviation (issue 002)
   - surviving matching mutants (issue 004)

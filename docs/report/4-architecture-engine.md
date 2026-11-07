@@ -21,25 +21,26 @@
 ```mermaid
 flowchart LR
   subgraph Person2["Person 2"]
-    TF[TokenFactory] -->|createToken| DT[DemoToken ERC20s]
-    MF[MarketFactory] -->|new OrderBook base,quote| OB
+    TF["TokenFactory"] -->|"createToken"| DT["DemoToken ERC20s"]
+    MF["MarketFactory"] -->|"new OrderBook(base, quote)"| OB
   end
   subgraph Engine["OrderBook (Person 1)"]
     direction TB
-    P[placeLimitOrder] --> V[_validate / _record / _pullEscrow]
-    PS[placeStopLimitOrder] --> V
-    V --> MT[_matchTaker budget]
-    MT --> SF[_settleFill: the only settlement path]
-    MO[matchOrders] --> SF
-    TR[triggerStopOrders: one shared budget] --> MT
-    C[cancelOrder] --> CR[_closeAndRefund]
-    TR -->|cannot enter book| CR
-    SF --> L[(book lists: bids desc, asks asc, ties by bookSeq)]
-    PS --> S[(stop lists: buy asc / sell desc by trigger)]
+    OB["OrderBook"]
+    P["placeLimitOrder"] --> V["_validate, _record, _pullEscrow"]
+    PS["placeStopLimitOrder"] --> V
+    V --> MT["_matchTaker (fill budget)"]
+    MT --> SF["_settleFill: the only settlement path"]
+    MO["matchOrders"] --> SF
+    TR["triggerStopOrders: one shared budget"] --> MT
+    C["cancelOrder"] --> CR["_closeAndRefund"]
+    TR -->|"cannot enter book"| CR
+    SF --> L[("Book lists: bids desc, asks asc, ties by bookSeq")]
+    PS --> S[("Stop lists: buy asc, sell desc by trigger")]
     TR --> S
   end
-  W[Next.js frontend] -->|reads, writes| OB
-  K[anyone: keeper, trader, UI button] -->|matchOrders / triggerStopOrders| OB
+  W["Next.js frontend"] -->|"reads, writes"| OB
+  K["Anyone: keeper, trader, UI button"] -->|"matchOrders, triggerStopOrders"| OB
 ```
 
 **State:**
