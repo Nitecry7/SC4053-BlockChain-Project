@@ -1,0 +1,78 @@
+# FOUNDRY_PROFILE=deep (invariant: 1000 runs x depth 128; fuzz: 10,000 runs), 2026-11-07T15:15:34Z, forge Version:
+# run in an isolated copy of contracts/ (engine == git HEAD, tests == this phase), so source mutations elsewhere cannot affect it
+# command: FOUNDRY_PROFILE=deep FOUNDRY_INVARIANT_SHOW_METRICS=true forge test --match-path 'test/invariant/*' -vv ; then the fuzz suites
+Ran 1 test for test/invariant/OrderBookInvariant.t.sol:OrderBookInvariantReachTest
+[PASS] test_handlerReachesEveryPath() (gas: 2997)
+  SUMMARY place calls fills hitCap 116 840 13
+  SUMMARY bursts placeTooDeep crossedAfterCall 93 0 390
+  SUMMARY cancel open partial pending 32 15 15
+  SUMMARY match calls callsThatFilled fills 99 32 149
+  SUMMARY stopsPlaced triggerCalls activations 89 115 69
+  SUMMARY triggerFills budgetUsedUp autoCancels 122 9 6
+  SUMMARY violations 0
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 6.68s (6.59s CPU time)
+Ran 1 test for test/invariant/OrderBookInvariant.t.sol:OrderBookInvariantTest
+[PASS]
+[PASS] invariant_conservation
+[PASS] invariant_handlerChecks
+[PASS] invariant_ledgerMatchesBalances
+[PASS] invariant_lists
+[PASS] invariant_orderFields
+[PASS] invariant_solvency
+ OrderBookInvariantTest invariants (runs: 1000, calls: 128000, reverts: 0)
+| Handler  | burst        | 21186 | 0       | 0        |
+| Handler  | cancel       | 21080 | 0       | 0        |
+| Handler  | matchOrders  | 21580 | 0       | 0        |
+| Handler  | placeLimit   | 21377 | 0       | 0        |
+| Handler  | placeStop    | 21278 | 0       | 0        |
+| Handler  | triggerStops | 21499 | 0       | 0        |
+  SUMMARY place calls fills hitCap 19 151 3
+  SUMMARY bursts placeTooDeep crossedAfterCall 24 0 47
+  SUMMARY cancel open partial pending 6 4 5
+  SUMMARY match calls callsThatFilled fills 25 3 7
+  SUMMARY stopsPlaced triggerCalls activations 15 26 8
+  SUMMARY triggerFills budgetUsedUp autoCancels 12 1 1
+  SUMMARY violations 0
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 7075.84s (7075.73s CPU time)
+Ran 2 test suites in 7075.85s (7082.52s CPU time): 2 tests passed, 0 failed, 0 skipped (2 total tests)
+# invariant deep elapsed: 7088s
+Ran 1 test for test/OrderBook.Place.t.sol:OrderBookPlaceTest
+[PASS] testFuzz_requiredQuote_exactForAlignedInputs(uint256,uint256) (runs: 10000, μ: 7960, ~: 8076)
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 1.16s (1.15s CPU time)
+Ran 3 tests for test/TokenFactory.t.sol:TokenFactoryTest
+[PASS] testFuzz_createToken_supplyAboveMaxReverts(uint256) (runs: 10000, μ: 40772, ~: 41095)
+[PASS] testFuzz_createToken_supplyInBounds(uint256) (runs: 10000, μ: 604140, ~: 603875)
+[PASS] testFuzz_getTokens_matchesRegistry(uint8,uint256,uint256) (runs: 10000, μ: 2698818, ~: 2282999)
+Suite result: ok. 3 passed; 0 failed; 0 skipped; finished in 100.81s (68.00s CPU time)
+Ran 8 tests for test/OrderBook.Fuzz.t.sol:OrderBookFuzzTest
+[PASS] testFuzz_batch_randomAskSizesClearExactly(uint256,uint256,uint256) (runs: 10000, μ: 11154982, ~: 10145374)
+[PASS] testFuzz_cancel_eitherSideAfterPartialFillRefundsExactly(bool,bool,uint256,uint256,uint256) (runs: 10000, μ: 1019382, ~: 1019310)
+[PASS] testFuzz_cancel_partlyFilledTakerRemainderAfterPriceImprovement(uint256,uint256,uint256,uint256) (runs: 10000, μ: 1128589, ~: 1128837)
+[PASS] testFuzz_place_crossingFillSettlesExactlyAtMakerPrice(bool,uint256,uint256,uint256,uint256) (runs: 10000, μ: 1024945, ~: 1011883)
+[PASS] testFuzz_requiredQuote_ceilInFullPrecision(uint256,uint256,bool) (runs: 10000, μ: 8384, ~: 8641)
+[PASS] testFuzz_requiredQuote_matchesCeilReference(uint128,uint128) (runs: 10000, μ: 6916, ~: 6919)
+[PASS] testFuzz_trigger_buyStopFillsAcrossMakersOrRests(uint256,uint256,uint256,uint256,uint256) (runs: 10000, μ: 2205959, ~: 2209559)
+[PASS] testFuzz_trigger_sellStopFillsAtTheBidPrice(uint256,uint256,uint256,uint256,uint256,uint256) (runs: 10000, μ: 1877629, ~: 1870247)
+Suite result: ok. 8 passed; 0 failed; 0 skipped; finished in 104.91s (231.82s CPU time)
+Ran 1 test for test/MarketFactory.t.sol:MarketFactoryTest
+[PASS] testFuzz_getMarkets_matchesRegistry(uint8,uint256,uint256) (runs: 10000, μ: 9262677, ~: 9019028)
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 104.91s (104.90s CPU time)
+Ran 1 test for test/OrderBook.Cancel.t.sol:OrderBookCancelTest
+[PASS] testFuzz_cancel_partialFillThenCancelRefundsExactRemainder(bool,uint256,uint256,uint256) (runs: 10000, μ: 981689, ~: 1016630)
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 104.91s (104.90s CPU time)
+Ran 2 tests for test/OrderBook.Batch.t.sol:OrderBookBatchTest
+[PASS] testFuzz_batch_bidMakersClearAtTheirOwnPrices(uint256,uint256,uint256) (runs: 10000, μ: 11442211, ~: 10422721)
+[PASS] testFuzz_batch_clearsAnyCapCrossedBookExactly(uint256,uint256,uint256) (runs: 10000, μ: 15488574, ~: 14405014)
+Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 104.91s (131.30s CPU time)
+Ran 1 test for test/DemoToken.t.sol:DemoTokenTest
+[PASS] testFuzz_supplyIsFixedAcrossTransfers(uint256) (runs: 10000, μ: 86472, ~: 86569)
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 108.60s (108.60s CPU time)
+Ran 1 test for test/OrderBook.Stop.t.sol:OrderBookStopTest
+[PASS] testFuzz_trigger_randomStopsKeepSolvencyAndLists(uint256) (runs: 10000, μ: 22679672, ~: 22799856)
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 108.60s (108.59s CPU time)
+Ran 2 tests for test/OrderBook.Match.t.sol:OrderBookMatchTest
+[PASS] testFuzz_coarsePlacementsKeepSolvencyAndBookOrder(uint256) (runs: 200, μ: 397833214, ~: 396738819)
+[PASS] testFuzz_randomPlacementsKeepSolvencyAndBookOrder(uint256) (runs: 10000, μ: 49814550, ~: 49700953)
+Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 108.60s (191.77s CPU time)
+Ran 9 test suites in 108.61s (847.40s CPU time): 20 tests passed, 0 failed, 0 skipped (20 total tests)
+# fuzz deep elapsed: 142s
