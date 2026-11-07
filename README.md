@@ -171,7 +171,7 @@ Versions are pinned in `web/package.json` and `web/package-lock.json`. The Solid
 
 ## 🤖 AI-Assisted Development and Verification
 
-AI assistance was used across the project for planning, coding, design exploration, independent review, testing and documentation. The phases were checked with the tools below, and each claim in the audit files is tied to a recorded test, reproduction or review. Not every phase had an independent review. AI tools supplement contract tests, real-chain tests, manual wallet checks and human review; they do not replace them.
+AI assistance was used across the project for planning, coding, design exploration, independent review, testing and documentation. The phases were checked with the tools below, and each claim in the audit files is tied to a recorded test, reproduction or review. AI tools supplement contract tests, real-chain tests, manual wallet checks and human review; they do not replace them.
 
 | Category | Tools and models | Recorded status |
 |---|---|---|
