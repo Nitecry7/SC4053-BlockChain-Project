@@ -170,6 +170,21 @@ contract OrderBookMatchTest is OrderBookBase {
         _assertChecks();
     }
 
+    function test_match_noRefundTransferWhenNoPriceImprovement() public {
+        _place(alice, SELL, 2e18, 1e18);
+
+        vm.recordLogs();
+        _place(bob, BUY, 2e18, 1e18);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        uint256 quoteLogs = 0;
+        for (uint256 i = 0; i < logs.length; i++) {
+            if (logs[i].emitter == address(quote)) quoteLogs++;
+        }
+        assertEq(quoteLogs, 2, "only the pull and the seller payout");
+        _assertChecks();
+    }
+
     // Price improvement
 
     function test_match_buyerRefundedPriceImprovementWhenFilled() public {
@@ -698,7 +713,7 @@ contract OrderBookPayoutViewsTest is OrderBookBase {
             uint256 makerFilled,
             IOrderBook.Status takerStatus,
             uint256 sellHead,
-            uint256 buyHead
+            uint256 buyHead,
         ) = spy.snapshot();
 
         assertTrue(taken);

@@ -85,8 +85,23 @@ contract OrderBook is IOrderBook, ReentrancyGuard {
         if (_orders[orderId].status != Status.Filled) _insert(orderId);
     }
 
-    function cancelOrder(uint256) external nonReentrant {
-        revert();
+    /// @dev SPEC section 5. PendingTrigger orders are added with stop orders in Phase 6a.
+    function cancelOrder(uint256 orderId) external nonReentrant {
+        Order storage order = _orders[orderId];
+        if (order.trader == address(0) || order.trader != msg.sender) revert NotOrderOwner();
+        if (order.status != Status.Open && order.status != Status.PartiallyFilled) revert OrderNotActive();
+
+        uint256 refundBase = order.side == Side.Sell ? order.amount - order.filled : 0;
+        uint256 refundQuote = order.lockedQuote;
+
+        _unlink(orderId);
+        order.status = Status.Cancelled;
+        order.lockedQuote = 0;
+
+        emit OrderCancelled(orderId, msg.sender, refundBase, refundQuote);
+
+        if (refundBase != 0) IERC20(baseToken).safeTransfer(msg.sender, refundBase);
+        if (refundQuote != 0) IERC20(quoteToken).safeTransfer(msg.sender, refundQuote);
     }
 
     function matchOrders(uint256) external nonReentrant returns (uint256) {

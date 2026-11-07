@@ -20,9 +20,9 @@ Paths are relative to `contracts/` unless they start at the repo root.
 | **3a Single fill and settlement** | One `_settleFill` used everywhere | `src/OrderBook.sol`, `test/OrderBook.Match.t.sol`, `assertSolvent()` in the base test | `_settleFill` (A4 and A5, maker price, price-improvement refund), `lastTradePrice`, `hasTradePrice`, `Trade` event | exact match, maker partial fill, taker partial fill, price-improvement refund, the SPEC.md worked example to the wei | Worked example exact; `assertSolvent` passes | 2h |
 | **3b Sweep and cap** | Multi-level matching | same files | match loop capped at `MAX_MATCHES_PER_TX`; remainder rests | sweep several price levels, FIFO at equal price, non-crossing order rests, cap leaves a crossed remainder, self-trade settles correctly | `assertSolvent` after every test. **Person 2 can integrate on Anvil** | 1.5h |
 | **4 Cancel** (bonus 1) | Refund only the unfilled part | `src/OrderBook.sol`, `test/OrderBook.Cancel.t.sol` | `cancelOrder` (owner only, active statuses only, CEI order, `OrderCancelled` event) | cancel open, cancel partial, cancel filled reverts, cancel twice reverts, non-owner reverts, cancel head, middle and tail | Every refund exact; links stay valid | 1.5h |
-| **5 Batch** (bonus 2) | Clear crossed books | `src/OrderBook.sol`, `test/OrderBook.Batch.t.sol` | `matchOrders(maxMatches)`, reusing `_settleFill`; the head with the lower `bookSeq` is the maker | clears a book left crossed by the cap, cap respected, 3+ traders settled, a filled taker is unlinked as well as a filled maker (both are in the book here), no-op when not crossed, `InvalidMaxCount` for 0 and for more than the cap | No duplicated settlement code | 1.5h |
+| **5 Batch** (bonus 2) | Clear crossed books | `src/OrderBook.sol`, `test/OrderBook.Batch.t.sol` | `matchOrders(maxMatches)`, reusing `_settleFill`; the head with the lower `bookSeq` is the maker | clears a book left crossed by the cap, cap respected, 3+ traders settled, a filled taker is unlinked as well as a filled maker (both are in the book here), no-op when not crossed, `InvalidMaxCount` for 0 and for more than the cap, a malicious token re-entering `matchOrders` during the price-improvement refund reverts with `ReentrancyGuardReentrantCall` (deferred from Phase 4, where `matchOrders` was a stub) | No duplicated settlement code | 1.5h |
 | **Freeze ABI** | Signatures final | `CONTRACT_INTERFACE.md` (banner changes to FROZEN) | none | none | Person 2 confirms. **Done 1 Nov** (target was Mon 2 Nov, revised from 31 Oct) | — |
-| **6a Stop placement** (bonus 3) | Funded pending stops | `src/OrderBook.sol`, `test/OrderBook.Stop.t.sol` | `placeStopLimitOrder` (escrow at placement, sorted stop lists); `cancelOrder` handles PendingTrigger | escrow on placement, `StopOrderPlaced` event, tick checks on both prices, cancel pending stop, not shown by `getBook` | Solvency includes pending stops | 1.5h |
+| **6a Stop placement** (bonus 3) | Funded pending stops | `src/OrderBook.sol`, `test/OrderBook.Stop.t.sol` | `placeStopLimitOrder` (escrow at placement, sorted stop lists); `cancelOrder` handles PendingTrigger | escrow on placement, `StopOrderPlaced` event, tick checks on both prices, cancel pending stop, not shown by `getBook`, `placeStopLimitOrder` added to the reentrancy payloads, and `test_cancel_statusCheckRejectsLinkedTerminalOrder` (added in Phase 4) kept passing once PendingTrigger becomes cancellable | Solvency includes pending stops | 1.5h |
 | **6b Triggering** | Activate and match | same files | `triggerStopOrders(maxCount)`: checks `hasTradePrice`, activates from the heads of the stop lists, stamps a fresh `bookSeq` on activation, **one shared `MAX_MATCHES_PER_TX` fill budget per call** | no trigger before the first trade, an activated stop queues behind equal-price orders that entered the book earlier, wrong side of the price, triggers and fills, triggers but rests, `maxCount` respected, shared budget (activated orders rest once the budget runs out, then `matchOrders` clears them), cascade within one call | All earlier tests still green | 2h |
 | **7 Fuzz and invariants** | Accounting proven | `test/OrderBook.Fuzz.t.sol`, `test/invariant/{Handler.sol,OrderBookInvariant.t.sol}` | none | SPEC A8 solvency (pending stops included), `filled <= amount`, lists sorted, no terminal-status order in any list | Invariants pass at a sensible depth (runs and depth set in foundry.toml) | 3h |
 | **8 Static analysis and coverage** | Evidence for the report | `docs/ai-audit/test-evidence/` | fixes as found | regression test per real finding | Slither findings triaged (real, false positive or accepted); `forge coverage` recorded | 2h |
@@ -162,6 +162,44 @@ depth (forge test --gas-report), and propose whether the proposed MAX_* values s
 change (SPEC O2). Do not change the values without asking.
 Run forge build, forge test and forge fmt --check, show the real output, log the session,
 do not commit. When this phase is merged, Person 2 can integrate on Anvil.
+```
+
+### Phase 4
+```text
+Read CLAUDE.md and SPEC.md section 5. Implement cancelOrder: the caller must be the order's
+trader, else NotOrderOwner; the status must be Open or PartiallyFilled, else OrderNotActive.
+PendingTrigger is added in Phase 6a. Check in that order, so an unknown ID reverts with
+NotOrderOwner. Then unlink from the book, set Cancelled, zero lockedQuote, emit
+OrderCancelled, and refund last (A7: a sell gets amount - filled base, a buy gets lockedQuote
+quote). All state changes come before the transfer. No exception to CEI applies here.
+Do not add any error, event or function that is not in the interface.
+Tests in contracts/test/OrderBook.Cancel.t.sol, calling assertSolvent and assertBookSorted
+in each one:
+- cancel an open buy and an open sell: exact refund to the wei, and the other token untouched
+- cancel a partly filled buy and sell: only the remainder is refunded, and filled is kept
+- cancel a filled order, cancel twice, and cancel by a non-owner each revert with no state
+  change; a non-owner on a filled order gets NotOrderOwner; an unknown ID gets NotOrderOwner
+- cancel the head, middle, tail and only element, with links checked afterwards and later
+  matching skipping the cancelled order
+- the OrderCancelled event fields for both sides (refundBase, refundQuote)
+- a cancelled order stays in getUserOrderIds and leaves getBook
+Reentrancy tests, in the same file. These replace the stub-only cancel coverage from Phase 3a.
+Extend test/mocks/ReentrantERC20.sol so that it can fire on the Nth balance change after
+arming, and add a mode that swallows the failed call and continues:
+- during the real cancelOrder refund, on a sell (evil base) and a buy (evil quote), re-enter
+  cancelOrder on the same order, cancelOrder on another order, placeLimitOrder, matchOrders
+  and triggerStopOrders. Each must revert with ReentrancyGuardReentrantCall, leaving the order
+  active and the balances unchanged
+- during the price-improvement refund in _settleFill (the third evil-quote balance change for
+  a buy taker: pull, seller payout, refund), re-enter placeLimitOrder and the real cancelOrder
+  on the same buy order. Each must revert with ReentrancyGuardReentrantCall
+- in swallow mode, during the cancel refund and the price-improvement refund: the inner call
+  fails, the outer call completes, the refund is paid once, and assertSolvent holds
+- confirm each test fires where its name says, by mutation: remove nonReentrant from
+  cancelOrder, and report which tests fail. Restore the source afterwards
+Then run /review-engine as a separate subagent review. Log real findings with /log-issue, and
+fix them with regression tests. Run forge build, forge test and forge fmt --check, show the
+real output, log the session, do not commit.
 ```
 
 ## Agree with Person 2 before coding

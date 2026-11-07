@@ -353,3 +353,97 @@ pinned submodule. A plain copy would have committed thousands of vendored files 
 **Human decisions:**
 - Keep `MAX_MATCHES_PER_TX = 10` and `MAX_INSERT_SCAN = 100`. Gas figures are in SPEC.md, and O2 is resolved.
 - The interface comments still say "proposed 10" and "proposed 100". CONTRACT_INTERFACE.md is frozen and IOrderBook.sol must match it, so they were not changed. The values did not change.
+
+---
+
+## 2026-11-02: Phase 4, cancel (uncommitted, awaiting human review of the summary)
+
+**Prompt (summary):** The Phase 4 prompt in docs/ENGINE_PHASES.md: `cancelOrder`, cancel tests, reentrancy tests against the real `cancelOrder` and during the refund transfers, a guard mutation, and the independent review. Pause before committing. Also remove "(draft, not run)" from the heading, and change the "proposed 10" and "proposed 100" comments to final values.
+
+**What the AI produced:**
+- `src/OrderBook.sol`: `cancelOrder`. `test/OrderBook.Cancel.t.sol`. `test/mocks/ReentrantERC20.sol` gained firing on the Nth balance change, a swallow mode and an `execute` function, so the token can own orders and pass the owner check. `test/mocks/ViewSpyERC20.sol` gained `makerLockedQuote`.
+- SPEC.md section 5 now says "emit `OrderCancelled`, then refund", to match the approved prompt. It previously listed the refund first.
+- Comment-only change in CONTRACT_INTERFACE.md and IOrderBook.sol: "10" and "100". The scripted comparison of the two files shows no differences.
+
+**Human decisions:**
+- The Phase 4 draft is approved, including owner before status, so an unknown ID gives `NotOrderOwner`.
+- The interface comment change does not need sign-off, as it is comment-only. CONTRACT_INTERFACE.md is shared and frozen, and Person 2 has not been told yet.
+- Pending: the commit and merge.
+
+**Guard mutation:** With `nonReentrant` removed from `cancelOrder`, 10 tests failed. Failures showed `OrderNotActive` for re-entry as the owner, so with the guard gone, the final state still blocks a double refund. The reviewer also showed that removing both the guard and the `_unlink` guard lets a re-entrant cancel succeed during the price-improvement refund.
+
+**Independent review (subagent, no context from this session):** The first run stalled and failed without a report. Its background mutant batch had been stopped because the system was low on memory. It was resumed, foreground only, and reported with 18 of 40 mutants run. No fund-affecting bug found. How each finding was handled:
+
+| Finding | Severity | Outcome |
+|---|---|---|
+| Zero-address caller passes the owner check on unknown IDs | Low (real bug) | Fixed, regression test. Issue 005 |
+| CEI inside `cancelOrder` not pinned: all transfers before state passed all tests | Medium (tests) | Fixed with `test_cancelRefund_viewsFinalOnSell` and `..OnBuy` |
+| Event order not pinned; zero-value transfers of the other token unnoticed | Low (tests) | Fixed with two log tests |
+| Status check and `_unlink` guard mask each other | Low | No test possible today. Added to the Phase 6a row |
+| Later matching covered only a cancelled head, on asks only | Low (tests) | Now head, middle and tail on both sides, plus only element |
+| Crossed-book cancel test weak; no sell-taker remainder or equal-price queue test | Low (tests) | Replaced with stronger tests |
+| Owner re-entry not tested during the pull or payouts; "other order" payload hidden by the loop | Low (tests) | Added tests for the escrow pull, seller payout, buyer payout and other order |
+| `placeStopLimitOrder` guard removal survives | Info | A deliberate stub. Added to the Phase 6a row |
+
+**What the AI got wrong:** Issue 005, and the test gaps above. The AI's first draft had a crossed-book test that did not check the book was crossed.
+
+**Skipped mutants:** The AI ran the reviewer's skipped mutants that apply to the source itself, plus new ones, one at a time with fuzz tests excluded. All were caught except S1 (zero-value refund transfer in `_settleFill`), which survived and is now covered by `test_match_noRefundTransferWhenNoPriceImprovement`. Not run: the reviewer's C9, S3 to S6, and the test-only T2 and T3.
+
+---
+
+## 2026-11-07: Recovery and sync with Person 2's main (Stage 0 review)
+
+**Prompt (summary):** Recover uncommitted Phase 4 work that was left on `main` after a branch switch, when `git pull` refused to overwrite `CONTRACT_INTERFACE.md`. Commit it as WIP on `engine/phase-4` and push. Fast-forward `main` to `origin/main` (24 commits from Person 2). Merge `main` into `engine/phase-4`, keeping both sides. Show the interface diffs. Then do a full review and run `forge build --sizes`, `forge test` and `forge fmt --check`.
+
+**What the AI did:**
+- WIP commit `814dc53` on `engine/phase-4`, pushed. `main` was fast-forwarded to `8258fa6`. The AI checked that the old `main` is an ancestor of the new one, and that `main` matches `origin/main`.
+- Merged `main` into `engine/phase-4` with no conflicts. The pull had failed only because of the uncommitted local edit. `CONTRACT_INTERFACE.md` was the only file both sides touched, and the edits were on different lines: Person 2 rewrote the deployment handoff (markets are created through `MarketFactory`), and Person 1 changed the `MAX_*` comments.
+- Interface diffs against `main`: comment-only (`proposed 10` became `10`, `proposed 100` became `100`) in both `CONTRACT_INTERFACE.md` and `IOrderBook.sol`. No signature, event or error changed.
+- Results on the merged tree: 233 tests passed, 0 failed (15 suites). `fmt --check` was clean. Sizes: OrderBook runtime 6,812 B, MarketFactory runtime 8,859 B (it embeds OrderBook's creation code), both well under the 24,576 B limit of EIP-170.
+- Frontend scan by a subagent: web/ calls only `placeLimitOrder` and view functions, and decodes only `OrderPlaced` and `Trade`. `NotOrderOwner`, `OrderNotActive` and `InvalidMaxCount` have no UI message. The exported ABI in `web/lib/contracts/abis.ts` predates Phase 4, so `cancelOrder` still has the stub's unnamed parameter. The main session checked this.
+
+**What the AI got wrong:** Nothing that changed the outcome. It updated `main` with `git branch -f main origin/main` rather than `git pull --ff-only`, and confirmed only afterwards that this was a fast-forward. Checking first is the safer order.
+
+**Human decisions:**
+- Commit the merge, keeping both sides.
+- Fix `.gitignore`: Person 2's change removed the `docs/project.pdf` rule and left a stray `]`. Restore the rule, and keep `docs/Development_Project.pdf` tracked (the repo is private).
+- Finish Phase 4 with a journey test using the brief's numbers. The `matchOrders` re-entry test waits for Phase 5.
+- Tell Person 2 about the interface comment change, and that the ABI needs re-exporting after Phase 4 merges.
+
+---
+
+## 2026-11-07: Phase 4, finish (review, mutants, merge)
+
+**Prompt (summary):** Finish Phase 4: add a journey test with the brief's exact numbers (Alice sells 100 at 2, Bob buys 40, Alice cancels and receives exactly 60). Defer the `matchOrders` re-entry test to Phase 5 (it is still a stub) and note it in the Phase 5 row. Run an independent review, log real flaws, re-run the earlier mutants and add new ones, run build, test and fmt, log, commit, merge into `main` with `--no-ff`, push, and create `engine/phase-5`. Also: fix `.gitignore` (stray `]`, restore the `docs/project.pdf` rule) and check the tools.
+
+**Tool check:** `slither --version` 0.11.6. `solc-select versions` 0.8.24. `node` and `npm` were not found in Git Bash or PowerShell, and Node was not installed.
+
+**What the AI produced:**
+- `test_cancel_briefJourneyAliceSells100BobBuys40AliceGets60Back`: every balance is exact at each step, and the book holds 100, then 60, then 0.
+- The Phase 5 row in ENGINE_PHASES.md now includes the deferred `matchOrders` re-entry test.
+- A commit fixing `.gitignore` on its own.
+
+**Independent review (fresh subagent, read-only, no session context):** It found no High or Medium issue and no code bug. It found three Low test gaps:
+
+| Finding | Outcome |
+|---|---|
+| L1: the `cancelOrder` status check is masked by `_unlink`'s guard, so deleting it survives | `test_cancel_statusCheckRejectsLinkedTerminalOrder` writes Filled or Cancelled onto a linked order through the harness. The Phase 6a row was updated |
+| L2: no minimum-size cancel (1 lot at 1 tick escrows 1 wei of quote) | `test_cancel_minimumSizeBuyRefundsOneWei`, `test_cancel_minimumSizeSellRefundsOneLot` |
+| L3: no fuzz test of cancel | `testFuzz_cancel_partialFillThenCancelRefundsExactRemainder` (1,000 runs) checks against the reference cost `fill * price / PRICE_SCALE` |
+
+The Info notes were not acted on: an equivalent mutant (I1), `_unlink`'s guard as defence in depth (I2), reentrancy tests to recheck when the stubs are replaced in Phases 5 and 6 (I3), PendingTrigger deferred to Phase 6a (I4), and redeploying the factory and re-exporting the ABI after the merge (I5).
+
+None of these is a bug in AI-written engine code, so no issue file was added.
+
+**Mutants** (one at a time on `OrderBook.sol`, fuzz tests excluded, source restored after each run):
+- Before the new tests: 13 caught, 4 survived. C1 (status check removed), R1 and R2 (refunds skipped at 1 wei and at one lot), and R3 (status check weakened) survived. R4 survived too.
+- After the new tests: 16 of 17 caught. The re-run earlier mutants were G (guard removed, 16 tests failed), Z (issue 005), S1, and C1 to C6. The new ones were N1 to N4 and R1 to R4.
+- R4 survives as an equivalent mutant. It recomputes the buy refund as `(amount - filled) * price / PRICE_SCALE`. Lot and tick sizes make that exactly equal to `lockedQuote`, so no test can tell them apart.
+
+**Results:** `forge build --sizes`: OrderBook 6,812 B runtime and 7,475 B initcode. MarketFactory 8,859 B runtime and 8,888 B initcode. Both have room under EIP-170 and EIP-3860. `forge test`: 238 passed, 0 failed, 0 skipped (15 suites). `forge fmt --check`: clean.
+
+**What the AI got wrong:** In the first version of the L1 test, `forged = original` aliased the memory struct, so the "restore" wrote the forged status back, and `assertBookSorted` failed with "order in the book is not live". It was fixed by reading a separate copy. This was a test-code mistake, not an engine bug.
+
+**Human decisions:** The `matchOrders` re-entry test moves to Phase 5. `docs/Development_Project.pdf` stays tracked (the repo is private).
+
+**Follow-up for Person 2:** OrderBook bytecode changed in Phase 4, so the deployed MarketFactory still creates markets with the stub `cancelOrder`. Redeploy, re-export the ABI, and add UI messages for `NotOrderOwner` and `OrderNotActive`.
