@@ -371,6 +371,31 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 
 **Evidence:** [`test-evidence/person2/p2-8a2-liveness.md`](test-evidence/person2/p2-8a2-liveness.md); issue [P2-015](issues/p2-015-stale-data-shown-as-live-after-the-rpc-died.md).
 
+## 2026-11-08: P2-8B.0 and P2-8B.1, integration preflight and scratch verification (verification only)
+
+**Model:** Sonnet 5.5 (Medium requested; the session effort setting could not be read). **Prompt (summary):** after merging the engine into `faheem` (expected `924ba6f`), read the specification and handoff documents, inspect the Next.js app and the four bonus functions, deploy the merged engine on a scratch Anvil (8546) with all outputs redirected, verify the ABI, run cancel, batch matching and stop-limit through real calls, run the baseline suites, and report. Protect the owner's Anvil (8545) and Next (3000). Then: investigate the failing Trade browser suite in isolation on a clean chain, and document it. No bonus UI, no commit.
+
+**What was done:** `HEAD` confirmed as `924ba6f` with a clean tree (and `origin/main` found to be 8 documentation-only commits ahead); the owner's chain on 8545 inspected with read-only calls only (it already runs the new engine); a scratch Anvil deployed with redirected broadcast, cache and exporter output (export byte-identical to the committed ABI and deployment files; protected files hashed before and after, identical); a scratch frontend built from a copy of `web/` and checked, by request capture, to talk only to 8546; `forge test` 335, exporter 21, `npm test` 410 + 48 skipped, tsc, eslint, build, real-chain 48; a viem script replaying the cancel, batch and stop-limit journeys through the frontend's own ABI (61 of 61 checks); the five browser suites. Details in [`test-evidence/person2/p2-8b01-preflight.md`](test-evidence/person2/p2-8b01-preflight.md).
+
+**Failed observation, recorded as it happened:** the first browser pass gave **Trade `e2e` 7 passed, 6 failed** (create 14, dashboard 14, hardening 9 and liveness 11 passed). The first failure was "approval button states the exact collateral (got undefined)", and the other five followed from it.
+
+**Diagnosis:** a read-only look at the chain showed Alice's NTU allowance to the market was 100e18 and that the only extra transaction was her `approve(100e18)` in block 12. That approval came from **my own first run of the journey script**, which crashed on a function-name typo right after sending it and never reached its `evm_revert`; the second run snapshotted after the leak, so its revert kept it. With that allowance present the Trade suite skips its approval step. After stopping the scratch Anvil by its verified pid and redeploying, `npm run e2e` alone passed **13 of 13**; recreating the 100e18 approval on the clean chain reproduced the same six failures with the same messages (machine otherwise idle); reverting it restored the clean state. Confirmed cause: a test-isolation defect from my aborted run. Not established: whether CPU load alone could also fail the suite (not tested); why the other suites were unaffected by the leak (not analysed).
+
+**What the AI got wrong:**
+1. My journey script had a function-name typo; it aborted after a state-changing transaction and left the shared scratch chain polluted.
+2. My "balances restored" check compared token balances only, so it missed a leftover allowance. I then reported the journeys as reverted. That statement was wrong until the diagnosis.
+3. I first suspected CPU contention from the concurrent `forge test` and said so as a hypothesis; the evidence pointed elsewhere, and I did not state the load explanation as the cause.
+4. I started the Trade suite while `forge test` was still running, which muddied the first result, against my own advice to run suites alone.
+5. A weak final check in the journey script (market escrow equals live-book obligations compares two zeros) is documented as weak evidence rather than counted as a solvency proof.
+
+**Not an AI audit issue:** the failure was test pollution caused by this session, not a defect in the application, contracts or engine, so no issue file was created. A precondition for the Trade suite (no leftover allowances) is proposed in the evidence file, section 5, and was not applied.
+
+**What the human did:** set the scope (verification only, scratch ports, protect 8545 and 3000), asked for the isolated Trade investigation and for this documentation, and withheld any bonus-UI work. Still needed from the owner: decide on the proposed precondition, approve the integration order in the evidence file (section 9) and, when ready, each integration step.
+
+**Skills and MCPs actually invoked:** the advisor tool once before the deployment steps. Not invoked: Context7, Playwright MCP (the project's `playwright-core` suites were used), `solidity-security`, Slither, `react-best-practices`, the design skills, axe.
+
+**Evidence:** [`test-evidence/person2/p2-8b01-preflight.md`](test-evidence/person2/p2-8b01-preflight.md).
+
 ## Requirements traceability
 Current status through P2-7 (2026-11-06). Earlier statuses are in the phase entries above.
 
