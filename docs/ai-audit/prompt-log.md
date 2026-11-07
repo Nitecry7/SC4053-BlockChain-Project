@@ -817,3 +817,43 @@ Notify after each step.
 - **The `88cedf7` message overstates the fuzz runs.**
 - **M-1 was missed by every earlier review and by the AI's own SPEC writing,** because the two limitations were analysed separately (issue 007, part 1).
 - **Two SPEC rows went stale after the issue 006 fix** (insertion, and dust wording). The final audit caught them.
+
+---
+
+## 2026-11-08: Final wrap-up (report, video plan, fresh-clone check, submission checklist)
+
+**Prompt (summary):** Pull first. Never overwrite or delete Person 2's files. Then:
+1. Assemble the full AI Audit Report: all 8 sections in the brief's order, every issue in four parts, Person 2's parts from their logs and marked "[P2 to confirm]", Section 1 marked for both, an executive summary, contents, an evidence index and requirements traceability. Then a consistency pass, and Mermaid that renders.
+2. The video plan.
+3. A fresh-clone check following the README, fixing only the engine sections.
+4. The submission checklist.
+
+Commit and notify after each step.
+
+**What the AI did:**
+- **Pull:** nothing new from Person 2 (`main` = `origin/main`; `faheem` has nothing unmerged). Worked on `docs/wrapup`, merging into `main` after each step: `6d216a7`, `a220ee2`, `dcc86e2`, then this commit.
+- **Step 1:** `docs/report/AI_AUDIT_REPORT.md`:
+  - 22 issues: engine 001 to 007 in four parts; P2-001 to P2-015 in a four-part table adapted from Person 2's draft.
+  - Traceability (M1 to M7, B1 to B3, T1 and T2, D1 to D5) and an evidence index.
+  - **Built on, not replacing:** Person 2's `ai-audit-report-draft.md` was not edited.
+  - **Also:** `forge lint` on `OrderBook.sol` triaged (Person 2's I-4: 6 warnings, 0 real); the SPEC brief reference fixed (I-1); `CLAUDE.md` left for both, because it is shared.
+- **Step 2:** `docs/VIDEO_PLAN.md`: a 7:30 script with a speaker split, timed shots, setup, the expected numbers on screen, UI and terminal paths for the bonuses, and a `demo-journey.sh` fallback.
+- **Step 3:** a fresh clone followed the README end to end on Windows Git Bash:
+  - `forge test` **335 passed, 0 failed** (709 s)
+  - `npm test` 410 passed, 48 skipped
+  - typecheck, lint and build pass
+  - deploy and export on 8546; `check-local.sh` "ready"
+
+  The README engine section's timings were fixed and a Windows long-path note added. Six findings for Person 2's sections were recorded in `test-evidence/wrapup/fresh-clone-check.md`, not edited.
+- **Step 4:** `docs/SUBMISSION_CHECKLIST.md`.
+
+**What the AI got wrong:**
+- **First report draft:**
+  - labelled P2-006 to P2-008 "unrated", but Person 2's files do rate them (Medium)
+  - called 20 fuzz tests "engine" (they are 15 engine and 5 Person 2)
+
+  Both were caught by checking the files before committing.
+- **Old drafts left stale:** its earlier engine drafts kept 334 and 244 without the post-Phase 8 count. Fixed in the consistency pass.
+- **Blocked tool:** it tried to download the Mermaid CLI to render the diagrams. The permission classifier blocked running external code, so it did not work around it. It linted the diagram syntax instead: every label quoted, quotes balanced. Rendering is not machine-verified.
+- **Orphan processes, again:** stopping the dev server's task left an orphaned `node.exe` listening on port 3999 (the same pattern as the Phase 7 mutant orphan). The AI identified it by its command line as the scratch clone's server and killed only that process tree.
+- **Windows path limit:** the README's `git submodule update --init --recursive` failed in the deep scratch path ("Filename too long"). Recorded as an environment finding and worked around with `core.longpaths`, not reported as a README bug.
