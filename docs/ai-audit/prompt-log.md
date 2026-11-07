@@ -388,3 +388,24 @@ pinned submodule. A plain copy would have committed thousands of vendored files 
 **What the AI got wrong:** Issue 005, and the test gaps above. The AI's first draft had a crossed-book test that did not check the book was crossed.
 
 **Skipped mutants:** The AI ran the reviewer's skipped mutants that apply to the source itself, plus new ones, one at a time with fuzz tests excluded. All were caught except S1 (zero-value refund transfer in `_settleFill`), which survived and is now covered by `test_match_noRefundTransferWhenNoPriceImprovement`. Not run: the reviewer's C9, S3 to S6, and the test-only T2 and T3.
+
+---
+
+## 2026-11-07: Recovery and sync with Person 2's main (Stage 0 review)
+
+**Prompt (summary):** Recover uncommitted Phase 4 work that was left on `main` after a branch switch, when `git pull` refused to overwrite `CONTRACT_INTERFACE.md`. Commit it as WIP on `engine/phase-4` and push. Fast-forward `main` to `origin/main` (24 commits from Person 2). Merge `main` into `engine/phase-4`, keeping both sides. Show the interface diffs. Then do a full review and run `forge build --sizes`, `forge test` and `forge fmt --check`.
+
+**What the AI did:**
+- WIP commit `814dc53` on `engine/phase-4`, pushed. `main` was fast-forwarded to `8258fa6`. The AI checked that the old `main` is an ancestor of the new one, and that `main` matches `origin/main`.
+- Merged `main` into `engine/phase-4` with no conflicts. The pull had failed only because of the uncommitted local edit. `CONTRACT_INTERFACE.md` was the only file both sides touched, and the edits were on different lines: Person 2 rewrote the deployment handoff (markets are created through `MarketFactory`), and Person 1 changed the `MAX_*` comments.
+- Interface diffs against `main`: comment-only (`proposed 10` became `10`, `proposed 100` became `100`) in both `CONTRACT_INTERFACE.md` and `IOrderBook.sol`. No signature, event or error changed.
+- Results on the merged tree: 233 tests passed, 0 failed (15 suites). `fmt --check` was clean. Sizes: OrderBook runtime 6,812 B, MarketFactory runtime 8,859 B (it embeds OrderBook's creation code), both well under the 24,576 B limit of EIP-170.
+- Frontend scan by a subagent: web/ calls only `placeLimitOrder` and view functions, and decodes only `OrderPlaced` and `Trade`. `NotOrderOwner`, `OrderNotActive` and `InvalidMaxCount` have no UI message. The exported ABI in `web/lib/contracts/abis.ts` predates Phase 4, so `cancelOrder` still has the stub's unnamed parameter. The main session checked this.
+
+**What the AI got wrong:** Nothing that changed the outcome. It updated `main` with `git branch -f main origin/main` rather than `git pull --ff-only`, and confirmed only afterwards that this was a fast-forward. Checking first is the safer order.
+
+**Human decisions:**
+- Commit the merge, keeping both sides.
+- Fix `.gitignore`: Person 2's change removed the `docs/project.pdf` rule and left a stray `]`. Restore the rule, and keep `docs/Development_Project.pdf` tracked (the repo is private).
+- Finish Phase 4 with a journey test using the brief's numbers. The `matchOrders` re-entry test waits for Phase 5.
+- Tell Person 2 about the interface comment change, and that the ABI needs re-exporting after Phase 4 merges.

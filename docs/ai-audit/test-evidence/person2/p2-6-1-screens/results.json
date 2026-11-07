@@ -1,0 +1,75 @@
+{
+  "wallet": "MOCK (not MetaMask)",
+  "rpc": "http://127.0.0.1:8546",
+  "base": "http://localhost:3100",
+  "passed": 13,
+  "failed": 0,
+  "results": [
+    {
+      "name": "default: no parameter shows the original NTU / SGDx market; disconnected holdings ask to connect",
+      "status": "pass",
+      "ms": 866
+    },
+    {
+      "name": "connected as Alice: all-token overview lists nonzero tokens across registries, deduplicated, unfiltered by the pair",
+      "status": "pass",
+      "ms": 1222
+    },
+    {
+      "name": "registry paging: the TokenFactory registry beyond the first 50 tokens is discovered",
+      "status": "pass",
+      "ms": 14
+    },
+    {
+      "name": "zero balances: hidden by default, shown on request, for an account that holds only NTU and SGDx",
+      "status": "pass",
+      "ms": 367
+    },
+    {
+      "name": "selecting DTT / SGDx switches every market-specific panel, updates the URL, and sends nothing to the wallet",
+      "status": "pass",
+      "ms": 247
+    },
+    {
+      "name": "a reload of the deep link keeps the selection (URL is the source of truth)",
+      "status": "pass",
+      "ms": 1475
+    },
+    {
+      "name": "invalid, unregistered and unreadable market requests fall back to the seed market with a plain notice",
+      "status": "pass",
+      "ms": 1845
+    },
+    {
+      "name": "Dashboard to Trade keeps the market, and Trade links back to the Dashboard with it",
+      "status": "pass",
+      "ms": 1650
+    },
+    {
+      "name": "the dashboard ticket trades the selected market: Bob buys 4 DTT at a 2.2 limit; the order goes to the DTT book; escrow and fill are correct on-chain",
+      "status": "pass",
+      "ms": 1756
+    },
+    {
+      "name": "after the trade the global overview shows Bob's new DTT without a reload",
+      "status": "pass",
+      "ms": 46
+    },
+    {
+      "name": "a token created in the app appears in the overview without a reload (in-app navigation only)",
+      "status": "pass",
+      "ms": 1596
+    },
+    {
+      "name": "accessible controls: the selector and the zero-balance checkbox work by keyboard and have visible focus",
+      "status": "pass",
+      "ms": 1392
+    },
+    {
+      "name": "layout at desktop, tablet and mobile: no horizontal overflow, no console errors",
+      "status": "pass",
+      "ms": 13696
+    }
+  ],
+  "consoleErrors": []
+}

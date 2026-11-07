@@ -1,0 +1,210 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* The interface is dark-only, matching the approved Liquid Glass reference. `.dark` is set on <html>, so shadcn's
+   `dark:` variants apply. */
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Brand and semantic colours. Buy and sell are never shown by colour alone (always with a label). */
+  --color-lilac: var(--lilac);
+  --color-violet: var(--violet);
+  --color-azure: var(--azure);
+  --color-buy: var(--buy);
+  --color-sell: var(--sell);
+  --color-warn: var(--warn);
+  --color-subtle: var(--subtle);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root,
+.dark {
+  color-scheme: dark;
+  --radius: 0.75rem;
+
+  /* Deep navy ground, light lavender-white ink. */
+  --background: #080d19;
+  --foreground: #f4f5ff;
+  --card: #121a2d;
+  --card-foreground: #f4f5ff;
+  --popover: #141c31;
+  --popover-foreground: #f4f5ff;
+  --primary: #7c5cf2;
+  --primary-foreground: #ffffff;
+  --secondary: #1c2540;
+  --secondary-foreground: #e6e8f7;
+  --muted: #1a2238;
+  --muted-foreground: #b6bed8;
+  --accent: #232c4a;
+  --accent-foreground: #f4f5ff;
+  --destructive: #f06a8e;
+  --border: rgb(174 194 255 / 0.16);
+  --input: rgb(174 194 255 / 0.2);
+  --ring: #a58bff;
+  --chart-1: #9c80fb;
+  --chart-2: #6aa4ff;
+  --chart-3: #36dc9a;
+  --chart-4: #f06a8e;
+  --chart-5: #f2c14e;
+  --sidebar: #10172a;
+  --sidebar-foreground: #e3e6f6;
+  --sidebar-primary: #7c5cf2;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #222b49;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgb(174 194 255 / 0.16);
+  --sidebar-ring: #a58bff;
+
+  --lilac: #b49cff;
+  --violet: #7c5cf2;
+  --azure: #6aa4ff;
+  --buy: #3ddc9e;
+  --sell: #f37aa3;
+  --warn: #f2c14e;
+  --subtle: #96a0be;
+
+  /* Glass recipe. */
+  --glass-fill:
+    radial-gradient(120% 90% at 0% 0%, rgb(120 128 222 / 0.16), transparent 55%),
+    linear-gradient(135deg, rgb(58 70 120 / 0.42), rgb(20 28 52 / 0.8) 50%, rgb(26 34 64 / 0.7));
+  --glass-fill-strong: linear-gradient(135deg, rgb(98 102 168 / 0.42), rgb(34 44 74 / 0.62));
+  --glass-border: rgb(186 202 255 / 0.2);
+  --glass-shadow: 0 22px 48px -14px rgb(0 0 0 / 0.6), 0 3px 10px rgb(3 6 18 / 0.4);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.09), inset 0 0 0 1px rgb(140 150 255 / 0.03);
+  --violet-glow: 0 0 0 1px rgb(196 182 255 / 0.32), 0 8px 24px -6px rgb(124 92 242 / 0.55);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply text-foreground;
+    min-height: 100dvh;
+    background-color: var(--background);
+    /* Layered lighting: a violet-blue bloom behind the hero and a faint cool wash lower down. */
+    background-image:
+      radial-gradient(60rem 28rem at 58% -6%, rgb(40 56 140 / 0.55), transparent 62%),
+      radial-gradient(40rem 30rem at 8% 70%, rgb(92 64 196 / 0.16), transparent 70%),
+      radial-gradient(46rem 30rem at 100% 100%, rgb(48 96 196 / 0.12), transparent 70%),
+      linear-gradient(165deg, #0a1020 0%, #080c17 72%);
+    background-attachment: fixed;
+    font-feature-settings: "cv11", "ss01";
+    letter-spacing: -0.011em;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: rgb(124 92 242 / 0.45);
+    color: #ffffff;
+  }
+  input,
+  textarea {
+    caret-color: var(--lilac);
+  }
+  html {
+    scrollbar-color: rgb(150 160 220 / 0.3) transparent;
+    scrollbar-width: thin;
+  }
+}
+
+/* A liquid-glass panel: translucent gradient fill, hairline light border, inner top highlight, soft long shadow. */
+@utility glass {
+  position: relative;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), var(--glass-highlight);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+/* Raised glass for cards that sit on another panel (hero status cards, list rows). */
+@utility glass-raised {
+  background: var(--glass-fill-strong);
+  border: 1px solid rgb(198 212 255 / 0.22);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1), 0 12px 28px -10px rgb(0 0 0 / 0.5);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* The active pill and sidebar item: violet glass with an inner glow. */
+@utility glass-active {
+  background: linear-gradient(140deg, rgb(140 118 240 / 0.62), rgb(70 76 150 / 0.5));
+  border: 1px solid rgb(200 188 255 / 0.34);
+  box-shadow: inset 0 1px 6px rgb(255 255 255 / 0.18), 0 0 18px -4px rgb(132 101 230 / 0.45);
+}
+
+@utility glass-inset {
+  background: rgb(88 104 160 / 0.13);
+  border: 1px solid rgb(170 186 255 / 0.08);
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum", "zero";
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

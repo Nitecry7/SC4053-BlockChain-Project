@@ -1,0 +1,80 @@
+{
+  "wallet": "MOCK (not MetaMask)",
+  "rpc": "http://127.0.0.1:8546",
+  "base": "http://localhost:3100",
+  "passed": 14,
+  "failed": 0,
+  "results": [
+    {
+      "name": "create-token page: disconnected visitors are asked to connect, and nothing can be submitted",
+      "status": "pass",
+      "ms": 383
+    },
+    {
+      "name": "connect through the wallet",
+      "status": "pass",
+      "ms": 516
+    },
+    {
+      "name": "validation: empty, whitespace, control characters, zero, too many decimals and over-MAX supply are refused with no wallet request",
+      "status": "pass",
+      "ms": 137
+    },
+    {
+      "name": "issue Fizz Coin (FIZZ, 1,000,000): review, one wallet request, verified result card, chain agrees",
+      "status": "pass",
+      "ms": 489
+    },
+    {
+      "name": "the Tokens page lists the new token without a reload",
+      "status": "pass",
+      "ms": 192
+    },
+    {
+      "name": "list market from the result: the new token is pre-selected as base; choose SGDx as quote; review and orientation warning; ack gates the button",
+      "status": "pass",
+      "ms": 570
+    },
+    {
+      "name": "rejection in the wallet is reported, nothing is sent, and Try again recovers",
+      "status": "pass",
+      "ms": 281
+    },
+    {
+      "name": "list FIZZ / SGDx: result card verified on-chain, registry and book honest",
+      "status": "pass",
+      "ms": 272
+    },
+    {
+      "name": "Trade this market: the new market loads through the registry with an honest empty book, and an order can be placed and rests",
+      "status": "pass",
+      "ms": 677
+    },
+    {
+      "name": "duplicate and reversed pairs are blocked before any signature, with a link to the existing market",
+      "status": "pass",
+      "ms": 1101
+    },
+    {
+      "name": "pair validation: same token twice, a non-token address and a 6-decimal-style bad address are refused with messages",
+      "status": "pass",
+      "ms": 729
+    },
+    {
+      "name": "wrong network: the create forms offer Switch to Anvil and send nothing",
+      "status": "pass",
+      "ms": 799
+    },
+    {
+      "name": "account change while the wallet request is open: flagged stale, nothing attributed to the new account",
+      "status": "pass",
+      "ms": 4470
+    },
+    {
+      "name": "layout at desktop, tablet and mobile: no horizontal overflow, no console errors",
+      "status": "pass",
+      "ms": 22473
+    }
+  ],
+  "consoleErrors": []
+}
