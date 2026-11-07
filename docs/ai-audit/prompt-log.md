@@ -520,3 +520,85 @@ None of these is a bug in the engine code, so no issue file was added.
 - The deployed factory embeds the old bytecode, so redeploy and re-export the ABI.
 - Map `InvalidMaxCount` to a message.
 - The "not available yet" text in `order-result.tsx` is out of date.
+
+---
+
+## 2026-11-07: Stage 3, size check, factory integration and handoff part 1 (before stop-limit)
+
+**Prompt (summary):**
+1. Sync with `origin/main`.
+2. Report sizes against EIP-170 and EIP-3860, and estimate what stop-limit adds.
+3. Write `test/Integration.Factory.t.sol`: TokenFactory, then MarketFactory, then the brief's journey with cancel, a multi-party `matchOrders`, and duplicate or reversed listing refused.
+4. Deploy with Person 2's script on a scratch Anvil (port 8546 only), run the same journey with `cast`, then stop that Anvil.
+5. Do not edit Person 2's files.
+6. Write `docs/ENGINE_HANDOFF.md` part 1.
+7. Test, log, commit, merge, push.
+
+**Sync:** There was nothing new on `origin/main` since `dab79f8` except this project's own Phase 5 merge. `origin/faheem` has 0 commits that are not on `main`, so nothing needed merging and there were no conflicts.
+
+**Sizes** (`forge build --sizes`; limits are 24,576 B runtime and 49,152 B initcode):
+
+| Contract | Runtime | Initcode | Runtime margin | Initcode margin |
+|---|---|---|---|---|
+| OrderBook | 7,239 | 7,902 | 17,337 | 41,250 |
+| MarketFactory | 9,286 | 9,315 | 15,290 | 39,837 |
+
+MarketFactory's runtime is about OrderBook's initcode plus 1.4 KB, because it embeds the creation code.
+
+The stop-limit estimate is extrapolated, not measured. Phase 5's `matchOrders` added 427 B. Stop-limit adds stop placement with its own sorted lists, a bounded scan or insert, trigger with a shared budget, and PendingTrigger cancel. That is roughly 1.5 to 3 KB of runtime, so OrderBook would reach about 9 to 10.5 KB, and MarketFactory about 11 to 12.5 KB. That is about half the limit, so no optimizer change or deployer split is needed. Re-measure after Phase 6.
+
+**Integration test:** `test/Integration.Factory.t.sol` has 5 tests, all passing:
+- the stack wiring
+- the journey with exact balances and the `OrderCancelled(1, alice, 60e18, 0)` event
+- a non-owner cancel and a second cancel both refused
+- 4 buyers and 4 sellers settled by one keeper `matchOrders`
+- the same pair and the reversed pair refused with `MarketExists(book)`
+
+It uses real DemoTokens and exact per-order approvals, as the wallet flow does.
+
+**Scratch Anvil:**
+- `anvil --port 8546`. Before starting, nothing was listening on ports 8540 to 8549, and no repo `broadcast/` or `cache/` deploy record existed.
+- Deployed with `forge script script/Deploy.s.sol:Deploy --rpc-url http://127.0.0.1:8546 --broadcast --unlocked --sender 0xf39F...2266`. `FOUNDRY_BROADCAST` and `FOUNDRY_CACHE_PATH` were redirected to the session scratchpad, following Person 2's P2-005 procedure. Afterwards the repo's `broadcast/` and `cache/` were confirmed absent.
+- Result: `ONCHAIN EXECUTION COMPLETE & SUCCESSFUL`. TokenFactory `0x5FbD...0aa3`, MarketFactory `0xe7f1...0512`, NTU `0xa16E...d2be`, SGDx `0xB7A5...d968`, market `0xCafa...052c`. These are the same as DEPLOYMENT.md's fresh-chain table.
+- Real `cast` results:
+
+| Step | Status | Gas | Trades | Tx |
+|---|---|---|---|---|
+| Alice approve 100 NTU | 1 | 46,379 | 0 | `0xc88fb0be...27d2` |
+| Alice placeLimitOrder Sell 100@2 | 1 | 303,333 | 0 | `0x3b90fe49...43c4` |
+| Bob approve 80 SGDx (`requiredQuote`) | 1 | 46,379 | 0 | `0x30157e6c...b134` |
+| Bob placeLimitOrder Buy 40@2 | 1 | 369,761 | 1 | `0x3c7d194a...6383` |
+| Bob cancelOrder(1) | reverted `0xf6412b5a` = `NotOrderOwner` | | | |
+| Alice cancelOrder(1) | 1 | 57,066 | 0 | `0xdee96980...19d7` |
+| Alice cancelOrder(1) again | reverted `0x1d4ecc5b` = `OrderNotActive` | | | |
+| Bob placeLimitOrder Buy 11@3 (after 22 asks of 1@2 from Alice and Carol) | 1 | 890,909 | 10 | `0x9c84d046...3bde` |
+| Account 0 placeLimitOrder Buy 11@2.5 | 1 | 915,545 | 10 | `0x29630ce8...32fe` |
+| Keeper matchOrders(0) and matchOrders(11) | reverted `0xac38930b` = `InvalidMaxCount` | | | |
+| Keeper (account 4, no tokens) matchOrders(10); simulated return 2 | 1 | 223,001 | 2 | `0xeccfe90d...51a8` |
+
+- Every balance check passed:
+  - After the journey: Alice 9,960 NTU and 10,080 SGDx; Bob 10,040 NTU and 9,920 SGDx; the market held 0 and 0. The cancel refunded exactly 60 NTU.
+  - After the batch: Alice 9,949 NTU and 10,102 SGDx; Carol 9,989 NTU and 10,022 SGDx; Bob 10,051 NTU and 9,898 SGDx; the keeper 0 and 0; the market 0 and 0. Orders 23 to 26 were Filled.
+  - A further `matchOrders(1)` simulated as 0.
+- The Anvil was then stopped: port 8546 refuses connections, and no anvil process remains.
+
+**Handoff:** `docs/ENGINE_HANDOFF.md` part 1 covers:
+- signatures, events and errors, with when each fires
+- the cancel and batch call flows, with the verified sequences
+- error text to add for `NotOrderOwner`, `OrderNotActive` and `InvalidMaxCount`
+- the stale frontend files
+- the exact re-run steps (fresh Anvil, deploy, the exporter with `--check` and its tests)
+- a placeholder for part 2
+
+**Person 2's files:** none were edited. The handoff records:
+- `docs/DEPLOYMENT.md`'s stale size figures and "four unnamed functions" note
+- stale comments and UI text in `my-orders.tsx`, `order-result.tsx`, `order-plan.ts` and the tests
+- the missing error text
+
+Their frontend tests' assertions about the placement cap stay correct.
+
+**Not done:** The ABI export was not run, because Node is not installed on this machine. The handoff gives Person 2 the command.
+
+**What the AI got wrong:** In the first draft of the cast script, the refund check computed a balance difference in bash arithmetic, which overflows above about 9.2e18. It was caught on review before running, and replaced with a whole-token difference. The first scratch-deploy command also returned exit code 2, but only because the follow-up `ls` confirmed that the repo's `broadcast/` directory did not exist, which was the intended outcome.
+
+**Results:** `forge test`: 274 passed, 0 failed, 0 skipped (19 suites). `forge fmt --check`: clean.
