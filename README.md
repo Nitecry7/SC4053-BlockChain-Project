@@ -403,6 +403,45 @@ More detail, with diagnosis steps, is in [docs/TESTING.md](docs/TESTING.md#e-tro
 
 ---
 
+## ⚙️ Trading engine (OrderBook)
+
+*Section added by Person 1.*
+
+**Status:** every engine function in the frozen interface is implemented and merged on `main`.
+- limit orders with matching, partial fills and price-time priority
+- **cancel** (Bonus 1), `cancelOrder`
+- **multi-party batch matching** (Bonus 2), `matchOrders`
+- **stop-limit orders** (Bonus 3), `placeStopLimitOrder` and `triggerStopOrders`
+
+The "Not implemented" rows elsewhere in this README describe the **app**, which still needs a redeploy and the bonus UI. See the engine handoff below. `web/lib/contracts/abis.ts` is already regenerated for the current engine.
+
+| Read | For |
+|---|---|
+| [SPEC.md](SPEC.md) | Behaviour: accounting rules, lifecycle, every function, who triggers execution (section 6), known limitations (section 8) |
+| [docs/ENGINE_HANDOFF.md](docs/ENGINE_HANDOFF.md) | For the front end: signatures, events, errors, call flows, UI suggestions for each bonus, and what to re-run |
+| [docs/ENGINE_PHASES.md](docs/ENGINE_PHASES.md) | How the engine was built, phase by phase, with the exact prompts |
+| [docs/report/](docs/report/) | The engine's AI Audit Report section drafts |
+| [docs/ai-audit/test-evidence/](docs/ai-audit/test-evidence/) | Test, invariant and mutation evidence. [DEBUGGING.md](docs/ai-audit/test-evidence/DEBUGGING.md) explains how to replay failures |
+
+**Run the engine tests** (from `contracts/`):
+```bash
+forge test --no-match-path "test/invariant/*"   # unit, fuzz and regression suites: about 15 s
+forge test --match-path "test/invariant/*"      # invariant suite plus the reach test: several minutes
+FOUNDRY_PROFILE=deep forge test --match-path "test/invariant/*"   # 1,000 runs x depth 128: hours
+```
+
+**Replay the whole journey on a private chain** (from the repo root). This is a backup for demos. It starts its own Anvil on port 8546 and refuses to run if anything already answers there. It deploys with `Deploy.s.sol`, without touching your chain's deployment record, then runs these steps with balance checks:
+1. a limit order with a partial fill
+2. a cancel
+3. a 4-trader batch match in one transaction
+4. a stop-limit trigger
+
+```bash
+bash contracts/script/demo-journey.sh
+```
+
+---
+
 ## 📚 Documentation
 
 | Document | What it covers |

@@ -1,0 +1,450 @@
+# forge coverage, 2026-11-07T17:17:19Z
+# command (from contracts/): forge coverage --report summary --no-match-path 'test/invariant/*'
+Warning: optimizer settings and `viaIR` have been disabled for accurate coverage reports.
+If you encounter "stack too deep" errors, consider using `--ir-minimum` which enables `viaIR` with minimum optimization resolving most of the errors.
+See more: https://book.getfoundry.sh/guides/best-practices/stack-too-deep
+Compiling 63 files with Solc 0.8.24
+Solc 0.8.24 finished in 11.12s
+Compiler run successful with warnings:
+    |
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Analysing contracts...
+Running tests...
+
+Ran 2 tests for test/OrderBook.Match.t.sol:OrderBookPayoutViewsTest
+[PASS] test_payout_tradeEmittedBeforeTransfers() (gas: 898989)
+[PASS] test_payout_viewsShowFillSettledAndRemainderNotYetRested() (gas: 6818823)
+Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 25.75ms (12.97ms CPU time)
+
+Ran 8 tests for test/OrderBookBase.t.sol:OrderBookConstructorTest
+[PASS] test_constructor_emptyRevertWhenTokenHasNoDecimals() (gas: 106061)
+[PASS] test_constructor_revertsWhenBaseIsZeroAddress() (gas: 6816)
+[PASS] test_constructor_revertsWhenBaseNot18Decimals() (gas: 980932)
+[PASS] test_constructor_revertsWhenQuoteIsZeroAddress() (gas: 6933)
+[PASS] test_constructor_revertsWhenQuoteNot18Decimals() (gas: 980982)
+[PASS] test_constructor_revertsWhenSameToken() (gas: 7076)
+[PASS] test_setUp_fundsAndApprovesTraders() (gas: 122462)
+[PASS] test_setUp_storesTokensAndConstants() (gas: 43862)
+Suite result: ok. 8 passed; 0 failed; 0 skipped; finished in 30.70ms (17.76ms CPU time)
+
+Ran 1 test for test/OrderBook.Regression.t.sol:BriefJourneyRegressionTest
+[PASS] test_briefJourney_issueListTradePartialCancelBatchStop() (gas: 18015594)
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 45.61ms (42.67ms CPU time)
+
+Ran 2 tests for test/OrderBook.Cancel.t.sol:OrderBookCancelRefundViewsTest
+[PASS] test_cancelRefund_viewsFinalOnBuy() (gas: 6554506)
+[PASS] test_cancelRefund_viewsFinalOnSell() (gas: 6515588)
+Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 21.35ms (15.39ms CPU time)
+
+Ran 3 tests for test/OrderBook.Stop.t.sol:OrderBookStopReentrancyTest
+[PASS] test_reentrancy_duringStopEscrowPullReverts() (gas: 7862087)
+[PASS] test_reentrancy_duringTriggeredFillRevertsAndChangesNothing() (gas: 11726362)
+[PASS] test_swallow_duringTriggeredFillActivatesOnce() (gas: 7821516)
+Suite result: ok. 3 passed; 0 failed; 0 skipped; finished in 51.86ms (40.95ms CPU time)
+
+Ran 4 tests for test/OrderBook.Match.t.sol:OrderBookReentrancyTest
+[PASS] test_reentrancy_duringBasePayout() (gas: 7644941)
+[PASS] test_reentrancy_duringEscrowPullOfBase() (gas: 6830610)
+[PASS] test_reentrancy_duringEscrowPullOfQuote() (gas: 6872051)
+[PASS] test_reentrancy_duringQuotePayout() (gas: 7651564)
+Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 60.77ms (43.83ms CPU time)
+
+Ran 14 tests for test/MarketFactoryIntegration.t.sol:MarketFactoryIntegrationTest
+[PASS] test_market_constantsAndImmutablesMatchADirectDeployment() (gas: 82817)
+[PASS] test_market_everyWriteBehavesLikeADirectDeployment() (gas: 1572605)
+[PASS] test_market_factoryIsNeverTraderOrHolder() (gas: 800358)
+[PASS] test_market_orientationFixesTheSmallestTradablePrice() (gas: 77460)
+[PASS] test_market_runtimeBytecodeIdenticalToADirectDeployment() (gas: 25359)
+[PASS] test_market_tradeSequenceMatchesADirectDeployment() (gas: 1934528)
+[PASS] test_trade_aSecondTraderCanUseAMarketSomeoneElseCreated() (gas: 1204354)
+[PASS] test_trade_capLeavesFundedCrossedRemainder() (gas: 4897713)
+[PASS] test_trade_fifoAtEqualPrice() (gas: 1200657)
+[PASS] test_trade_marketsAreIndependent() (gas: 4751853)
+[PASS] test_trade_partialFillExecutesAtMakerPriceWithRefund() (gas: 897160)
+[PASS] test_trade_pricePriorityAcrossLevels() (gas: 1706404)
+[PASS] test_trade_specWorkedExample() (gas: 913818)
+[PASS] test_trade_takerPartiallyFilledRestsRemainderFunded() (gas: 890648)
+Suite result: ok. 14 passed; 0 failed; 0 skipped; finished in 76.90ms (63.48ms CPU time)
+
+Ran 16 tests for test/Deploy.t.sol:DeployTest
+[PASS] test_defaultWallets_areAnvilAccountsOneToThree() (gas: 9541)
+[PASS] test_deploy_addressesAreNonZeroAndDistinct() (gas: 27997)
+[PASS] test_deploy_balancesAreHolderRemainderAndDemoAmounts() (gas: 141147)
+[PASS] test_deploy_contractSizesAreWithinEvmLimits() (gas: 107675)
+[PASS] test_deploy_customWalletListIsFunded() (gas: 10002028)
+[PASS] test_deploy_emptyWalletListKeepsEverythingWithTheHolder() (gas: 9864079)
+[PASS] test_deploy_marketIsRegisteredInBothOrientations() (gas: 54419)
+[PASS] test_deploy_marketReferencesIntendedTokensAndSpecConstants() (gas: 23995)
+[PASS] test_deploy_rejectsZeroWalletHolderAsWalletAndDuplicateWallets() (gas: 102193)
+[PASS] test_deploy_tokensAreInTheTokenFactoryRegistry() (gas: 43051)
+[PASS] test_deploy_tokensHaveExpectedMetadataAndSupply() (gas: 65992)
+[PASS] test_deploy_tradeOnTheDeployedMarket() (gas: 866970)
+[PASS] test_deploy_wrongHolderFailsAPostCheck() (gas: 10024353)
+[PASS] test_run_broadcastsFromTheDeployerAndFundsDefaultWallets() (gas: 18268948)
+[PASS] test_run_revertsOffTheLocalChain() (gas: 60180)
+[PASS] test_run_revertsWhenTheNodeReportsAnotherChainEvenIfBlockChainidSaysLocal() (gas: 8239069)
+Suite result: ok. 16 passed; 0 failed; 0 skipped; finished in 83.60ms (69.48ms CPU time)
+
+Ran 1 test for test/OrderBook.Batch.t.sol:OrderBookBatchPayoutViewsTest
+[PASS] test_matchPayout_viewsShowBothFilledOrdersAlreadyUnlinked() (gas: 11272226)
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 31.85ms (26.26ms CPU time)
+
+Ran 13 tests for test/OrderBook.Cancel.t.sol:OrderBookCancelReentrancyTest
+[PASS] test_reentrancy_cancelOtherOrderDuringRefundOfBuy() (gas: 6934935)
+[PASS] test_reentrancy_cancelOtherOrderDuringRefundOfSell() (gas: 6895320)
+[PASS] test_reentrancy_cancelSameOrderDuringPriceImprovementRefund() (gas: 6871120)
+[PASS] test_reentrancy_duringCancelRefundOfBuy() (gas: 9912563)
+[PASS] test_reentrancy_duringCancelRefundOfSell() (gas: 9880889)
+[PASS] test_reentrancy_ownerCancelDuringBuyerPayout() (gas: 6895067)
+[PASS] test_reentrancy_ownerCancelDuringEscrowPullOfBase() (gas: 6185657)
+[PASS] test_reentrancy_ownerCancelDuringEscrowPullOfQuote() (gas: 6206323)
+[PASS] test_reentrancy_ownerCancelDuringSellerPayout() (gas: 6909000)
+[PASS] test_reentrancy_placeDuringPriceImprovementRefund() (gas: 6921122)
+[PASS] test_swallow_cancelRefundOfBuyPaidOnce() (gas: 6899575)
+[PASS] test_swallow_cancelRefundOfSellPaidOnce() (gas: 6864645)
+[PASS] test_swallow_priceImprovementRefundPaidOnce() (gas: 7004757)
+Suite result: ok. 13 passed; 0 failed; 0 skipped; finished in 134.37ms (122.09ms CPU time)
+
+Ran 6 tests for test/OrderBook.Batch.t.sol:OrderBookBatchReentrancyTest
+[PASS] test_reentrancy_duringMatchBasePayout() (gas: 16833608)
+[PASS] test_reentrancy_duringMatchPriceImprovementRefund() (gas: 17092249)
+[PASS] test_reentrancy_duringMatchQuotePayout() (gas: 16894103)
+[PASS] test_reentrancy_matchOrdersDuringPlacementPriceImprovementRefund() (gas: 6843933)
+[PASS] test_swallow_matchOrdersDuringPlacementRefundPaidOnce() (gas: 7001429)
+[PASS] test_swallow_matchPriceImprovementRefundPaidOnce() (gas: 11462374)
+Suite result: ok. 6 passed; 0 failed; 0 skipped; finished in 181.93ms (168.77ms CPU time)
+
+Ran 6 tests for test/Integration.Factory.t.sol:IntegrationFactoryTest
+[PASS] test_batch_fourBuyersFourSellersSettledInOneMatchOrders() (gas: 30824501)
+[PASS] test_journey_cancelByAnotherTraderOrTwiceIsRefused() (gas: 605968)
+[PASS] test_journey_sell100Buy40CancelReturnsExactly60() (gas: 1518018)
+[PASS] test_listing_samePairAndReversedPairAreRefused() (gas: 74733)
+[PASS] test_stack_marketIsTheFactoryListingOfFactoryTokens() (gas: 79653)
+[PASS] test_stop_tradeMovesPriceKeeperTriggersSellStopAndItFills() (gas: 3059580)
+Suite result: ok. 6 passed; 0 failed; 0 skipped; finished in 110.00ms (95.48ms CPU time)
+
+Ran 6 tests for test/OrderBook.Regression.t.sol:OrderBookRegressionTest
+[PASS] test_issue001_unlinkOfOrderNotInBookRevertsAndKeepsTheSide() (gas: 1904089)
+[PASS] test_issue002_viewsDuringAPayoutMatchTheDocumentedDeviation() (gas: 6818302)
+[PASS] test_issue003_fillWhoseQtyTimesPriceExceedsUint256Settles() (gas: 1065907)
+[PASS] test_issue004_makerFilledTwiceTakerStopsAndTradeFieldsForBuyMaker() (gas: 3402723)
+[PASS] test_issue005_zeroAddressCannotCancelUnknownOrIdZero() (gas: 161953)
+[PASS] test_issue006_unplaceableStopNoLongerBlocksTriggers() (gas: 86979835)
+Suite result: ok. 6 passed; 0 failed; 0 skipped; finished in 320.94ms (306.82ms CPU time)
+
+Ran 11 tests for test/DemoToken.t.sol:DemoTokenTest
+[PASS] testFuzz_supplyIsFixedAcrossTransfers(uint256) (runs: 1000, μ: 89872, ~: 89767)
+[PASS] test_approveAndTransferFrom() (gas: 155279)
+[PASS] test_constructor_emitsMintTransfer() (gas: 11153)
+[PASS] test_constructor_mintsWholeSupplyToHolder() (gas: 18291)
+[PASS] test_constructor_revertsWhenHolderIsZeroAddress() (gas: 6855)
+[PASS] test_hasNoOwner() (gas: 26946)
+[PASS] test_metadata() (gas: 31828)
+[PASS] test_noMintOrBurnEntryPoint() (gas: 55924)
+[PASS] test_transferFrom_revertsWithoutAllowance() (gas: 43106)
+[PASS] test_transfer_movesBalance() (gas: 87427)
+[PASS] test_transfer_revertsOnInsufficientBalance() (gas: 40224)
+Suite result: ok. 11 passed; 0 failed; 0 skipped; finished in 774.92ms (772.55ms CPU time)
+
+Ran 22 tests for test/OrderBook.Place.t.sol:OrderBookPlaceTest
+[PASS] testFuzz_requiredQuote_exactForAlignedInputs(uint256,uint256) (runs: 1000, μ: 10904, ~: 11135)
+[PASS] test_getOrder_unknownIdReturnsZeroOrder() (gas: 124711)
+[PASS] test_getUserOrderIds_perTrader() (gas: 1359651)
+[PASS] test_place_bookTooDeepRevertRollsBackEscrowPull() (gas: 43091662)
+[PASS] test_place_buyPullsExactQuote() (gas: 582550)
+[PASS] test_place_crossingOrderTradesInsteadOfResting() (gas: 967799)
+[PASS] test_place_emitsOrderPlaced() (gas: 912094)
+[PASS] test_place_escrowAccumulatesAcrossOrders() (gas: 1794609)
+[PASS] test_place_failedAttemptDoesNotConsumeId() (gas: 537070)
+[PASS] test_place_idsIncreaseFromOne() (gas: 1319394)
+[PASS] test_place_ordersRestInPriorityOrder() (gas: 3778678)
+[PASS] test_place_revertsBadLot() (gas: 426842)
+[PASS] test_place_revertsBadTick() (gas: 427311)
+[PASS] test_place_revertsInsufficientBalance() (gas: 893779)
+[PASS] test_place_revertsNoAllowance() (gas: 1002660)
+[PASS] test_place_revertsZeroAmount() (gas: 426174)
+[PASS] test_place_revertsZeroPrice() (gas: 426304)
+[PASS] test_place_sellPullsExactBase() (gas: 554468)
+[PASS] test_place_smallestAlignedOrderEscrowsExactly() (gas: 543642)
+[PASS] test_place_storesOrderFields() (gas: 967490)
+[PASS] test_place_validationOrder() (gas: 639867)
+[PASS] test_requiredQuote_roundsUpForUnalignedInputs() (gas: 37356)
+Suite result: ok. 22 passed; 0 failed; 0 skipped; finished in 772.47ms (793.14ms CPU time)
+
+Ran 37 tests for test/OrderBook.Cancel.t.sol:OrderBookCancelTest
+[PASS] testFuzz_cancel_partialFillThenCancelRefundsExactRemainder(bool,uint256,uint256,uint256) (runs: 1000, μ: 1031852, ~: 1060445)
+[PASS] test_cancel_bothSidesOfCrossedBook() (gas: 6276003)
+[PASS] test_cancel_briefJourneyAliceSells100BobBuys40AliceGets60Back() (gas: 1502495)
+[PASS] test_cancel_buyEmitsBeforeRefundAndTouchesOnlyQuote() (gas: 532102)
+[PASS] test_cancel_buyTakerRemainderWithPriceImprovementRefundsLockedQuote() (gas: 1036888)
+[PASS] test_cancel_emitsOrderCancelledForBuy() (gas: 963868)
+[PASS] test_cancel_emitsOrderCancelledForSell() (gas: 942454)
+[PASS] test_cancel_filledOrderRevertsOrderNotActive() (gas: 1390404)
+[PASS] test_cancel_head() (gas: 1404195)
+[PASS] test_cancel_keepsTimePriorityAtEqualPrice() (gas: 1774982)
+[PASS] test_cancel_laterMatchingSkipsCancelledAsk_head() (gas: 1861877)
+[PASS] test_cancel_laterMatchingSkipsCancelledAsk_middle() (gas: 1864453)
+[PASS] test_cancel_laterMatchingSkipsCancelledAsk_tail() (gas: 1856563)
+[PASS] test_cancel_laterMatchingSkipsCancelledBid_head() (gas: 1909782)
+[PASS] test_cancel_laterMatchingSkipsCancelledBid_middle() (gas: 1911925)
+[PASS] test_cancel_laterMatchingSkipsCancelledBid_tail() (gas: 1905548)
+[PASS] test_cancel_laterMatchingSkipsCancelledOrder() (gas: 1785903)
+[PASS] test_cancel_middle() (gas: 1406666)
+[PASS] test_cancel_minimumSizeBuyRefundsOneWei() (gas: 582626)
+[PASS] test_cancel_minimumSizeSellRefundsOneLot() (gas: 530992)
+[PASS] test_cancel_nonOwnerOnFilledOrderRevertsNotOrderOwner() (gas: 1041982)
+[PASS] test_cancel_nonOwnerRevertsNotOrderOwner() (gas: 685859)
+[PASS] test_cancel_onlyAffectsThatOrdersEscrow() (gas: 1877163)
+[PASS] test_cancel_onlyElement() (gas: 537426)
+[PASS] test_cancel_onlyOrderThenTakerRests() (gas: 979935)
+[PASS] test_cancel_openBuyRefundsQuoteOnly() (gas: 634651)
+[PASS] test_cancel_openSellRefundsBaseOnly() (gas: 568682)
+[PASS] test_cancel_partlyFilledBuyRefundsRemainderOnly() (gas: 1103444)
+[PASS] test_cancel_partlyFilledSellRefundsRemainderOnly() (gas: 1023152)
+[PASS] test_cancel_sellEmitsBeforeRefundAndTouchesOnlyBase() (gas: 514571)
+[PASS] test_cancel_sellTakerRemainderRefundsUnfilledBase() (gas: 1099655)
+[PASS] test_cancel_statusCheckRejectsLinkedTerminalOrder() (gas: 1076544)
+[PASS] test_cancel_staysInUserOrdersAndLeavesBook() (gas: 550648)
+[PASS] test_cancel_tail() (gas: 1382393)
+[PASS] test_cancel_twiceRevertsOrderNotActive() (gas: 1070711)
+[PASS] test_cancel_unknownIdRevertsNotOrderOwner() (gas: 982612)
+[PASS] test_cancel_zeroAddressCallerOnUnknownIdRevertsNotOrderOwner() (gas: 161968)
+Suite result: ok. 37 passed; 0 failed; 0 skipped; finished in 4.25s (4.40s CPU time)
+
+Ran 4 tests for test/TokenOrderBookIntegration.t.sol:TokenOrderBookIntegrationTest
+[PASS] test_factoryTokensAreAcceptedByTheOrderBook() (gas: 43757)
+[PASS] test_noAllowance_leavesFactoryTokenBalancesUntouched() (gas: 336881)
+[PASS] test_specWorkedExample_withFactoryTokens() (gas: 975361)
+[PASS] test_tradeEventCarriesFactoryTokenAmounts() (gas: 746534)
+Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 15.64ms (9.54ms CPU time)
+
+Ran 20 tests for test/TokenFactory.t.sol:TokenFactoryTest
+[PASS] testFuzz_createToken_supplyAboveMaxReverts(uint256) (runs: 1000, μ: 42746, ~: 43404)
+[PASS] testFuzz_createToken_supplyInBounds(uint256) (runs: 1000, μ: 969362, ~: 968785)
+[PASS] testFuzz_getTokens_matchesRegistry(uint8,uint256,uint256) (runs: 1000, μ: 4435200, ~: 3744735)
+[PASS] test_createToken_acceptsExactlyMaxSupplyAndOneWei() (gas: 1897360)
+[PASS] test_createToken_emitsTokenCreated() (gas: 958052)
+[PASS] test_createToken_mintsWholeSupplyToCaller() (gas: 996362)
+[PASS] test_createToken_revertsEmptyName() (gas: 35156)
+[PASS] test_createToken_revertsEmptySymbol() (gas: 35236)
+[PASS] test_createToken_revertsSupplyTooLarge() (gas: 41257)
+[PASS] test_createToken_revertsZeroSupply() (gas: 35454)
+[PASS] test_createToken_sameNameAndSymbolGiveDistinctTokens() (gas: 1882078)
+[PASS] test_createToken_validationOrder() (gas: 61589)
+[PASS] test_getTokens_limitLargerThanRemainingIsTruncated() (gas: 2811151)
+[PASS] test_getTokens_limitZeroReturnsEmpty() (gas: 2817309)
+[PASS] test_getTokens_maxLimitDoesNotOverflow() (gas: 2814442)
+[PASS] test_getTokens_middlePage() (gas: 4668543)
+[PASS] test_getTokens_offsetAtOrPastEndReturnsEmpty() (gas: 2826043)
+[PASS] test_isFactoryToken_trueOnlyForFactoryTokens() (gas: 986244)
+[PASS] test_registry_recordsTokensOldestFirst() (gas: 2826860)
+[PASS] test_registry_startsEmpty() (gas: 25705)
+Suite result: ok. 20 passed; 0 failed; 0 skipped; finished in 6.38s (6.40s CPU time)
+
+Ran 23 tests for test/OrderBook.Book.t.sol:OrderBookBookTest
+[PASS] test_getBestBidAndAsk_returnHeads() (gas: 1406788)
+[PASS] test_getBook_respectsMaxOrdersInPriorityOrder() (gas: 1332112)
+[PASS] test_insert_asksAscendingAcrossPrices() (gas: 1170720)
+[PASS] test_insert_bidsDescendingAcrossPrices() (gas: 1170636)
+[PASS] test_insert_deepBookStillAcceptsNewBest() (gas: 36342284)
+[PASS] test_insert_fifoAtEqualPrice() (gas: 2350644)
+[PASS] test_insert_higherIdWithLowerBookSeqRanksFirst() (gas: 1516564)
+[PASS] test_insert_lowerBookSeqRanksFirstWhicheverIsInsertedFirst() (gas: 785204)
+[PASS] test_insert_priceBeatsBookSeq() (gas: 794024)
+[PASS] test_insert_revertsBookTooDeepPastMaxScan() (gas: 78859735)
+[PASS] test_insert_sidesAreIndependent() (gas: 746998)
+[PASS] test_insert_succeedsWithExactlyMaxScanOrdersAhead() (gas: 78351030)
+[PASS] test_stampBookSeq_increasesAndIsNotTheOrderId() (gas: 496563)
+[PASS] test_unlink_head() (gas: 1154123)
+[PASS] test_unlink_leavesOtherSideAlone() (gas: 681632)
+[PASS] test_unlink_middle() (gas: 1156174)
+[PASS] test_unlink_onlyElement() (gas: 402387)
+[PASS] test_unlink_orderNotInBookDoesNotEmptySide() (gas: 982495)
+[PASS] test_unlink_revertsWhenAlreadyUnlinked() (gas: 763528)
+[PASS] test_unlink_revertsWhenOrderNotInBook() (gas: 565564)
+[PASS] test_unlink_tail() (gas: 1149845)
+[PASS] test_unlink_thenInsertAgain() (gas: 911479)
+[PASS] test_views_emptyBookReturnsZero() (gas: 81680)
+Suite result: ok. 23 passed; 0 failed; 0 skipped; finished in 14.10s (900.58ms CPU time)
+
+Ran 39 tests for test/OrderBook.Stop.t.sol:OrderBookStopTest
+[PASS] testFuzz_trigger_randomStopsKeepSolvencyAndLists(uint256) (runs: 1000, μ: 24850005, ~: 24937940)
+[PASS] test_cancel_activatedStopCancelsLikeALimitOrder() (gas: 1468950)
+[PASS] test_cancel_cancelledStopIsNeverTriggered() (gas: 1372769)
+[PASS] test_cancel_pendingBuyStopRefundsFullEscrow() (gas: 588105)
+[PASS] test_cancel_pendingSellStopRefundsFullEscrow() (gas: 516151)
+[PASS] test_cancel_pendingStopByNonOwnerReverts() (gas: 519151)
+[PASS] test_cancel_pendingStopHeadMiddleTailKeepLinks() (gas: 1812187)
+[PASS] test_gas_triggerTenActivationsDeepInserts() (gas: 78159939)
+[PASS] test_gas_triggerTenActivationsTenFillsWithRefunds() (gas: 9599367)
+[PASS] test_place_buyStopEscrowsQuoteAtLimitAndEmits() (gas: 540747)
+[PASS] test_place_pendingStopDoesNotMatchAndIsNotMatched() (gas: 1396026)
+[PASS] test_place_pendingStopIsNotInTheBookButIsListedForTheTrader() (gas: 1360701)
+[PASS] test_place_sellStopEscrowsBaseAndEmits() (gas: 547095)
+[PASS] test_place_stopListInsertBoundedByMaxInsertScan() (gas: 70407365)
+[PASS] test_place_stopListsSortedByTriggerWithTiesInPlacementOrder() (gas: 2599155)
+[PASS] test_place_validationOrderAndTriggerChecks() (gas: 275058)
+[PASS] test_solvency_contractHoldsEscrowOfPendingStops() (gas: 1283275)
+[PASS] test_trigger_activatedBuyStopFillsWithPriceImprovementRefund() (gas: 1909006)
+[PASS] test_trigger_activatedBuyStopPartFillKeepsExactRemainderEscrow() (gas: 1973340)
+[PASS] test_trigger_activatedSellStopFillsAgainstABid() (gas: 1864966)
+[PASS] test_trigger_activatedStopQueuesBehindEarlierOrdersAtItsPrice() (gas: 2248988)
+[PASS] test_trigger_activatedStopWithNoLiquidityRestsAsLimitOrder() (gas: 1881470)
+[PASS] test_trigger_buySideFirstWhenBothEligible() (gas: 1969499)
+[PASS] test_trigger_cannotTriggerTheSameStopTwice() (gas: 1449943)
+[PASS] test_trigger_cascadeStillBoundedByMaxCount() (gas: 2344602)
+[PASS] test_trigger_cascadeWithinOneCall() (gas: 2639200)
+[PASS] test_trigger_eventCarriesLastTradePriceNotTriggerPrice() (gas: 1404872)
+[PASS] test_trigger_exactTriggerPriceTriggersBothSides() (gas: 1918281)
+[PASS] test_trigger_honestStopBehindTooDeepBookIsRefundedExactly() (gas: 88130170)
+[PASS] test_trigger_ineligibleBuyHeadDoesNotHideEligibleSellStop() (gas: 1829698)
+[PASS] test_trigger_maxCountRespected() (gas: 3068076)
+[PASS] test_trigger_nothingBeforeTheFirstTrade() (gas: 942720)
+[PASS] test_trigger_partialFillRestsTheRemainder() (gas: 1915311)
+[PASS] test_trigger_revertsInvalidMaxCount() (gas: 130193)
+[PASS] test_trigger_sharedFillBudgetAcrossTheWholeCall() (gas: 14110082)
+[PASS] test_trigger_thirdPartyCallerGainsAndLosesNothing() (gas: 1801529)
+[PASS] test_trigger_unplaceableSellStopRefundsBase() (gas: 83412691)
+[PASS] test_trigger_unplaceableStopIsCancelledAndDoesNotBlockOthers() (gas: 86272149)
+[PASS] test_trigger_wrongSideOfThePriceDoesNotTrigger() (gas: 1758578)
+Suite result: ok. 39 passed; 0 failed; 0 skipped; finished in 33.05s (34.70s CPU time)
+
+Ran 37 tests for test/OrderBook.Match.t.sol:OrderBookMatchTest
+[PASS] testFuzz_coarsePlacementsKeepSolvencyAndBookOrder(uint256) (runs: 25, μ: 430238802, ~: 415087335)
+[PASS] testFuzz_randomPlacementsKeepSolvencyAndBookOrder(uint256) (runs: 1000, μ: 54605092, ~: 54572621)
+[PASS] test_cap_exactlyMaxFillsFillsTakerWithNoRemainder() (gas: 4805075)
+[PASS] test_cap_oneMoreMakerLeavesFundedCrossedTakerThatLaterOrdersDoNotClear() (gas: 7242006)
+[PASS] test_cap_remainderHittingBookTooDeepRevertsFillsToo() (gas: 64741586)
+[PASS] test_fifo_askMakersFillInEntryOrder() (gas: 3602194)
+[PASS] test_fifo_bidMakersFillInEntryOrder() (gas: 3670531)
+[PASS] test_gas_fullCapSweepWithRefunds() (gas: 4785667)
+[PASS] test_gas_insertAtMaxScanDepth() (gas: 47467515)
+[PASS] test_gas_worstCasePlacement() (gas: 140208716)
+[PASS] test_match_buyMakerPartlyFilledKeepsLockedQuoteFunded() (gas: 1078286)
+[PASS] test_match_buyerRefundedPriceImprovementWhenFilled() (gas: 957557)
+[PASS] test_match_buyerRefundedPriceImprovementWithRemainderResting() (gas: 1051124)
+[PASS] test_match_capLeavesRemainderRestingCrossed() (gas: 5417232)
+[PASS] test_match_crossedBookNewTakerFillsOppositeHeadAheadOfOlderOrder() (gas: 5859525)
+[PASS] test_match_emitsOrderPlacedBeforeTrade() (gas: 895268)
+[PASS] test_match_emitsTradeWithBuyMakerAndSellTaker() (gas: 902054)
+[PASS] test_match_emitsTradeWithMakerFields() (gas: 932346)
+[PASS] test_match_exactMatchBuyTaker() (gas: 1089217)
+[PASS] test_match_exactMatchSellTakerExecutesAtMakerPrice() (gas: 997931)
+[PASS] test_match_makerPartlyFilled() (gas: 1031818)
+[PASS] test_match_noRefundTransferWhenNoPriceImprovement() (gas: 897050)
+[PASS] test_match_nonCrossingOrdersRest() (gas: 991011)
+[PASS] test_match_oneTickBelowDoesNotCross() (gas: 939647)
+[PASS] test_match_partlyFilledMakerFilledAgain() (gas: 1570391)
+[PASS] test_match_sellOneTickAboveBidDoesNotCross() (gas: 966885)
+[PASS] test_match_sellTakerPartlyFilledRestsRemainder() (gas: 1073953)
+[PASS] test_match_settlesWhenQtyTimesPriceExceedsUint256() (gas: 1065954)
+[PASS] test_match_specWorkedExample() (gas: 1153475)
+[PASS] test_match_stopsWhenTakerExactlyFilled() (gas: 1403995)
+[PASS] test_match_sweepsLevelsBestFirstAtEachMakerPrice() (gas: 1460592)
+[PASS] test_match_takerPartlyFilledRestsRemainder() (gas: 1115543)
+[PASS] test_match_updatesLastTradePrice() (gas: 1678422)
+[PASS] test_selfTrade_fullFillReturnsEverything() (gas: 949492)
+[PASS] test_selfTrade_partialFillNetsCorrectly() (gas: 1003059)
+[PASS] test_sweep_buyTakerAcrossLevelsPartlyFillsLastMaker() (gas: 1991470)
+[PASS] test_sweep_sellTakerAcrossLevelsPartlyFillsLastMaker() (gas: 2071666)
+Suite result: ok. 37 passed; 0 failed; 0 skipped; finished in 34.96s (59.39s CPU time)
+
+Ran 8 tests for test/OrderBook.Fuzz.t.sol:OrderBookFuzzTest
+[PASS] testFuzz_batch_randomAskSizesClearExactly(uint256,uint256,uint256) (runs: 1000, μ: 11601961, ~: 10616921)
+[PASS] testFuzz_cancel_eitherSideAfterPartialFillRefundsExactly(bool,bool,uint256,uint256,uint256) (runs: 1000, μ: 1059759, ~: 1059654)
+[PASS] testFuzz_cancel_partlyFilledTakerRemainderAfterPriceImprovement(uint256,uint256,uint256,uint256) (runs: 1000, μ: 1179258, ~: 1179895)
+[PASS] testFuzz_place_crossingFillSettlesExactlyAtMakerPrice(bool,uint256,uint256,uint256,uint256) (runs: 1000, μ: 1069069, ~: 1058989)
+[PASS] testFuzz_requiredQuote_ceilInFullPrecision(uint256,uint256,bool) (runs: 1000, μ: 10558, ~: 11088)
+[PASS] testFuzz_requiredQuote_matchesCeilReference(uint128,uint128) (runs: 1000, μ: 8908, ~: 8911)
+[PASS] testFuzz_trigger_buyStopFillsAcrossMakersOrRests(uint256,uint256,uint256,uint256,uint256) (runs: 1000, μ: 2296467, ~: 2299445)
+[PASS] testFuzz_trigger_sellStopFillsAtTheBidPrice(uint256,uint256,uint256,uint256,uint256,uint256) (runs: 1000, μ: 1953046, ~: 1946903)
+Suite result: ok. 8 passed; 0 failed; 0 skipped; finished in 34.97s (91.09s CPU time)
+
+Ran 24 tests for test/OrderBook.Batch.t.sol:OrderBookBatchTest
+[PASS] testFuzz_batch_bidMakersClearAtTheirOwnPrices(uint256,uint256,uint256) (runs: 1000, μ: 11945101, ~: 10903664)
+[PASS] testFuzz_batch_clearsAnyCapCrossedBookExactly(uint256,uint256,uint256) (runs: 1000, μ: 16494846, ~: 15807683)
+[PASS] test_batch_acceptsMaxCountAtCapAndAtOne() (gas: 78147)
+[PASS] test_batch_bothFilledAreBothUnlinked() (gas: 5494314)
+[PASS] test_batch_capRespectedExactly() (gas: 23191496)
+[PASS] test_batch_clearsBookLeftCrossedByCapOverSeveralCalls() (gas: 20085086)
+[PASS] test_batch_filledTakerInBookIsUnlinked() (gas: 5555869)
+[PASS] test_batch_invalidMaxCountCheckedBeforeMatching() (gas: 5414361)
+[PASS] test_batch_makerFollowsBookSeqNotOrderId() (gas: 5548023)
+[PASS] test_batch_multiPartySettlesFourBuyersAndFourSellersInOneCall() (gas: 32502450)
+[PASS] test_batch_noOpOnEmptyBookReturnsZero() (gas: 113077)
+[PASS] test_batch_noOpWhenNotCrossedChangesNothing() (gas: 1013429)
+[PASS] test_batch_noOpWhenOnlyAsks() (gas: 518203)
+[PASS] test_batch_noOpWhenOnlyBids() (gas: 582303)
+[PASS] test_batch_olderAskIsMakerAndSetsPrice() (gas: 5541981)
+[PASS] test_batch_olderBidIsMakerAndSetsPrice() (gas: 5668838)
+[PASS] test_batch_revertsInvalidMaxCountAboveCap() (gas: 43902)
+[PASS] test_batch_revertsInvalidMaxCountAtZero() (gas: 38187)
+[PASS] test_batch_selfTradeAcrossTheCrossingNetsToZero() (gas: 5460837)
+[PASS] test_batch_stopsWhenAsksRunOutWithBidsLeft() (gas: 6865490)
+[PASS] test_batch_stopsWhenBookNoLongerCrossed() (gas: 6011984)
+[PASS] test_batch_thirdPartyCallerGainsAndLosesNothing() (gas: 7525077)
+[PASS] test_batch_unfundedCallerCanClearTheBook() (gas: 5943916)
+[PASS] test_gas_matchOrdersFullCapWithRefunds() (gas: 10061516)
+Suite result: ok. 24 passed; 0 failed; 0 skipped; finished in 34.91s (64.69s CPU time)
+
+Ran 25 tests for test/MarketFactory.t.sol:MarketFactoryTest
+[PASS] testFuzz_getMarkets_matchesRegistry(uint8,uint256,uint256) (runs: 1000, μ: 14333810, ~: 14129507)
+[PASS] test_control_reenteringTokenSucceedsOutsideStaticContext() (gas: 995130956)
+[PASS] test_createMarket_customRevertDataFromTokenPassesThroughUnchanged() (gas: 306908)
+[PASS] test_createMarket_deploysOrderBookForThePair() (gas: 2790948)
+[PASS] test_createMarket_distinctPairsCoexist() (gas: 8331124)
+[PASS] test_createMarket_emitsMarketCreated() (gas: 2787017)
+[PASS] test_createMarket_emptyRevertWhenTokenHasNoDecimals() (gas: 245398)
+[PASS] test_createMarket_factoryHoldsNoTokensAndIsNotTrader() (gas: 2805489)
+[PASS] test_createMarket_failedAttemptsLeaveNoOrphanMarket() (gas: 3885259)
+[PASS] test_createMarket_firstCreatorFixesOrientation() (gas: 2790752)
+[PASS] test_createMarket_isPermissionlessAndRecordsNoOwner() (gas: 5576303)
+[PASS] test_createMarket_revertsInvalidTokens() (gas: 346970)
+[PASS] test_createMarket_revertsMarketExistsForExactPair() (gas: 2816813)
+[PASS] test_createMarket_revertsMarketExistsForReversedPair() (gas: 2816824)
+[PASS] test_createMarket_revertsUnsupportedDecimals() (gas: 1239678)
+[PASS] test_createMarket_tokenCannotReenterFromDecimals() (gas: 1010886449)
+[PASS] test_getMarket_isOrderInsensitive() (gas: 2814269)
+[PASS] test_getMarkets_limitLargerThanRemainingIsTruncated() (gas: 14131696)
+[PASS] test_getMarkets_limitZeroReturnsEmpty() (gas: 14137855)
+[PASS] test_getMarkets_maxLimitDoesNotOverflow() (gas: 14134900)
+[PASS] test_getMarkets_middlePage() (gas: 23535639)
+[PASS] test_getMarkets_offsetAtOrPastEndReturnsEmpty() (gas: 14146628)
+[PASS] test_getMarkets_recordsOldestFirst() (gas: 14138663)
+[PASS] test_isMarket_trueOnlyForFactoryMarkets() (gas: 2817072)
+[PASS] test_registry_startsEmpty() (gas: 39359)
+Suite result: ok. 25 passed; 0 failed; 0 skipped; finished in 34.98s (35.04s CPU time)
+
+Ran 24 test suites in 34.99s (200.34s CPU time): 332 tests passed, 0 failed, 0 skipped (332 total tests)
+
+╭---------------------------------+-------------------+-------------------+------------------+-----------------╮
+| File                            | % Lines           | % Statements      | % Branches       | % Funcs         |
++==============================================================================================================+
+| script/Deploy.s.sol             | 90.91% (60/66)    | 79.84% (99/124)   | 23.81% (5/21)    | 85.71% (6/7)    |
+|---------------------------------+-------------------+-------------------+------------------+-----------------|
+| src/DemoToken.sol               | 100.00% (2/2)     | 100.00% (1/1)     | N/A (0/0)        | 100.00% (1/1)   |
+|---------------------------------+-------------------+-------------------+------------------+-----------------|
+| src/MarketFactory.sol           | 100.00% (26/26)   | 100.00% (30/30)   | 100.00% (6/6)    | 100.00% (6/6)   |
+|---------------------------------+-------------------+-------------------+------------------+-----------------|
+| src/OrderBook.sol               | 100.00% (182/182) | 100.00% (246/246) | 100.00% (59/59)  | 100.00% (25/25) |
+|---------------------------------+-------------------+-------------------+------------------+-----------------|
+| src/TokenFactory.sol            | 100.00% (21/21)   | 100.00% (27/27)   | 100.00% (7/7)    | 100.00% (4/4)   |
+|---------------------------------+-------------------+-------------------+------------------+-----------------|
+| test/Deploy.t.sol               | 100.00% (4/4)     | 100.00% (2/2)     | N/A (0/0)        | 100.00% (2/2)   |
+|---------------------------------+-------------------+-------------------+------------------+-----------------|
+| test/MarketFactory.t.sol        | 100.00% (8/8)     | 100.00% (7/7)     | 100.00% (2/2)    | 100.00% (3/3)   |
+|---------------------------------+-------------------+-------------------+------------------+-----------------|
+| test/OrderBookBase.t.sol        | 100.00% (85/85)   | 100.00% (98/98)   | 100.00% (15/15)  | 100.00% (6/6)   |
+|---------------------------------+-------------------+-------------------+------------------+-----------------|
+| test/invariant/Handler.sol      | 0.00% (0/257)     | 0.00% (0/384)     | 0.00% (0/92)     | 0.00% (0/29)    |
+|---------------------------------+-------------------+-------------------+------------------+-----------------|
+| test/mocks/MockERC20.sol        | 100.00% (6/6)     | 100.00% (3/3)     | N/A (0/0)        | 100.00% (3/3)   |
+|---------------------------------+-------------------+-------------------+------------------+-----------------|
+| test/mocks/OrderBookHarness.sol | 100.00% (25/25)   | 100.00% (12/12)   | N/A (0/0)        | 100.00% (13/13) |
+|---------------------------------+-------------------+-------------------+------------------+-----------------|
+| test/mocks/ReentrantERC20.sol   | 100.00% (29/29)   | 100.00% (27/27)   | 100.00% (6/6)    | 100.00% (6/6)   |
+|---------------------------------+-------------------+-------------------+------------------+-----------------|
+| test/mocks/ViewSpyERC20.sol     | 100.00% (9/9)     | 100.00% (8/8)     | 100.00% (1/1)    | 100.00% (3/3)   |
+|---------------------------------+-------------------+-------------------+------------------+-----------------|
+| Total                           | 63.47% (457/720)  | 57.79% (560/969)  | 48.33% (101/209) | 72.22% (78/108) |

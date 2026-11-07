@@ -769,3 +769,51 @@ Their frontend tests' assertions about the placement cap stay correct.
 - **`forge-test-deep.txt`:** the full `FOUNDRY_PROFILE=deep` run (1,000 × 128), running in an isolated copy of `contracts/` since 23:15. Not complete at merge time; it is committed when it ends.
 
 **Result:** no real engine bug found. Every invariant held, including the independent payout ledger.
+
+---
+
+## 2026-11-08: Phase 8 begins, report section drafts (engine)
+
+**Prompt (summary):** After the Phase 7 merge, keep the deep run going in the background. Draft the engine's AI Audit Report sections in `docs/report/` from the real logs, with work that needs no CPU. Run Slither and coverage only after the deep run finishes.
+
+**What the AI produced:**
+- `docs/report/README.md` (an index, the rules, and a merge timeline with commit hashes).
+- Drafts for brief sections 2 to 8 (engine side): `2-methodology-engine.md`, `3-spec-and-prompts-engine.md`, `4-architecture-engine.md` (including a Mermaid diagram), `5-issues-engine.md` (issues 001 to 006 ranked, each in four parts), `6-validation-engine.md`, `7-improvements-engine.md` and `8-lessons-engine.md`.
+- Person 2's `docs/ai-audit/ai-audit-report-draft.md` was not edited. These files are written to slot into the sections where it says "Needs Person 1".
+- Every figure comes from the committed evidence, the issue files, SPEC or git.
+- Slither, coverage, the final audit and the deep-run result are marked pending.
+
+**What the AI got wrong:**
+- Its first Section 6 draft took the reach-test counts from a run that had been declared void, because it ran during the orphan-mutant window.
+- On checking, the clean committed run (`phase7/forge-test-default.txt`) gives identical counts, as the test is deterministic. The draft now cites that file.
+- The Phase 6 log entry says `OrderBook.Stop.t.sol` has 41 tests. The committed run shows 42 (39 in `OrderBookStopTest` and 3 in `OrderBookStopReentrancyTest`). The report uses 42.
+
+**Deep run status at commit time:** still running (Windows `forge.exe`, about 40 MB of memory), started 7 Nov 23:15 in an isolated copy of `contracts/`.
+
+---
+
+## 2026-11-08: Phase 8, deep run result, Slither, coverage, final audit, demo, engine-final
+
+**Prompt (summary):**
+1. Confirm Phase 7 and `abis.ts` are on main.
+2. Draft the report sections with placeholders.
+3. Draft the demo script and the README engine section, without test-running the script before the deep run ends.
+4. When the deep run ends (or at 02:45, stop it), run Phase 8: Slither, coverage, the final audit and the security summary. Fill in the placeholders, test the demo, tag `engine-final`, and push.
+
+Notify after each step.
+
+**Results:**
+- **Confirmed on `origin/main`:** Phase 7 at `5f2e860`, with the default-profile evidence. `abis.ts` is at `e375ff6`. The deep run is the full 1,000 × 128.
+- **Deep run: passed.** 128,000 calls with 0 reverts held all invariants, in 7,088 s. Deep fuzz: 20/20, 19 at 10,000 runs and one at its 200-run setting. The commit message of `88cedf7` says "20 fuzz tests at 10,000 runs", which is imprecise; the report and the security summary give the exact figures. The 02:45 timer was cancelled.
+- **Slither 0.11.6:** 27 results, 0 real: 13 false positives (uninitialized-state through a storage alias, enum and price equality, timestamp taint from `createdAt`) and 14 accepted (bounded costly-loop, interface naming). See `phase8/slither-triage.md`.
+- **Coverage:** `OrderBook.sol` 100% on lines (182/182), statements (246/246), branches (59/59) and functions (25/25), with 332 tests passing under coverage. Gas report and sizes saved.
+- **Final independent audit** (fresh subagent, PoCs in a scratch copy): no Critical or High. One Medium (M-1): a dust front-run sandwiches an honest limit order through the fill cap. Three Low documentation findings (L-1 to L-3), fixed in SPEC. Info notes (I-1, I-2) went to the handoff.
+- **Human decision on M-1: document it.** It is in SPEC section 8, logged as **issue 007** (accepted, four-part format), and reproduced in the repo by `test_issue007_dustSandwichMakesAHonestBuyPayItsLimit`. The test pins the auditor's figures to the wei: Carol pays 20e18 − 5.01e9 instead of 15e18, and the attacker makes 5e18 − 5.01e9.
+- **Demo:** `contracts/script/demo-journey.sh` passed every check on its first run (52 s). It ran on a private Anvil, which it stopped afterwards, and `contracts/broadcast/` was not written.
+- **Docs:** `docs/ai-audit/ENGINE_SECURITY_SUMMARY.md` (threat model, defences with evidence, audit results, limitations). Every report placeholder in `docs/report/` is filled. Notes for the frontend and the factory are in the handoff.
+
+**What the AI got wrong:**
+- **It told the human the deep run had died** (see the Phase 7 entry), and corrected this before merging.
+- **The `88cedf7` message overstates the fuzz runs.**
+- **M-1 was missed by every earlier review and by the AI's own SPEC writing,** because the two limitations were analysed separately (issue 007, part 1).
+- **Two SPEC rows went stale after the issue 006 fix** (insertion, and dust wording). The final audit caught them.

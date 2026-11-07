@@ -168,6 +168,58 @@ contract OrderBookRegressionTest is OrderBookBase {
     }
 }
 
+/// @dev Issue 007 (ACCEPTED limitation, final audit M-1): pins the documented behaviour, it does not fix it. Dust
+/// front-running spends an honest taker's MAX_MATCHES_PER_TX fills, its remainder rests crossed at its own limit, and
+/// the attacker sells into it at that limit before buying the honest ask more cheaply. The loss is bounded by the
+/// victim's limit price; solvency and list integrity hold. SPEC section 8.
+contract DustSandwichLimitationTest is OrderBookBase {
+    IOrderBook.Side private constant BUY = IOrderBook.Side.Buy;
+    IOrderBook.Side private constant SELL = IOrderBook.Side.Sell;
+
+    function _place(address trader, IOrderBook.Side side, uint256 price, uint256 amount) private returns (uint256) {
+        vm.prank(trader);
+        return book.placeLimitOrder(side, price, amount);
+    }
+
+    function test_issue007_dustSandwichMakesAHonestBuyPayItsLimit() public {
+        address mallory = makeAddr("mallory");
+        _fund(mallory);
+        uint256 honestAsk = _place(bob, SELL, 1.5e18, 10e18); // Carol expects to buy this at 1.5
+
+        // Mallory front-runs Carol's buy with MAX_MATCHES_PER_TX one-lot asks just below Bob's.
+        for (uint256 i = 0; i < book.MAX_MATCHES_PER_TX(); i++) {
+            _place(mallory, SELL, 1.499e18, 1e9);
+        }
+        uint256 victim = _place(carol, BUY, 2e18, 10e18);
+
+        uint256 remaining = 10e18 - 1e10;
+        assertEq(book.getOrder(victim).filled, 1e10, "all 10 fills spent on dust");
+        (uint256 bidId, uint256 bidPrice) = book.getBestBid();
+        (uint256 askId, uint256 askPrice) = book.getBestAsk();
+        assertEq(bidId, victim);
+        assertEq(askId, honestAsk);
+        assertGt(bidPrice, askPrice, "Carol's remainder rests crossed at her limit");
+
+        // Mallory sells into Carol at Carol's limit (Carol is now the maker), then buys Bob's ask at 1.5.
+        _place(mallory, SELL, 1.5e18, remaining);
+        _place(mallory, BUY, 1.5e18, 10e18);
+
+        // Carol: 10 base for 20e18 - 5.01e9 quote, instead of 15e18 from Bob. Mallory gains the difference.
+        assertEq(int256(base.balanceOf(carol)) - int256(INITIAL_BALANCE), 10e18);
+        assertEq(int256(INITIAL_BALANCE) - int256(quote.balanceOf(carol)), 20e18 - 5.01e9, "victim paid ~her limit");
+        assertEq(int256(base.balanceOf(mallory)) - int256(INITIAL_BALANCE), 0);
+        assertEq(int256(quote.balanceOf(mallory)) - int256(INITIAL_BALANCE), 5e18 - 5.01e9, "attacker profit");
+        _assertBalancesBob();
+        assertBookSorted();
+        assertSolvent();
+    }
+
+    function _assertBalancesBob() private view {
+        assertEq(int256(INITIAL_BALANCE) - int256(base.balanceOf(bob)), 10e18, "Bob sold his 10");
+        assertEq(int256(quote.balanceOf(bob)) - int256(INITIAL_BALANCE), 15e18, "at his 1.5");
+    }
+}
+
 /// @dev The brief's full journey (section 5.1 feature list) on the deployed stack: issue ERC20s, list a market,
 /// submit limit orders, automatic execution with a partial fill, cancel the remainder (Bonus 1), batched multi-party
 /// matching (Bonus 2) and a conditional stop-limit order (Bonus 3). Every balance is exact.
