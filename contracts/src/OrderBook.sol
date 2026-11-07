@@ -104,8 +104,24 @@ contract OrderBook is IOrderBook, ReentrancyGuard {
         if (refundQuote != 0) IERC20(quoteToken).safeTransfer(msg.sender, refundQuote);
     }
 
-    function matchOrders(uint256) external nonReentrant returns (uint256) {
-        revert();
+    /// @dev SPEC section 5. Clears a crossed book, e.g. one left by a placement that hit MAX_MATCHES_PER_TX. Both heads
+    /// are in the book, so the one that entered first (lower bookSeq) is the maker and sets the price.
+    function matchOrders(uint256 maxMatches) external nonReentrant returns (uint256 matchesDone) {
+        if (maxMatches == 0 || maxMatches > MAX_MATCHES_PER_TX) revert InvalidMaxCount();
+
+        while (matchesDone < maxMatches) {
+            uint256 bidId = _bookHead[Side.Buy];
+            uint256 askId = _bookHead[Side.Sell];
+            if (bidId == 0 || askId == 0) break;
+
+            Order storage bid = _orders[bidId];
+            Order storage ask = _orders[askId];
+            if (bid.price < ask.price) break;
+
+            (uint256 makerId, uint256 takerId) = _bookSeq[bidId] < _bookSeq[askId] ? (bidId, askId) : (askId, bidId);
+            _settleFill(makerId, takerId, Math.min(bid.amount - bid.filled, ask.amount - ask.filled), true);
+            matchesDone++;
+        }
     }
 
     function placeStopLimitOrder(Side, uint256, uint256, uint256) external nonReentrant returns (uint256) {
@@ -166,13 +182,15 @@ contract OrderBook is IOrderBook, ReentrancyGuard {
             bool crossed = taker.side == Side.Buy ? taker.price >= maker.price : taker.price <= maker.price;
             if (!crossed) break;
 
-            _settleFill(makerId, takerId, Math.min(taker.amount - taker.filled, maker.amount - maker.filled));
+            _settleFill(makerId, takerId, Math.min(taker.amount - taker.filled, maker.amount - maker.filled), false);
         }
     }
 
     /// @dev The only settlement path (SPEC A4 to A6). Executes at the maker's price. All state changes come before
-    /// the transfers. The maker is unlinked here when filled; the caller decides whether a taker rests.
-    function _settleFill(uint256 makerId, uint256 takerId, uint256 qty) internal {
+    /// the transfers. A filled maker is always unlinked here. A filled taker is unlinked here only when it is already
+    /// in the book (`takerInBook`, matchOrders); a placement taker is not in the book yet, and its caller decides
+    /// whether it rests.
+    function _settleFill(uint256 makerId, uint256 takerId, uint256 qty, bool takerInBook) internal {
         Order storage maker = _orders[makerId];
         Order storage taker = _orders[takerId];
         (Order storage buyOrder, Order storage sellOrder) = maker.side == Side.Buy ? (maker, taker) : (taker, maker);
@@ -190,6 +208,7 @@ contract OrderBook is IOrderBook, ReentrancyGuard {
         maker.status = maker.filled == maker.amount ? Status.Filled : Status.PartiallyFilled;
         taker.status = taker.filled == taker.amount ? Status.Filled : Status.PartiallyFilled;
         if (maker.status == Status.Filled) _unlink(makerId);
+        if (takerInBook && taker.status == Status.Filled) _unlink(takerId);
 
         lastTradePrice = price;
         hasTradePrice = true;

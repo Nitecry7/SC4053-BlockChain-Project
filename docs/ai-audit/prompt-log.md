@@ -447,3 +447,76 @@ None of these is a bug in AI-written engine code, so no issue file was added.
 **Human decisions:** The `matchOrders` re-entry test moves to Phase 5. `docs/Development_Project.pdf` stays tracked (the repo is private).
 
 **Follow-up for Person 2:** OrderBook bytecode changed in Phase 4, so the deployed MarketFactory still creates markets with the stub `cancelOrder`. Redeploy, re-export the ABI, and add UI messages for `NotOrderOwner` and `OrderNotActive`.
+
+---
+
+## 2026-11-07: Phase 5, batch matching (`matchOrders`)
+
+**Prompt (summary):** Copy the mutant script into the repo with a note on how to run it. Implement `matchOrders(maxMatches)`:
+- `InvalidMaxCount` for 0 and for anything above the cap
+- fill the two heads through the same `_settleFill`
+- the head with the lower `bookSeq` is the maker
+- unlink both orders when filled
+- return the number of fills; anyone may call it
+
+Tests: clearing over several calls, the cap respected exactly, at least 4 traders on each side in one call, the maker following `bookSeq`, a no-op, `InvalidMaxCount` at both edges, a third-party caller, and the deferred re-entry tests. Add a SPEC section on who triggers execution. Then the standard finish. Mid-session the human added: run only the new phase's mutants plus a smoke set from now on, and the full set once, in Phase 8.
+
+**What the AI produced:**
+- **`src/OrderBook.sol`:**
+  - `matchOrders` is implemented.
+  - `_settleFill` gained a `takerInBook` flag. `matchOrders` passes true, so a filled taker that is already in the book is unlinked before that fill's transfers (CEI per fill). Placement passes false.
+  - There is no second settlement path.
+  - The return variable is named `matchesDone`, matching the interface.
+- **`test/OrderBook.Batch.t.sol`:** 31 tests in 3 contracts, built on crossed books that come from a capped placement, the only way a book becomes crossed:
+  - the multi-party test settles 4 buyers and 4 sellers in one `matchOrders` call, with every balance exact
+  - maker selection by `bookSeq`, including a harness swap that proves the order ID is not used
+  - unlink cases
+  - two fuzz tests: ask makers, and bid makers at random prices
+  - a payout view-spy test
+  - re-entry tests during the base payout, quote payout and refund, and `matchOrders` re-entered during a placement refund (deferred from Phase 4)
+  - swallow-mode tests
+- **SPEC.md:**
+  - the `matchOrders` details
+  - section 6 expanded into a who, how and how-often table, with design points (bounded work, a permissionless and harmless caller, no caller reward, multi-party batching)
+  - the gas figure for `matchOrders(10)`
+  - a section 8 limitation: no caller reward
+- **ENGINE_PHASES.md:** the 6b row notes that activated stops must pass `takerInBook = false`.
+- **`docs/ai-audit/test-evidence/mutants.sh` and `MUTANTS.md`:**
+  - mutants now match on code text, not line numbers
+  - a filter argument picks which mutants run
+  - mutants whose pattern no longer matches report NOT APPLIED
+
+**What the AI got wrong (in its own test code, not the engine):**
+- One re-entry test asserted the token's `fired` flag after the outer call reverted. The revert rolls that flag back too, so the assertion could never hold. It was replaced by a swallow-mode twin that pins where the call fires.
+- A NatSpec comment on the bid-maker fuzz test said "spans several bids per fill". The real behaviour is one bid per fill, across several calls. Corrected.
+- The first mutant run of the full set took more than 10 minutes and outlasted the tool's foreground timeout. The human then limited each phase to its own mutants plus a smoke set.
+
+**Independent review (fresh subagent, read-only, no session context):** It found no High issue and no code bug. It did reason through and confirm several properties: the refund cannot underflow when the bid is the maker, placement is not affected by the flag, linked-list integrity holds when both orders fill, and CEI holds.
+
+| Finding | Outcome |
+|---|---|
+| M1 (test gap): the `askId == 0` break was never exercised with bids only, so dropping it would go unnoticed (it would make `matchOrders` revert on a book with only bids) | `test_batch_noOpWhenOnlyBids`, `test_batch_stopsWhenAsksRunOutWithBidsLeft`, and mutants P5o and P5p (both caught) |
+| L1: bid-maker coverage was thin | `testFuzz_batch_bidMakersClearAtTheirOwnPrices` (1,000 runs) |
+| L2: no self-trade test through `matchOrders` | `test_batch_selfTradeAcrossTheCrossingNetsToZero` |
+| L3: the gas figure was not a worst case | The SPEC O2 text now says it is a typical case, warm storage, not a worst case |
+| Info: the return named `fills` differed from the interface's `matchesDone` in the compiled ABI | Renamed to `matchesDone` |
+| Info: Phase 6 activated stops must pass `takerInBook = false` | Added to the 6b row |
+
+None of these is a bug in the engine code, so no issue file was added.
+
+**Mutants:**
+- After the implementation, the full set of 31: 30 caught, R4 survived (equivalent).
+- After the review fixes, `^(P5|G |Z |S1)`, 20 mutants: 19 caught. P5q survives as an equivalent mutant (an empty bid side reads as price 0, which never crosses). This run took 8 minutes.
+- P5o and P5p were added together with their tests, so no run shows them surviving beforehand.
+- After each run, `git diff contracts/src` showed only the Phase 5 change.
+
+**Results:** `forge build --sizes`: OrderBook runtime 7,239 B (+427) and initcode 7,902 B. MarketFactory runtime 9,286 B and initcode 9,315 B. Both are within EIP-170 and EIP-3860. `forge test`: 269 passed, 0 failed, 0 skipped (18 suites). `forge fmt --check`: clean. `matchOrders(10)` with 10 fills and refunds used 765,646 gas.
+
+**Human decisions:**
+- Mutant scope per phase: the new phase's mutants plus the smoke set (G, Z, S1). The full set runs once, in Phase 8.
+
+**Follow-up for Person 2:**
+- `matchOrders` is live, and the return name in the ABI is `matchesDone`.
+- The deployed factory embeds the old bytecode, so redeploy and re-export the ABI.
+- Map `InvalidMaxCount` to a message.
+- The "not available yet" text in `order-result.tsx` is out of date.
