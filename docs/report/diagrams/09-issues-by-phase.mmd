@@ -1,3 +1,9 @@
+---
+config:
+  flowchart:
+    rankSpacing: 30
+    nodeSpacing: 18
+---
 flowchart TB
   classDef phase fill:#555555,stroke:#555555,color:#FFFFFF,stroke-width:2px
   classDef high fill:#FBE3D6,stroke:#D55E00,stroke-width:3px,color:#1A1A1A
@@ -11,9 +17,10 @@ flowchart TB
   end
   subgraph R2[" "]
     direction LR
-    P3a["Phase 3a<br/>matching"]:::phase --- I4["004 three matching bugs<br/>passed the tests<br/>HIGH (tests), fixed"]:::high
-    I4 ~~~ I2["002 CEI deviation<br/>undocumented<br/>MEDIUM (docs), fixed"]:::medium
-    I2 ~~~ I3["003 fill cost overflow<br/>LOW, fixed"]:::low
+    P3a["Phase 3a<br/>matching"]:::phase
+    P3a --- I4["004 three injected bugs<br/>would pass the tests<br/>HIGH (tests), fixed"]:::high
+    P3a --- I2["002 CEI deviation<br/>undocumented<br/>MEDIUM (docs), fixed"]:::medium
+    P3a --- I3["003 fill cost overflow<br/>LOW, fixed"]:::low
   end
   subgraph R3[" "]
     direction LR
