@@ -16,6 +16,7 @@ contract ViewSpyERC20 is MockERC20 {
         IOrderBook.Status takerStatus;
         uint256 sellHead;
         uint256 buyHead;
+        uint256 makerLockedQuote;
     }
 
     OrderBookHarness private _book;
@@ -41,7 +42,8 @@ contract ViewSpyERC20 is MockERC20 {
                 makerFilled: _book.getOrder(_makerId).filled,
                 takerStatus: _book.getOrder(_takerId).status,
                 sellHead: _book.bookHead(IOrderBook.Side.Sell),
-                buyHead: _book.bookHead(IOrderBook.Side.Buy)
+                buyHead: _book.bookHead(IOrderBook.Side.Buy),
+                makerLockedQuote: _book.getOrder(_makerId).lockedQuote
             });
         }
         super._update(from, to, value);

@@ -126,7 +126,7 @@ Known limit: the guard does not cover view functions. A token callback can read 
 ### cancelOrder(orderId)
 - Caller must be the order's trader, else `NotOrderOwner`.
 - Status must be Open, PartiallyFilled or PendingTrigger, else `OrderNotActive`.
-- Steps: unlink the order from its list (book or stop list), set Cancelled, zero `lockedQuote`, then refund (A7) and emit `OrderCancelled`.
+- Steps: unlink the order from its list (book or stop list), set Cancelled, zero `lockedQuote`, emit `OrderCancelled`, then refund (A7). All state changes come before the transfer, so CEI holds here.
 
 ### matchOrders(maxMatches)
 - `maxMatches` must be between 1 and `MAX_MATCHES_PER_TX`, else `InvalidMaxCount`.

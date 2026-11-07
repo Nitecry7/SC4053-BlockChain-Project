@@ -38,8 +38,8 @@ struct Order {
 function PRICE_SCALE() external view returns (uint256);        // 1e18
 function LOT_SIZE() external view returns (uint256);           // 1e9
 function TICK_SIZE() external view returns (uint256);          // 1e9
-function MAX_MATCHES_PER_TX() external view returns (uint256); // proposed 10, tuned by gas report
-function MAX_INSERT_SCAN() external view returns (uint256);    // proposed 100, tuned by gas report
+function MAX_MATCHES_PER_TX() external view returns (uint256); // 10
+function MAX_INSERT_SCAN() external view returns (uint256);    // 100
 
 // Writes
 function placeLimitOrder(Side side, uint256 price, uint256 amount) external returns (uint256 orderId);

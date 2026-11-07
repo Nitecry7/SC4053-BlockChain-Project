@@ -353,3 +353,38 @@ pinned submodule. A plain copy would have committed thousands of vendored files 
 **Human decisions:**
 - Keep `MAX_MATCHES_PER_TX = 10` and `MAX_INSERT_SCAN = 100`. Gas figures are in SPEC.md, and O2 is resolved.
 - The interface comments still say "proposed 10" and "proposed 100". CONTRACT_INTERFACE.md is frozen and IOrderBook.sol must match it, so they were not changed. The values did not change.
+
+---
+
+## 2026-11-02: Phase 4, cancel (uncommitted, awaiting human review of the summary)
+
+**Prompt (summary):** The Phase 4 prompt in docs/ENGINE_PHASES.md: `cancelOrder`, cancel tests, reentrancy tests against the real `cancelOrder` and during the refund transfers, a guard mutation, and the independent review. Pause before committing. Also remove "(draft, not run)" from the heading, and change the "proposed 10" and "proposed 100" comments to final values.
+
+**What the AI produced:**
+- `src/OrderBook.sol`: `cancelOrder`. `test/OrderBook.Cancel.t.sol`. `test/mocks/ReentrantERC20.sol` gained firing on the Nth balance change, a swallow mode and an `execute` function, so the token can own orders and pass the owner check. `test/mocks/ViewSpyERC20.sol` gained `makerLockedQuote`.
+- SPEC.md section 5 now says "emit `OrderCancelled`, then refund", to match the approved prompt. It previously listed the refund first.
+- Comment-only change in CONTRACT_INTERFACE.md and IOrderBook.sol: "10" and "100". The scripted comparison of the two files shows no differences.
+
+**Human decisions:**
+- The Phase 4 draft is approved, including owner before status, so an unknown ID gives `NotOrderOwner`.
+- The interface comment change does not need sign-off, as it is comment-only. CONTRACT_INTERFACE.md is shared and frozen, and Person 2 has not been told yet.
+- Pending: the commit and merge.
+
+**Guard mutation:** With `nonReentrant` removed from `cancelOrder`, 10 tests failed. Failures showed `OrderNotActive` for re-entry as the owner, so with the guard gone, the final state still blocks a double refund. The reviewer also showed that removing both the guard and the `_unlink` guard lets a re-entrant cancel succeed during the price-improvement refund.
+
+**Independent review (subagent, no context from this session):** The first run stalled and failed without a report. Its background mutant batch had been stopped because the system was low on memory. It was resumed, foreground only, and reported with 18 of 40 mutants run. No fund-affecting bug found. How each finding was handled:
+
+| Finding | Severity | Outcome |
+|---|---|---|
+| Zero-address caller passes the owner check on unknown IDs | Low (real bug) | Fixed, regression test. Issue 005 |
+| CEI inside `cancelOrder` not pinned: all transfers before state passed all tests | Medium (tests) | Fixed with `test_cancelRefund_viewsFinalOnSell` and `..OnBuy` |
+| Event order not pinned; zero-value transfers of the other token unnoticed | Low (tests) | Fixed with two log tests |
+| Status check and `_unlink` guard mask each other | Low | No test possible today. Added to the Phase 6a row |
+| Later matching covered only a cancelled head, on asks only | Low (tests) | Now head, middle and tail on both sides, plus only element |
+| Crossed-book cancel test weak; no sell-taker remainder or equal-price queue test | Low (tests) | Replaced with stronger tests |
+| Owner re-entry not tested during the pull or payouts; "other order" payload hidden by the loop | Low (tests) | Added tests for the escrow pull, seller payout, buyer payout and other order |
+| `placeStopLimitOrder` guard removal survives | Info | A deliberate stub. Added to the Phase 6a row |
+
+**What the AI got wrong:** Issue 005, and the test gaps above. The AI's first draft had a crossed-book test that did not check the book was crossed.
+
+**Skipped mutants:** The AI ran the reviewer's skipped mutants that apply to the source itself, plus new ones, one at a time with fuzz tests excluded. All were caught except S1 (zero-value refund transfer in `_settleFill`), which survived and is now covered by `test_match_noRefundTransferWhenNoPriceImprovement`. Not run: the reviewer's C9, S3 to S6, and the test-only T2 and T3.
