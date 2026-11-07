@@ -94,7 +94,7 @@ How it stays honest:
 ```bash
 cd contracts && forge build --root . --sizes
 ```
-Observed: `OrderBook` 6,325 B runtime and 6,974 B initcode; `MarketFactory` 8,358 B runtime and 8,387 B initcode (limits: 24,576 B runtime, 49,152 B initcode). `Deploy.t.sol` also asserts these limits.
+Observed on 2026-11-08 (P2-8B.1, with all four bonus functions implemented): `OrderBook` 8,461 B runtime and 9,124 B initcode; `MarketFactory` 10,508 B runtime and 10,537 B initcode (limits: 24,576 B runtime, 49,152 B initcode). Earlier, with the bonus functions still stubs, they were 6,325 / 6,974 B and 8,358 / 8,387 B. `Deploy.t.sol` also asserts these limits.
 
 ## Smoke trade on the deployed market (no wallet needed)
 SPEC section 3 worked example with real transactions. Set `NTU`, `SGDX` and `MKT` from `web/lib/contracts/deployments.ts` (`baseToken.address`, `quoteToken.address`, `market`). Account 1 sells 10 NTU at 2.0. Account 2 buys 4 NTU at a limit of 2.2.
@@ -115,4 +115,4 @@ Expected afterwards: account 1 holds 9,990 NTU and 10,008 SGDx; account 2 holds 
 - **Checked with `forge`, `anvil` and `cast` (commands run by hand in this project, not an automated pipeline):** the deploy script, the export, redeploy, stale-chain detection, the chain-id guard bypass and its fix, custom `DEPLOYER` and `DEMO_WALLETS`, and the smoke trade, all on scratch Anvils. See `docs/ai-audit/test-evidence/person2/p2-3-deployment.md` for exact commands and results.
 - **Not verified:** any MetaMask or browser flow, any UI, and any chain other than a local Anvil.
 - The script's post-deployment checks run against the state the script just built. Under `--broadcast` that is Forge's simulation. The exporter and the checks above are what confirm the live chain.
-- The deployed `OrderBook` ABI has **unnamed parameters** on the four unimplemented functions (`cancelOrder`, `matchOrders`, `placeStopLimitOrder`, `triggerStopOrders`), while `IOrderBook` names them. Types are identical, so encoding is unaffected. Call these positionally. Names will appear once they are implemented with named parameters.
+- The four bonus functions are now implemented and the compiled `OrderBook` ABI names their parameters (`cancelOrder(orderId)`, `matchOrders(maxMatches)`, `placeStopLimitOrder(side, triggerPrice, limitPrice, amount)`, `triggerStopOrders(maxCount)`); checked on 2026-11-08 against `contracts/out`, and the committed `web/lib/contracts/abis.ts` is byte-identical to a fresh scratch export (`p2-8b01-preflight.md`). Earlier versions of this file said these parameters were unnamed while the functions were stubs.

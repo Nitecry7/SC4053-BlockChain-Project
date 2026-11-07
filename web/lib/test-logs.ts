@@ -29,6 +29,13 @@ export const orderPlaced = (address: Address, orderId: bigint, trader: Address, 
   logIndex: idx++,
 });
 
+export const orderCancelled = (address: Address, orderId: bigint, trader: Address, refundBase: bigint, refundQuote: bigint): TestLog => ({
+  address,
+  topics: encodeEventTopics({ abi: orderBookAbi, eventName: "OrderCancelled", args: { orderId, trader } }) as [Hex, ...Hex[]],
+  data: encodeAbiParameters([{ type: "uint256" }, { type: "uint256" }], [refundBase, refundQuote]),
+  logIndex: idx++,
+});
+
 export const trade = (
   address: Address,
   makerOrderId: bigint,

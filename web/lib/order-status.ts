@@ -42,13 +42,32 @@ export const remainingBase = (o: Pick<OrderSnapshot, "amount" | "filled">): bigi
 
 /**
  * Collateral the order book still holds for this order. Buy: `lockedQuote` (quote token). Sell: the unfilled base
- * while the order is on the book. `undefined` when it cannot be stated (a pending stop order).
+ * while the order is on the book or waiting as a pending stop (a stop escrows its collateral at placement, so a
+ * pending sell stop holds `amount - filled` base). Nothing for a filled or cancelled sell.
  */
 export function collateralHeld(o: OrderSnapshot): { token: "base" | "quote"; amount: bigint } | undefined {
   if (o.id === 0n) return undefined;
   if (o.side === 0) return { token: "quote", amount: o.lockedQuote };
-  if (o.status === 4) return undefined;
-  return { token: "base", amount: isOnLiveBook(o) ? remainingBase(o) : 0n };
+  return { token: "base", amount: isOnLiveBook(o) || o.status === 4 ? remainingBase(o) : 0n };
+}
+
+/** Statuses `cancelOrder` accepts: Open, PartiallyFilled and PendingTrigger. Filled and Cancelled revert `OrderNotActive`. */
+export const isCancellableStatus = (status: number): boolean => status === 0 || status === 1 || status === 4;
+
+/** Only the order's own trader can cancel it (the engine reverts `NotOrderOwner` otherwise). */
+export function canCancel(o: Pick<OrderSnapshot, "id" | "trader" | "status">, account: string | undefined): boolean {
+  return o.id !== 0n && account !== undefined && o.trader.toLowerCase() === account.toLowerCase() && isCancellableStatus(o.status);
+}
+
+/**
+ * What `cancelOrder` refunds, from the order as `getOrder` reports it (SPEC A7, ENGINE_HANDOFF): a sell gets
+ * `amount - filled` in base tokens, a buy gets its remaining `lockedQuote` in quote tokens. `undefined` when the order
+ * cannot be cancelled. This is an expectation shown before the transaction; the refund that counts is the one the
+ * `OrderCancelled` event reports.
+ */
+export function expectedRefund(o: OrderSnapshot): { token: "base" | "quote"; amount: bigint } | undefined {
+  if (o.id === 0n || !isCancellableStatus(o.status)) return undefined;
+  return o.side === 0 ? { token: "quote", amount: o.lockedQuote } : { token: "base", amount: remainingBase(o) };
 }
 
 /** `getOrder` returns an all-zero order for an unknown id; the front end treats `id == 0` as "not found". */

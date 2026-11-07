@@ -396,6 +396,29 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 
 **Evidence:** [`test-evidence/person2/p2-8b01-preflight.md`](test-evidence/person2/p2-8b01-preflight.md).
 
+## 2026-11-08: P2-8B.2, Bonus 1: order cancellation in the front end
+
+**Model:** Sonnet 5.5 (Medium requested; the session effort setting could not be read). **Prompt (summary):** implement a complete Cancel Order workflow (eligibility, refund shown first, the existing transaction lifecycle, `OrderCancelled` decoded from the receipt, readable errors, pending stops at the contract level, history kept), with unit, real-chain and mock-wallet browser tests, a small separate test-isolation fix in the Trade browser suite, and audit evidence maintained as the work went. Not Bonus 2 or 3; no staging, committing or pushing; scratch 8546 and 3100 only; no Opus review yet.
+
+**What the AI produced:** `cancel-runner.ts` (`runCancel`), `decodeCancelReceipt` and the `OrderCancelled` rendering on the transaction page, `canCancel` / `expectedRefund` / `isCancellableStatus`, error text for `NotOrderOwner` and `OrderNotActive`, `useCancelFlow`, `CancelPanel` and the Cancel action in My orders, the `cancel` wallet-prompt kind, 23 + 6 + 8 unit tests, `cancel.integration.test.ts` (11, real chain), `e2e/cancel.e2e.mjs` (13, mock wallet), and the allowance precondition in `trade.e2e.mjs`. Evidence: [`test-evidence/person2/p2-8b2-cancellation.md`](test-evidence/person2/p2-8b2-cancellation.md).
+
+**Results as observed:** unit 447 passed (59 skipped), tsc and eslint clean, real chain 59 passed, browser `e2e:cancel` 13, `e2e` 13, `e2e:create` 14, `e2e:dashboard` 14, `e2e:hardening` 9, `e2e:liveness` 11 (all mock wallet), axe 0 violations in six new states (contrast "needs review", not claimed). `forge test` was not re-run (no Solidity change; 335 recorded in P2-8B.1).
+
+**What the AI got wrong (all caught by running the tests or looking at screenshots, none shipped):**
+1. First `e2e:cancel` run 2 of 13: a case-sensitive assertion (`/cancelled/` against "Cancelled"); the failure left a panel open and cascaded.
+2. Second run 10 of 13: I assumed My orders stays visible with a "last known" label during an outage; the product replaces the whole terminal with "Node unreachable". The failing test also left the request blocker set, which broke the next two. I fixed the assertion to match the product and moved the unblock into a `finally`.
+3. The screenshot of the first run showed two real UI defects in my work: a redundant "cancelled: Cancelled" heading, and a cancelled row still showing the released amount as "Remaining". Both were fixed.
+4. An existing assertion (`collateralHeld` of a pending stop is undefined) pinned stub-era behaviour; I replaced it with narrower assertions and said so in the evidence file rather than leaving it to be read as an unchanged test.
+5. I did not run `forge test` again; the evidence file says so rather than implying it.
+
+**Not an AI audit issue:** no defect in the application, contracts or engine was reproduced, so no issue file was created.
+
+**What the human did:** approved the P2-8B preflight and the scope (Bonus 1 only), required the initial-state check and the test-isolation change, and reserved the Opus review for the completed integration. Still needed from the owner: the manual MetaMask cancel procedure (`docs/TESTING.md`, Test 12), screenshots for the report, approval of proposed `PRODUCT.md` / `DESIGN.md` / `SUBMISSION_CHECKLIST.md` wording, and the decision to proceed to Bonus 2.
+
+**Skills and MCPs actually invoked:** none beyond the shell, `forge`/`anvil`/`cast`, `vitest`, Playwright through the project's own `playwright-core` suites, and axe-core 4.14.0 (temporary). Not invoked: `react-best-practices`, `solidity-security`, Slither, Context7, the design skills, an independent reviewer subagent.
+
+**Evidence:** [`test-evidence/person2/p2-8b2-cancellation.md`](test-evidence/person2/p2-8b2-cancellation.md).
+
 ## Requirements traceability
 Current status through P2-7 (2026-11-06). Earlier statuses are in the phase entries above.
 
@@ -417,4 +440,5 @@ Current status through P2-7 (2026-11-06). Earlier statuses are in the phase entr
 | D2 (P2-8A.1 fixes): accessibility semantics, per-block RPC cost, P2-3 issue records | `PRODUCT.md` accessibility; no unnecessary refetch; four-part issue format | `web/components/data/amount.tsx`, `address-chip.tsx`, `wallet/connect-control.tsx`, `dashboard/wallet-panels.tsx`, `hooks/use-dex-data.ts`, `lib/query-scope.ts`, `lib/wagmi.ts` | `amount.test.ts` (6), `query-scope.test.ts` (7), `rpc-batching.test.ts` (2), `e2e:dashboard` wallet-control test | unit 383, browser 13 / 14 / 14 / 9, real chain 48, axe 0 violations on 18 views; overview per-block 65 to 45 operations, HTTP 65 to 9 with batching | `test-evidence/person2/p2-8a1-fixes.md` | 1 to 8 | R6, R7, R1, R2, I-5 fixed. Open: R3 to R5, R6b, R8 (partly measured), R9 (RPC outage shows stale data), manual screen-reader and contrast checks (R6b and R9 closed in D3 below) |
 
 | D3 (P2-8A.2): RPC liveness, verified recovery, R6b, R8 | no stale data shown as current; transactions only against a verified chain; accessibility | `web/lib/rpc-health.ts`, `web/hooks/use-rpc-health.tsx`, `web/components/shell/rpc-health-banner.tsx`, `panel.tsx`, `chain-reset-notice.tsx`, `order-ticket.tsx`, `tx-status.tsx`, `token-mark.tsx`, `globals.css` | `rpc-health.test.ts` (17), `rpc-health-banner.test.ts` (7), `tx-status.test.ts` (2), `e2e:liveness` (11) | unit 410, real chain 48, browser 13 / 14 / 14 / 9 / 11, axe 0 on 18 views, 4 mutation checks plus 1 in the final review; idle RPC 55 to 67 per minute | `test-evidence/person2/p2-8a2-liveness.md`, issue P2-015 | 1 to 8 | R9, R6b fixed; R8 fixed for badges, primary button and captions, two items left; MetaMask, screen-reader and DevTools checks pending |
+| B1 (P2-8B.2): cancel an order in the UI | brief Bonus 1; `docs/ENGINE_HANDOFF.md` Part 1; `docs/BONUS_INTEGRATION.md` | `web/lib/cancel-runner.ts`, `receipt.ts`, `order-status.ts`, `errors.ts`, `web/hooks/use-cancel-flow.ts`, `web/components/trade/cancel-panel.tsx`, `my-orders.tsx` (engine: Person 1) | `cancel-runner.test.ts` (23), `receipt.test.ts`, `order-status.test.ts`, `cancel.integration.test.ts` (11, real chain), `e2e/cancel.e2e.mjs` (13, mock wallet) | `test-evidence/person2/p2-8b2-cancellation.md` | 7 | Built and verified with a mock wallet on a scratch chain. **MetaMask not tested** (procedure: `docs/TESTING.md` Test 12). B2 and B3 are not integrated. Supersedes the earlier "Not implemented" status of B1 in the row above |
 Other rows are not started by Person 2.

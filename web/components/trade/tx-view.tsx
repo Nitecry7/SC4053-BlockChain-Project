@@ -158,7 +158,7 @@ function EventLine({
   pairOf: (market: Address) => { base: Address; quote: Address } | undefined;
 }) {
   // Amounts in order and trade events are base amounts and quote-per-base prices of that event's market.
-  const pair = e.kind === "OrderPlaced" || e.kind === "Trade" ? pairOf(e.market) : undefined;
+  const pair = e.kind === "OrderPlaced" || e.kind === "Trade" || e.kind === "OrderCancelled" ? pairOf(e.market) : undefined;
   const b = pair ? symbol(pair.base) : undefined;
   const q = pair ? symbol(pair.quote) : undefined;
   switch (e.kind) {
@@ -174,6 +174,16 @@ function EventLine({
         <>
           <strong>Trade</strong>: maker #{e.makerOrderId.toString()} with taker #{e.takerOrderId.toString()}, <Amount value={e.baseAmount} visible={4} showTail={false} symbol={b} /> at the maker&rsquo;s price{" "}
           <Amount value={e.price} visible={4} showTail={false} symbol={q} /> for <Amount value={e.quoteAmount} visible={4} showTail={false} symbol={q} />
+        </>
+      );
+    case "OrderCancelled":
+      return (
+        <>
+          <strong>Order #{e.orderId.toString()} cancelled</strong> by <AddressChip address={e.trader} copy={false} className="text-[0.75rem]" />: refund{" "}
+          {e.refundBase > 0n ? <Amount value={e.refundBase} visible={4} showTail={false} symbol={b} /> : null}
+          {e.refundBase > 0n && e.refundQuote > 0n ? " and " : null}
+          {e.refundQuote > 0n ? <Amount value={e.refundQuote} visible={4} showTail={false} symbol={q} /> : null}
+          {e.refundBase === 0n && e.refundQuote === 0n ? "nothing (no escrow was left)" : null}
         </>
       );
     case "Transfer":

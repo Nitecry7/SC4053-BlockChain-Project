@@ -68,6 +68,14 @@ const CONTRACT_ERROR_TEXT: Record<string, { title: string; detail: string }> = {
     title: "The book is too deep for this price",
     detail: "More orders rank ahead of this one than the engine will scan (BookTooDeep). Try a price closer to the best price.",
   },
+  NotOrderOwner: {
+    title: "This is not your order",
+    detail: "Only the account that placed an order can cancel it. Check the connected account. (An order number the engine has never used is reported the same way.)",
+  },
+  OrderNotActive: {
+    title: "This order can no longer be cancelled",
+    detail: "It is already filled or cancelled. Your orders are being re-read.",
+  },
   ReentrancyGuardReentrantCall: { title: "The order book rejected a re-entrant call", detail: "Nothing was changed." },
   SafeERC20FailedOperation: {
     title: "The token transfer failed",

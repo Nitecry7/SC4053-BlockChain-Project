@@ -152,9 +152,55 @@ export function reconcileOrder(
   return problems;
 }
 
+export type CancelReceipt = {
+  orderId: bigint;
+  trader: Address;
+  /** Refund reported by `OrderCancelled`. */
+  refundBase: bigint;
+  refundQuote: bigint;
+  /** Tokens that actually moved from the market to the trader in this transaction (the tokens' own `Transfer` events). */
+  transferredBase: bigint;
+  transferredQuote: bigint;
+};
+
+export type CancelReceiptResult = { ok: true; receipt: CancelReceipt } | { ok: false; reason: "no-order-cancelled" | "ambiguous-order-cancelled" };
+
+/**
+ * Reads what a `cancelOrder` transaction actually did: the `OrderCancelled` event for the requested order, emitted by
+ * this market for this trader, and the tokens' `Transfer(market -> trader)` events. Anything else (another order's
+ * cancellation, another market, another trader) is not accepted, so a replaced transaction cannot be reported as ours.
+ */
+export function decodeCancelReceipt(input: {
+  logs: readonly RawLog[];
+  market: Address;
+  baseToken: Address;
+  quoteToken: Address;
+  user: Address;
+  orderId: bigint;
+}): CancelReceiptResult {
+  const { logs, market, baseToken, quoteToken, user, orderId } = input;
+  const cancelled = decodeFrom<{ eventName: string; args?: { orderId: bigint; trader: Address; refundBase: bigint; refundQuote: bigint } }>(orderBookAbi, logs, market).filter(
+    (e) => e.eventName === "OrderCancelled" && e.args !== undefined && e.args.orderId === orderId && same(e.args.trader, user),
+  );
+  if (cancelled.length === 0) return { ok: false, reason: "no-order-cancelled" };
+  if (cancelled.length > 1) return { ok: false, reason: "ambiguous-order-cancelled" };
+  const a = cancelled[0]!.args!;
+  const moved = (token: Address) =>
+    decodeFrom<TokenEvent>(demoTokenAbi, logs, token)
+      .filter((e): e is Extract<TokenEvent, { eventName: "Transfer" }> => e.eventName === "Transfer")
+      .map((e) => e.args)
+      .filter((t) => same(t.from, market) && same(t.to, user))
+      .reduce((sum, t) => sum + t.value, 0n);
+  return {
+    ok: true,
+    receipt: { orderId, trader: a.trader, refundBase: a.refundBase, refundQuote: a.refundQuote, transferredBase: moved(baseToken), transferredQuote: moved(quoteToken) },
+  };
+}
+
 export type TxEvent =
   | { kind: "OrderPlaced"; market: Address; orderId: bigint; trader: Address; side: Side; price: bigint; amount: bigint }
   | ({ kind: "Trade"; market: Address } & DecodedTrade)
+  | { kind: "OrderCancelled"; market: Address; orderId: bigint; trader: Address; refundBase: bigint; refundQuote: bigint }
   | { kind: "Transfer"; token: Address; from: Address; to: Address; value: bigint }
   | { kind: "Approval"; token: Address; owner: Address; spender: Address; value: bigint };
 
@@ -176,6 +222,10 @@ export function decodeTxEvents(input: { logs: readonly (RawLog & { logIndex?: nu
         recognisedLogs++;
       } else if (e.eventName === "Trade" && e.args) {
         events.push({ logIndex: e.logIndex ?? 0, event: { kind: "Trade", market, ...(e.args as DecodedTrade) } });
+        recognisedLogs++;
+      } else if (e.eventName === "OrderCancelled" && e.args) {
+        const a = e.args as { orderId: bigint; trader: Address; refundBase: bigint; refundQuote: bigint };
+        events.push({ logIndex: e.logIndex ?? 0, event: { kind: "OrderCancelled", market, ...a } });
         recognisedLogs++;
       }
     }

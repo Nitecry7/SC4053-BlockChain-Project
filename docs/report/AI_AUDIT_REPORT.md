@@ -27,7 +27,7 @@
   - cancellation of unfilled amounts (`cancelOrder`)
   - batched multi-party matching (`matchOrders`; 4 buyers and 4 sellers settled in one transaction)
   - conditional stop-limit orders (`placeStopLimitOrder`, `triggerStopOrders`)
-- **The bonus UI is not built yet (Person 2).** The regenerated ABI is already in `web/` (`e375ff6`). The app shows no bonus controls, and Person 2's local chain still needs a redeploy.
+- **Only the cancel UI is built (Person 2, P2-8B.2, mock-wallet verified, MetaMask not tested); the batch-matching and stop-limit UI are not built yet.** The regenerated ABI is already in `web/` (`e375ff6`). The app shows no controls for batch matching or stop-limit orders. Person 2's local chain (8545) was found, by read-only calls on 2026-11-08 (P2-8B.1), to be already redeployed with the new engine.
 - **AI use:** both teammates used Claude Code throughout, steered by specification files read every session (`CLAUDE.md`, `SPEC.md`, the frozen `CONTRACT_INTERFACE.md`, per-phase prompts). The human made every design trade-off. A fresh, read-only AI reviewer checked each phase.
 - **Problems found in AI output:** 22 issues are logged in the four-part format: 7 engine (001 to 007) and 15 Person 2 (P2-001 to P2-015).
   - **Highest:** 006 (High availability: one 102-wei stop blocked every stop trigger, fixed) and 004 (High test quality: three matching bugs passed the suite, fixed). For Person 2, two Medium deployment-tooling defects (P2-013, P2-014, fixed).
@@ -493,7 +493,7 @@ Person 2's front-end limits are in `docs/FRONTEND.md`. [P2 to confirm]
 | M5 | Partial fulfilment | same; A5 refunds | `test_match_*PartlyFilled*`, fuzz | `phase7`; demo step 1 | Done |
 | M6 | Self-custody, non-custodial | no admin; escrow leaves only to the counterparty or the owner | invariants (ledger, conservation); Slither | `ENGINE_SECURITY_SUMMARY.md` | Done |
 | M7 | Simple front end | `web/` | 410 unit, 48 real-chain, browser suites | `person2/p2-4` to `p2-8a2` | Done (baseline) [P2 to confirm] |
-| B1 | Bonus 1: cancel unfilled amounts | `cancelOrder`, `_closeAndRefund` | `OrderBook.Cancel.t.sol` (52), regression 005 | issue 005; scratch-chain cast; demo step 2 | **Engine done; UI pending (Person 2)** |
+| B1 | Bonus 1: cancel unfilled amounts | `cancelOrder`, `_closeAndRefund` | `OrderBook.Cancel.t.sol` (52), regression 005 | issue 005; scratch-chain cast; demo step 2 | **Engine done. UI: built and verified with a mock wallet on a scratch chain in P2-8B.2** (Person 2; [evidence](../ai-audit/test-evidence/person2/p2-8b2-cancellation.md)); **MetaMask not tested** |
 | B2 | Bonus 2: batched multi-party matching | `matchOrders` | `OrderBook.Batch.t.sol` (31), `test_batch_multiParty*` (4 + 4 traders, one transaction) | demo step 3; handoff | **Engine done; UI pending** |
 | B3 | Bonus 3: conditional orders | `placeStopLimitOrder`, `triggerStopOrders` | `OrderBook.Stop.t.sol` (42), regression 006 | issue 006; demo step 4 | **Engine done; UI pending** |
 | T1 | Tricky point: who triggers execution, and how often | SPEC section 6 | `test_batch_thirdPartyCallerGainsAndLosesNothing`, trigger tests | SPEC section 6 | Answered |

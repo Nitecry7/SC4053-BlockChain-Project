@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  ALICE, BOB, EVIL, MARKET, NTU, SGDX, approval, dec, orderPlaced, resetLogIndex, specExampleLogs, trade, transfer,
+  ALICE, BOB, EVIL, MARKET, NTU, SGDX, approval, dec, orderCancelled, orderPlaced, resetLogIndex, specExampleLogs, trade, transfer,
 } from "./test-logs";
-import { decodeOrderReceipt, decodeTxEvents, reconcileOrder } from "./receipt";
+import { decodeCancelReceipt, decodeOrderReceipt, decodeTxEvents, reconcileOrder } from "./receipt";
 
 // The logs are SYNTHETIC (built with viem's event encoders in test-logs.ts, not captured from a chain). The
 // chain-backed equivalents are in trading.integration.test.ts, run against a scratch Anvil.
@@ -165,5 +165,51 @@ describe("decodeTxEvents (transaction page)", () => {
     const { events, unrecognised } = decodeTxEvents({ logs: specExampleLogs(), markets: [], tokens: [] });
     expect(events).toEqual([]);
     expect(unrecognised).toBe(6);
+  });
+});
+
+describe("decodeCancelReceipt (P2-8B.2)", () => {
+  it("reads the event for the requested order and the refund tokens that moved to the trader", () => {
+    resetLogIndex();
+    const logs = [orderCancelled(MARKET, 1n, ALICE, dec("60"), 0n), transfer(NTU, MARKET, ALICE, dec("60"))];
+    const r = decodeCancelReceipt({ logs, ...pair, user: ALICE, orderId: 1n });
+    expect(r).toEqual({ ok: true, receipt: { orderId: 1n, trader: ALICE, refundBase: dec("60"), refundQuote: 0n, transferredBase: dec("60"), transferredQuote: 0n } });
+  });
+
+  it("a buy's refund is in quote", () => {
+    resetLogIndex();
+    const logs = [orderCancelled(MARKET, 2n, BOB, 0n, dec("13.2")), transfer(SGDX, MARKET, BOB, dec("13.2"))];
+    const r = decodeCancelReceipt({ logs, ...pair, user: BOB, orderId: 2n });
+    expect(r).toMatchObject({ ok: true, receipt: { refundQuote: dec("13.2"), transferredQuote: dec("13.2"), transferredBase: 0n } });
+  });
+
+  it("does not count transfers to someone else, or from someone other than the market", () => {
+    resetLogIndex();
+    const logs = [orderCancelled(MARKET, 1n, ALICE, dec("5"), 0n), transfer(NTU, MARKET, BOB, dec("5")), transfer(NTU, EVIL, ALICE, dec("5"))];
+    const r = decodeCancelReceipt({ logs, ...pair, user: ALICE, orderId: 1n });
+    expect(r).toMatchObject({ ok: true, receipt: { transferredBase: 0n } });
+  });
+
+  it("rejects a different order id, a different trader, another contract's event, and a missing event", () => {
+    resetLogIndex();
+    expect(decodeCancelReceipt({ logs: [orderCancelled(MARKET, 9n, ALICE, 1n, 0n)], ...pair, user: ALICE, orderId: 1n })).toEqual({ ok: false, reason: "no-order-cancelled" });
+    expect(decodeCancelReceipt({ logs: [orderCancelled(MARKET, 1n, BOB, 1n, 0n)], ...pair, user: ALICE, orderId: 1n })).toEqual({ ok: false, reason: "no-order-cancelled" });
+    expect(decodeCancelReceipt({ logs: [orderCancelled(EVIL, 1n, ALICE, 1n, 0n)], ...pair, user: ALICE, orderId: 1n })).toEqual({ ok: false, reason: "no-order-cancelled" });
+    expect(decodeCancelReceipt({ logs: [], ...pair, user: ALICE, orderId: 1n })).toEqual({ ok: false, reason: "no-order-cancelled" });
+  });
+
+  it("refuses an ambiguous receipt (two cancellations of the same order for the same trader)", () => {
+    resetLogIndex();
+    const logs = [orderCancelled(MARKET, 1n, ALICE, 1n, 0n), orderCancelled(MARKET, 1n, ALICE, 1n, 0n)];
+    expect(decodeCancelReceipt({ logs, ...pair, user: ALICE, orderId: 1n })).toEqual({ ok: false, reason: "ambiguous-order-cancelled" });
+  });
+
+  it("the transaction page decodes OrderCancelled and no longer counts it as unrecognised", () => {
+    resetLogIndex();
+    const logs = [orderCancelled(MARKET, 1n, ALICE, dec("60"), 0n), transfer(NTU, MARKET, ALICE, dec("60"))];
+    const { events, unrecognised } = decodeTxEvents({ logs, markets: [MARKET], tokens: [NTU, SGDX] });
+    expect(events.map((e) => e.kind)).toEqual(["OrderCancelled", "Transfer"]);
+    expect(events[0]).toMatchObject({ kind: "OrderCancelled", orderId: 1n, refundBase: dec("60"), refundQuote: 0n });
+    expect(unrecognised).toBe(0);
   });
 });

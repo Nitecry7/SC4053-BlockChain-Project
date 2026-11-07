@@ -52,7 +52,7 @@ SC4053 DEX is a small exchange for the SC4053 course. It is an **order book, not
 
 Everything runs on a **local Anvil chain** (chain ID `31337`). Nothing is deployed to a public network, and this repository makes no claim about one.
 
-> **Scope.** The official assignment brief (kept locally in `docs/Development_Project.pdf`, git-ignored) is the authority for requirements. Cancelling orders, batch matching and stop-limit orders are **not implemented** in the shared engine (see [Implemented and pending](#implemented-and-pending)).
+> **Scope.** The official assignment brief (kept locally in `docs/Development_Project.pdf`, git-ignored) is the authority for requirements. The shared engine implements cancelling orders, batch matching and stop-limit orders; the app has a **Cancel** action (P2-8B.2) and no control yet for batch matching or stop-limit orders (see [Implemented and pending](#implemented-and-pending)).
 
 ---
 
@@ -71,7 +71,8 @@ Everything runs on a **local Anvil chain** (chain ID `31337`). Nothing is deploy
 | 🧾 **Refunds and order history**: refunds, fills and remaining escrow, plus a transaction page | ✅ Built | **My orders**, `/tx/<hash>` |
 | 📊 **Multi-market dashboard and token holdings**: choose any listed market; balances per token, never added together | ✅ Built (P2-6.1) | **Dashboard** |
 | 🔁 **Transaction replacement tracking and local chain-reset detection**: a sped-up, cancelled or replaced transaction is followed to what was mined; a restarted chain is reported with its evidence | ✅ Built (P2-7). Mock-wallet and real-chain tests pass; the wallet's own speed-up and cancel buttons are not yet tested by hand | Result cards, chain-reset notice |
-| ❌ **Cancel an order**, 🧮 **batch matching**, 🎯 **stop-limit orders** | ⛔ **Not implemented.** The engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` still `revert()`, so the app shows no control for them | none |
+| ❌ **Cancel an order** (Bonus 1) | ✅ Built (P2-8B.2). A **Cancel** action on your own open, partly filled and pending orders states the refund first, needs no approval, and reports success only from the confirmed receipt. Verified with a mock wallet and on a scratch chain; **MetaMask not tested** | **My orders** |
+| 🧮 **Batch matching**, 🎯 **stop-limit orders** | ⛔ **No UI yet.** The engine implements `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders`, but the app shows no control for them | none |
 
 ---
 
@@ -178,7 +179,7 @@ AI assistance was used across the project for planning, coding, design explorati
 | Claude Code and model roles | Claude Code; Opus 5.5, Sonnet 5.5 and Haiku 5.5 in different phases | Used in every phase. Model attribution is given where the prompt logs record it, and is marked "not recorded" otherwise |
 | Context7 and MCPs | Context7 (library documentation); shadcn and Awwwards MCPs (P2-4); Playwright MCP | Context7 accepted in P2-3 to P2-5. The Playwright MCP was attempted and did not launch. Awwwards results were rejected |
 | Solidity Security skill and Slither | `solidity-security` skill (P2-3 and P2-8A); Slither 0.11.6 on the Person 2 contracts and deployment script | Slither: 0 results (P2-1), 5 accepted notes (P2-2), 6 accepted notes (P2-3), re-run at HEAD in P2-8A. The skill is a checklist and produced no finding of its own. Slither has not been run on `OrderBook.sol` by Person 2 |
-| Foundry and contract testing | `forge` (185 tests, including fuzz), `anvil` and `cast` on scratch chains | Unit, fuzz and integration tests exist. A dedicated stateful invariant suite is planned for Engine Phase 7 and not yet implemented |
+| Foundry and contract testing | `forge` (335 tests, including fuzz and the engine's invariant suite), `anvil` and `cast` on scratch chains | Unit, fuzz, invariant and integration tests exist (335 passed in the 2026-11-08 run) |
 | Playwright and browser testing | `playwright-core` 1.64.1 with Chromium, and a mock wallet | Mock-wallet suites pass. These are not MetaMask results |
 | Frontend design and quality | `frontend-design`, `ui-ux-pro-max`, `impeccable`, `taste-skill` (P2-4); `impeccable detect` later; `react-best-practices` and a temporary pinned axe-core (P2-8A) | Design work in P2-4. The detector runs regex rules only, so its zero results are an undercount. The P2-8A audit measured performance and found two accessibility violation types, reported and not yet fixed |
 | Independent reviews and AI audit evidence | Read-only reviewers in P2-1 to P2-6; prompt logs; issue reports; test evidence | P2-3 reproduced two Medium defects, which were fixed. Other reviews found no High or Medium contract defects |
@@ -191,7 +192,7 @@ Full methodology, including each tool's status (invoked, attempted, or only inst
 SC4053-BlockChain-Project/
 ├── contracts/                 Solidity project (Foundry)
 │   ├── src/                   OrderBook (matching engine), TokenFactory, MarketFactory, DemoToken
-│   ├── test/                  Foundry unit, fuzz and integration tests (185); the stateful invariant suite is planned for Phase 7, not yet implemented
+│   ├── test/                  Foundry unit, fuzz, invariant and integration tests (335)
 │   └── script/                Deploy.s.sol (deployment), export-web.mjs (ABIs and addresses for the app)
 ├── web/                       Next.js app
 │   ├── app/                   Routes: overview, markets, tokens, trade, create-token, list-market, tx/[hash]
@@ -321,16 +322,16 @@ Run each command in the directory shown. "Observed" means it was run on the proj
 | `cast receipt <txHash> --rpc-url …` | any | Read a transaction's receipt | `status 1 (success)` means it was mined and succeeded. A missing receipt means it is not mined yet, or the node has dropped it |
 | `cast call <MarketFactory> "marketCount()(uint256)" --rpc-url …` | any | Count the registered markets | Observed: `2` (NTU/SGDx and one more on the owner's chain) |
 | `forge build` | `contracts/` | Compile | Ends with `Compiler run successful`. Regenerated artifacts go to `contracts/out/` |
-| `forge test` | `contracts/` | Contract tests | Observed for the recorded run: `185 passed`. Any `failed` line means a broken contract or test |
+| `forge test` | `contracts/` | Contract tests | Observed for the recorded run (2026-11-08, P2-8B.1): `335 passed`. Any `failed` line means a broken contract or test |
 | `node --test contracts/script/export-web.test.mjs` | repo root | Exporter tests | Recorded: `21 passed` |
 | `forge script script/Deploy.s.sol:Deploy --rpc-url … --broadcast --unlocked --sender …` | `contracts/` | Deploy (local only) | Logs with the deployer, `TokenFactory`, `MarketFactory`, NTU, SGDx and the NTU/SGDx market, then `ONCHAIN EXECUTION COMPLETE & SUCCESSFUL`. Run only on a chain with no contract code |
 | `node contracts/script/export-web.mjs --rpc-url …` | repo root | Write ABIs and addresses for the app | Writes `web/lib/contracts/`. Refuses to write if the chain, the deployment record and the build disagree |
 | `node contracts/script/export-web.mjs --check --rpc-url …` | repo root | Confirm the export is current; writes nothing | `up to date` means the files match. A `stale deployment` message means the chain was restarted without a redeploy |
 | `scripts/check-local.sh` | repo root | Read-only environment check | Observed: `Result: ready. 0 warning(s). No deployment is needed.` See the table above for other results |
 | `npm run dev` | `web/` | Start the Next.js dev server on `localhost:3000` | `Ready in …` and `Local: http://localhost:3000` |
-| `npm test` | `web/` | Unit tests (Vitest, no chain needed) | Recorded (P2-8A.2): `410 passed`, and `48` gated real-chain and browser tests skipped |
+| `npm test` | `web/` | Unit tests (Vitest, no chain needed) | Recorded (P2-8B.2): `447 passed`, and `59` gated real-chain and browser tests skipped |
 | `npm run typecheck`, `npm run lint`, `npm run build` | `web/` | Types, lint, production build | Each exits with no errors |
-| `npm run e2e`, `e2e:create`, `e2e:dashboard`, `e2e:hardening`, `e2e:liveness` | `web/` | Browser tests with a **mock wallet** | These need a **scratch** chain (port 8546) and a scratch server (port 3100), set up as described in [docs/FRONTEND.md](docs/FRONTEND.md). They never touch your main chain |
+| `npm run e2e`, `e2e:create`, `e2e:dashboard`, `e2e:hardening`, `e2e:liveness`, `e2e:cancel` | `web/` | Browser tests with a **mock wallet** | These need a **scratch** chain (port 8546) and a scratch server (port 3100), set up as described in [docs/FRONTEND.md](docs/FRONTEND.md). They never touch your main chain |
 
 ---
 
@@ -471,7 +472,7 @@ bash contracts/script/demo-journey.sh
 
 **Verification status.** The SPEC worked example (Alice sells 10 NTU at 2 SGDx, Bob buys 4 NTU at a limit of 2.2) was checked on a scratch chain by automated tests, in a browser with a **mock** wallet, and by the project owner with real MetaMask accounts. The owner also reported creating DTT, listing DTT/SGDx and a trade on that market. Those reports are recorded in [docs/TESTING.md](docs/TESTING.md), section F, which says which steps were not performed.
 
-**Pending:** cancel an order, batch matching and stop-limit orders are not built. The engine functions revert, so the interface offers no control for them. The manual cases for negative paths, speed-up and cancel in MetaMask are procedures, not yet performed.
+**Pending:** batch matching and stop-limit orders have no control in the app yet (the engine implements them). **Cancelling an order** is built and was verified with a mock wallet and on a scratch chain only. The manual MetaMask cases for negative paths, speed-up, cancel-a-transaction and cancel-an-order (`docs/TESTING.md`, Test 12) are procedures, not yet performed.
 
 ---
 

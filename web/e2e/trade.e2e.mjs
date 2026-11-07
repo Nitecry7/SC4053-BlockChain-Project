@@ -108,6 +108,17 @@ async function main() {
   snapshotId = await chain.request({ method: "evm_snapshot" });
   const existing = await orderIds(ALICE);
   assert(existing.length === 0, "the scratch chain already has orders for Alice; restart the scratch Anvil and redeploy first");
+  // Test isolation (P2-8B.2): the steps below expect to be asked for an approval. A leftover allowance from an earlier
+  // run, or from anything else on a reused scratch chain, silently skips that step and cascades into six failures
+  // (found in P2-8B.1, docs/ai-audit/test-evidence/person2/p2-8b01-preflight.md). Check it explicitly instead of assuming it.
+  const leftovers = [];
+  for (const [name, who] of [["Alice", ALICE], ["Bob", BOB], ["Carol", CAROL]]) {
+    for (const [symbol, token] of [["NTU", NTU], ["SGDx", SGDX]]) {
+      const a = await chain.readContract({ address: token, abi: demoTokenAbi, functionName: "allowance", args: [who, MARKET] });
+      if (a !== 0n) leftovers.push(`${name} has a leftover ${symbol} allowance of ${a} for the market`);
+    }
+  }
+  assert(leftovers.length === 0, `the scratch chain is not freshly deployed (${leftovers.join("; ")}); restart the scratch Anvil and redeploy first`);
 
   browser = await chromium.launch({ executablePath: CHROMIUM, headless: true, args: ["--no-sandbox"] });
   context = await browser.newContext({ viewport: { width: 1586, height: 1000 } });
