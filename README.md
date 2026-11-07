@@ -423,12 +423,14 @@ The "Not implemented" rows elsewhere in this README describe the **app**, which 
 | [docs/report/](docs/report/) | The engine's AI Audit Report section drafts |
 | [docs/ai-audit/test-evidence/](docs/ai-audit/test-evidence/) | Test, invariant and mutation evidence. [DEBUGGING.md](docs/ai-audit/test-evidence/DEBUGGING.md) explains how to replay failures |
 
-**Run the engine tests** (from `contracts/`):
+**Run the engine tests** (from `contracts/`). The first run compiles everything, which takes about 1 minute:
 ```bash
-forge test --no-match-path "test/invariant/*"   # unit, fuzz and regression suites: about 15 s
-forge test --match-path "test/invariant/*"      # invariant suite plus the reach test: several minutes
-FOUNDRY_PROFILE=deep forge test --match-path "test/invariant/*"   # 1,000 runs x depth 128: hours
+forge test --no-match-path "test/invariant/*"   # unit, fuzz and regression suites: about 15 s once compiled
+forge test --match-path "test/invariant/*"      # invariant suite plus the reach test: about 10 minutes
+forge test                                      # everything: 335 tests, about 12 minutes (fresh clone, 8 Nov)
+FOUNDRY_PROFILE=deep forge test --match-path "test/invariant/*"   # 1,000 runs x depth 128: about 2 hours
 ```
+On Windows (Git Bash) in a deeply nested folder, `git submodule update --init --recursive` can fail with "Filename too long", because of OpenZeppelin's own nested test submodules. Run `git config --global core.longpaths true` once, or clone into a short path such as `C:\dev`.
 
 **Replay the whole journey on a private chain** (from the repo root). This is a backup for demos. It starts its own Anvil on port 8546 and refuses to run if anything already answers there. It deploys with `Deploy.s.sol`, without touching your chain's deployment record, then runs these steps with balance checks:
 1. a limit order with a partial fill
