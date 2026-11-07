@@ -37,8 +37,8 @@ Non-custodial: no admin or owner role exists. Escrowed tokens leave the contract
 | Execution price | The maker's (resting) price |
 | Priority | Bids by price descending, asks by price ascending; ties go to the lower `bookSeq` (the order that entered the book first) |
 | Book sequence | Internal `bookSeq` per order, from a counter that only increases. It is stamped when the order enters the book: at placement for limit orders, at activation for stop orders. It is not in the interface or the `Order` struct. For plain limit orders it gives the same order as the order ID |
-| Book storage | One sorted doubly linked list of order IDs per side; the best order is the head |
-| Insertion | Walk from the head; revert with `BookTooDeep` after `MAX_INSERT_SCAN` steps |
+| Book storage | One sorted doubly linked list of order IDs per side; the best order is the head. Pending stop orders are in a separate sorted stop list per side (section 5), which shares the same link storage and code; an order is in at most one list |
+| Insertion | Walk from the head; revert with `BookTooDeep` after `MAX_INSERT_SCAN` steps. The same bound applies to the stop lists and to an activated stop entering the book |
 | Matching on placement | Up to `MAX_MATCHES_PER_TX` fills, then the remainder rests (even if still crossed) |
 | Self-trade | Allowed. A trader's order can fill against their own order; settlement is still correct. Documented, not prevented |
 | Token transfers | OpenZeppelin `SafeERC20`; `ReentrancyGuard` on every state-changing external; CEI, with the exceptions in `placeLimitOrder` documented in section 5 |
@@ -93,6 +93,7 @@ Notation: `cost(q, p) = q * p / PRICE_SCALE`.
 | (new limit order) | placed, fully matched | Filled (never enters the book) |
 | (new stop order) | placed | PendingTrigger |
 | PendingTrigger | triggered | Open, then normal matching (and possibly PartiallyFilled or Filled) |
+| Open / PartiallyFilled (just activated) | its remainder cannot enter the book (`MAX_INSERT_SCAN` exceeded) | Cancelled, remainder refunded (section 5, `triggerStopOrders`) |
 | Open / PartiallyFilled | further fills | PartiallyFilled or Filled |
 | Open / PartiallyFilled / PendingTrigger | owner cancels | Cancelled |
 
@@ -140,8 +141,12 @@ Known limit: the guard does not cover view functions. A token callback can read 
 ### placeStopLimitOrder(side, triggerPrice, limitPrice, amount)
 - Validates like a limit order, with `triggerPrice` also non-zero and tick-aligned.
 - Escrow is pulled now (A2 or A3, using `limitPrice`). Status is PendingTrigger.
-- The order is stored in that side's stop list, not in the book, and emits `StopOrderPlaced`.
-- There is no constraint between `triggerPrice` and `limitPrice`.
+- The order is stored in that side's stop list, not in the book, and emits `StopOrderPlaced`. It is listed in `getUserOrderIds`, not in `getBook`, and is neither matched nor matchable while pending.
+- Validation order follows section 2: `ZeroAmount`, then `ZeroPrice` (limit or trigger), then `InvalidLotSize`, then `InvalidTickSize` (limit or trigger).
+- All state changes (record, insert into the stop list) come before the escrow pull, its only external call. The event is emitted after the pull, as in `placeLimitOrder`. Under `nonReentrant` this is safe; it is not strict CEI only in that the event follows the call.
+- Inserting into a stop list is bounded like the book: `BookTooDeep` after `MAX_INSERT_SCAN` steps.
+- There is no constraint between `triggerPrice` and `limitPrice`. A stop that is already eligible when placed stays pending until the next `triggerStopOrders` call.
+- `bookSeq` is not stamped at placement. It is stamped at activation.
 
 ### triggerStopOrders(maxCount)
 - `maxCount` must be between 1 and `MAX_MATCHES_PER_TX`, else `InvalidMaxCount`.
@@ -150,12 +155,14 @@ Known limit: the guard does not cover view functions. A token callback can read 
 - Stop lists (gap f):
   - buy stops are sorted by `triggerPrice` ascending
   - sell stops are sorted by `triggerPrice` descending
-  - ties go to the lower ID
+  - equal triggers stay in placement order. A new stop queues behind existing stops with the same trigger, which is the same as "lower ID first" because stops enter a stop list only when placed
   - eligible orders are therefore always at the heads, and each check is O(1)
+  - the stop lists reuse the book's linked-list code: an order's status selects the list (PendingTrigger means its stop list, otherwise the book), and an order is in at most one list
+- When both heads are eligible, the buy stop is activated first. The sell stop follows within the same call if `maxCount` allows, or on the next call.
 - **One shared fill budget:** at most `MAX_MATCHES_PER_TX` fills in total across the whole call.
   1. Repeatedly take an eligible head, up to `maxCount` activations.
   2. Set its status to Open, stamp a fresh `bookSeq`, emit `StopOrderTriggered`, and run normal matching with whatever budget is left.
-  3. Rest any remainder.
+  3. Rest any remainder. If it cannot enter the book because more than `MAX_INSERT_SCAN` orders rank ahead of it, cancel it instead: refund the remainder (A6 and A7) and emit `OrderCancelled`. The call does not revert, and the order still counts as triggered (decided 7 Nov after the Phase 6 review, finding H1).
   4. Once the budget is used up, further activated orders rest without matching. `matchOrders` clears any crossing they leave.
 - Fills made during the call update `lastTradePrice`, which may make more stops eligible within the same call. This is still bounded by `maxCount`.
 - Anyone can call it. Returns the number of orders activated.
@@ -198,17 +205,41 @@ There is no background execution on-chain.
   The worst figure is the worst placement built so far, not a proven upper bound. It is well below Anvil's default 30M block gas limit.
 
   Phase 5 added `matchOrders(10)`: 10 fills with price-improvement refunds use 765,646 gas, measured with `gasleft()` inside `test_gas_matchOrdersFullCapWithRefunds` (not `--isolate`). This is a typical case, not a worst case: one seller and one buyer who already hold balances, so storage is warm. Ten distinct sellers receiving quote for the first time cost more (each first write to a zero balance is a cold, zero-to-nonzero store). Like placement, it is bounded by `MAX_MATCHES_PER_TX`, with constant work per fill and no escrow pull or insert.
+
+  Phase 6 added `triggerStopOrders(10)`, also measured with `gasleft()`, not `--isolate`:
+  - 10 activations, each inserted behind 90 better-priced bids, with no fills: 1,998,765 gas (`test_gas_triggerTenActivationsDeepInserts`)
+  - 10 activations sharing 10 fills with refunds: 1,482,995 gas (`test_gas_triggerTenActivationsTenFillsWithRefunds`)
+
+  The worst case is bounded by 10 activations, 10 fills in total, and at most `MAX_INSERT_SCAN` steps for each insert, which is well under 30M. These are cases built so far, not a proven upper bound.
 - **O3.** The Bonus 2 "multi-party" interpretation: confirm with the TA.
 - **O4 (resolved 2 Nov).** On a crossed book, section 5 step 4 (match the opposite head) takes precedence over section 2 (Priority). The behaviour is kept and listed in section 8.
 
 ## 8. Known limitations (for the report)
-- `lastTradePrice` is easy to manipulate in a thin market, so stop orders are for teaching purposes only.
+- **Stop orders trigger on `lastTradePrice`, which is easy to manipulate.** It is the price of the most recent fill on this book, and any single trade sets it, whatever its size.
+  - **Attack:** in a thin market, an attacker can trade 1 lot against themselves (self-trades are allowed), or against a stray order, at any price the book allows. That moves `lastTradePrice` across other traders' triggers, then they call `triggerStopOrders`. The victims' stops activate and sell into, or buy from, liquidity the attacker placed at their limit prices, then the price snaps back.
+  - **Cost:** gas plus one minimum-size fill.
+  - **What limits the damage:** stops are stop-*limit* orders, so an activated stop never trades worse than its own `limitPrice`, and anything unfilled rests as a normal limit order the owner can cancel. Funds are never lost beyond what the owner's limit price accepts.
+  - **Not provided:** no time-weighted or volume-weighted reference price, no minimum trade size for moving the trigger price, and no delay between a trade and triggering. The trigger also uses the price of a single book, with no external oracle. Stop orders here are for teaching purposes only.
+  - **Execution needs a caller:** `triggerStopOrders` is permissionless and pays no reward (section 6), so an eligible stop can sit unactivated until someone calls it, possibly long after the price moved.
+  - **The buy side goes first:** when buy and sell stops are both eligible, buy stops activate first.
+  - **A deep book cancels an activated stop:** if an activated stop's remainder cannot enter the book (more than `MAX_INSERT_SCAN` orders rank ahead of its limit price), it is cancelled and refunded instead of resting.
+    - **History:** the first Phase 6 design reverted the whole call here, and the independent review (H1, issue 006) showed that a self-owned stop plus 101 dust bids, 102 wei in all, then blocked every stop activation on both sides permanently.
+    - **The trade-off:** an honest stop behind a deep book now loses its place, and its owner gets the escrow back, rather than it blocking everyone. Someone who floods the book with dust can therefore cancel other traders' activated stops, but cannot take their funds.
+    - **Tests:** `test_trigger_unplaceableStopIsCancelledAndDoesNotBlockOthers` and `test_trigger_honestStopBehindTooDeepBookIsRefundedExactly`.
 - A deep book can make placement revert (`BookTooDeep`), which is a deliberate gas bound.
 - Only 18-decimal tokens are supported; fee-on-transfer and rebasing tokens are not.
 - A token without a `decimals()` function is rejected with an empty revert, not `UnsupportedDecimals`.
 - The minimum order size and price granularity are 1e-9 of a whole token.
 - Self-trades are allowed.
 - A capped placement can leave the book crossed, and `matchOrders` clears it. Until then, price-time priority does not hold across the crossing: a new sell can fill at once against a resting bid, ahead of an older, better-priced ask. `test_match_crossedBookNewTakerFillsOppositeHeadAheadOfOlderOrder` pins this.
+- **Stops can be sniped through the shared fill budget.** `triggerStopOrders` can leave the book crossed in the same way, and the caller chooses when that happens.
+  - **Example:** the last trade was at 2. Bob has a bid of 10 at 2.0, and Carol has a sell stop with trigger 2, limit 1.0 and size 10.
+    1. An attacker places 10 dust bids at 2.1 and calls `triggerStopOrders(1)`.
+    2. Carol's stop spends the whole budget filling the dust, then rests as an ask at 1.0, crossed with Bob's bid.
+    3. In the attacker's next transaction, a buy at 1.0 fills against Carol at her limit price of 1.0, ahead of `matchOrders`, which would have filled her at Bob's 2.0.
+  - **Bound:** the fill can never be worse than her `limitPrice`, which is what a stop-limit promises, but a wide limit can lose much more than she expected. The independent Phase 6 review reproduced this.
+  - **Mitigations not built:** clearing crossings inside `placeLimitOrder` before the new order takes, a minimum fill size, or not activating once the budget is used up (which would only limit later stops).
+- **Stop-list insertion can be griefed.** 101 stops at trigger T (1 wei of escrow each for a buy stop at a 1-tick limit) make every later buy stop with a trigger at or above T revert with `BookTooDeep` until those stops activate. Sell stops can be griefed the same way. This is the dust-griefing limitation above, applied to the stop lists.
 - Dust griefing is cheap. `MAX_INSERT_SCAN` + 1 minimum-size orders make any worse-priced resting order revert with `BookTooDeep`, and `MAX_MATCHES_PER_TX` minimum-size orders use up a taker's fills. The cost is gas plus almost no capital. Tuning the constants does not remove this.
 - Payouts are pushed, so a token that can refuse a transfer to one address (a blocklist or a hook) would let a maker block every taker that crosses it. Plain demo tokens are not affected.
 - Tokens sent directly to the contract are stranded, because no function can recover them. Trader escrow is not affected.

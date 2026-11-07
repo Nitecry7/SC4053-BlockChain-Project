@@ -39,6 +39,10 @@ contract OrderBookHarness is OrderBook {
         return _bookHead[side];
     }
 
+    function stopHead(Side side) external view returns (uint256) {
+        return _stopHead[side];
+    }
+
     function bookNext(uint256 orderId) external view returns (uint256) {
         return _bookNext[orderId];
     }

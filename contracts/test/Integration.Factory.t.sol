@@ -226,6 +226,50 @@ contract IntegrationFactoryTest is Test {
         assertEq(book.matchOrders(1), 0, "nothing left to match");
     }
 
+    // Stop-limit on the factory market
+
+    /// @dev Alice protects 10 NTU with a sell stop (trigger 1.8, limit 1.7). A trade at 1.8 moves the price down to
+    /// the trigger; a keeper's triggerStopOrders activates the stop, and it fills against Bob's resting bid at 1.75.
+    function test_stop_tradeMovesPriceKeeperTriggersSellStopAndItFills() public {
+        _approveAndPlace(alice, IOrderBook.Side.Sell, 2e18, 1e18);
+        _approveAndPlace(bob, IOrderBook.Side.Buy, 2e18, 1e18); // last trade 2
+        assertEq(book.lastTradePrice(), 2e18);
+
+        vm.startPrank(alice);
+        ntu.approve(address(book), 10e18);
+        uint256 stop = book.placeStopLimitOrder(IOrderBook.Side.Sell, 1.8e18, 1.7e18, 10e18);
+        vm.stopPrank();
+        lastOrderId = stop;
+        _assertStatus(stop, IOrderBook.Status.PendingTrigger);
+        assertEq(book.getBook(IOrderBook.Side.Sell, 1).length, 0, "pending stop is not an ask");
+        _assertChecks();
+
+        vm.prank(keeper);
+        assertEq(book.triggerStopOrders(1), 0, "not eligible at 2");
+
+        uint256 bid = _approveAndPlace(bob, IOrderBook.Side.Buy, 1.75e18, 10e18);
+        _approveAndPlace(bob, IOrderBook.Side.Buy, 1.8e18, 1e18);
+        _approveAndPlace(alice, IOrderBook.Side.Sell, 1.8e18, 1e18); // trade at 1.8: the price falls to the trigger
+        assertEq(book.lastTradePrice(), 1.8e18);
+
+        uint256 aliceNtu = ntu.balanceOf(alice);
+        uint256 aliceSgdx = sgdx.balanceOf(alice);
+        vm.expectEmit(address(book));
+        emit IOrderBook.StopOrderTriggered(stop, 1.8e18);
+        vm.prank(keeper);
+        assertEq(book.triggerStopOrders(1), 1);
+
+        _assertStatus(stop, IOrderBook.Status.Filled);
+        _assertStatus(bid, IOrderBook.Status.Filled);
+        assertEq(book.lastTradePrice(), 1.75e18, "filled at the bid's price, above the stop's limit");
+        assertEq(ntu.balanceOf(alice), aliceNtu, "the stop's NTU was escrowed at placement");
+        assertEq(sgdx.balanceOf(alice) - aliceSgdx, 17.5e18, "10 NTU at 1.75");
+        _assertBalances(keeper, 0, 0);
+        assertEq(ntu.balanceOf(address(book)), 0);
+        assertEq(sgdx.balanceOf(address(book)), 0);
+        _assertChecks();
+    }
+
     // Listing
 
     function test_listing_samePairAndReversedPairAreRefused() public {

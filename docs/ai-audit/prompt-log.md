@@ -602,3 +602,82 @@ Their frontend tests' assertions about the placement cap stay correct.
 **What the AI got wrong:** In the first draft of the cast script, the refund check computed a balance difference in bash arithmetic, which overflows above about 9.2e18. It was caught on review before running, and replaced with a whole-token difference. The first scratch-deploy command also returned exit code 2, but only because the follow-up `ls` confirmed that the repo's `broadcast/` directory did not exist, which was the intended outcome.
 
 **Results:** `forge test`: 274 passed, 0 failed, 0 skipped (19 suites). `forge fmt --check`: clean.
+
+---
+
+## 2026-11-07: Node setup, then Phases 6a and 6b, stop-limit
+
+**Prompt (summary):**
+- **Step 0:** install Node LTS with winget. Run `npm ci` and Person 2's frontend tests for a baseline, without editing `web/`.
+- **Phase 6:** implement `placeStopLimitOrder`, PendingTrigger cancel, and `triggerStopOrders` with one shared fill budget. Use the simplest correct design, with sorted lists only if they stay simple. Write the listed tests, a factory integration test, a cast flow on a scratch Anvil, and the SPEC section 8 manipulation note. Then the standard finish (P6 mutants plus the smoke set), sizes, handoff part 2, and a re-run of Person 2's tests after the merge.
+- **ABI:** regenerate `abis.ts` only if the export works without a deployment.
+
+**Step 0:**
+- winget installed Node.js LTS 26.13.0. The installer asked for administrator rights, and the human approved.
+- `/c/Program Files/nodejs/node --version` gives v26.13.0, and npm gives 11.20.0. This shell needs `export PATH="/c/Program Files/nodejs:$PATH"` until Git Bash is restarted.
+- `npm ci` in `web/` succeeded. npm 11 skipped install scripts for optional native packages such as `utf-8-validate`.
+- Baseline:
+  - `npm test`: 33 files passed and 3 skipped; 410 tests passed and 48 skipped (gated real-chain suites). This matches Person 2's record.
+  - `node --test contracts/script/export-web.test.mjs`: 21 passed.
+
+**Design decision (AI, stated to the human):**
+- An unsorted list scanned up to `maxCount` would be incorrect. With more than `maxCount` ineligible stops ahead of an eligible one, that stop could never be reached.
+- Instead, sorted stop lists (SPEC's design) reuse the book's `_insert` and `_unlink`. The order's status selects the list through `_heads`, the stops share the `_bookNext` and `_bookPrev` links, and `_ranksAhead` has a stop branch. Ties go in placement order.
+- `placeLimitOrder` was refactored into `_validate`, `_record` and `_pullEscrow`, and `_matchTaker` gained a `maxFills` budget.
+
+**What the AI produced:**
+- **`src/OrderBook.sol`:** `placeStopLimitOrder`, `triggerStopOrders`, PendingTrigger cancel, `_eligibleStop` (buy side first), and later `_tryInsert` and `_closeAndRefund` (issue 006).
+- **Tests:**
+  - `OrderBookBase.assertBookSorted` now walks both stop lists and checks membership for every status.
+  - The harness gained `stopHead`.
+  - `test/OrderBook.Stop.t.sol` has 41 tests: 38 in the main suite, including a fuzz test and 2 gas tests, plus 3 reentrancy tests.
+  - `Integration.Factory.t.sol` gained a stop-limit flow on the factory market.
+- **SPEC.md:** placement and trigger details, the lifecycle row, the section 2 rows, and the gas figures. Section 8 now covers `lastTradePrice` manipulation, budget sniping, stop-list griefing, and the issue 006 history and trade-off.
+- **Handoff:** `docs/ENGINE_HANDOFF.md` part 2.
+- **Mutants:** P6a to P6y added, and C1, C2, R3 and P6n updated for the new code.
+
+**Independent review (fresh subagent, read-only):**
+- No fund-loss bug. The reviewer reasoned through and confirmed that the shared-link design, the budget accounting, CEI and reentrancy are correct, and that the refactor did not change `placeLimitOrder` behaviour.
+
+| Finding | Outcome |
+|---|---|
+| **H1:** a self-owned lowest-trigger buy stop plus 101 dust bids (102 wei) made activation revert with `BookTooDeep`, so every `triggerStopOrders` call reverted, permanently, on both sides | **Real design flaw in AI-written code.** The human chose option (a), auto-cancel and refund. Fixed with `_tryInsert` and `_closeAndRefund`, and logged as issue 006 with real before and after output (3 FAIL `BookTooDeep()`, then 3 PASS) |
+| M1: running out of fill budget lets an attacker snipe an activated stop at its limit price | Documented in SPEC section 8, with the possible mitigations listed. No code change |
+| M2: no test pinned the activation-depth behaviour | Covered by the three issue 006 tests |
+| L1: a mutant reporting the trigger price in `StopOrderTriggered` survived | `test_trigger_eventCarriesLastTradePriceNotTriggerPrice`, plus mutant P6v |
+| L2: an ineligible buy head hiding a sell head was caught only by the fuzz test | `test_trigger_ineligibleBuyHeadDoesNotHideEligibleSellStop`, plus mutant P6w |
+| L3: the fuzz test's final check was weak | It now asserts that no eligible head is left and that one more trigger returns 0 |
+| L4: no gas figure | Two gas tests: 1,998,765 gas for 10 deep inserts, 1,482,995 for 10 fills with refunds. Added to SPEC O2 |
+| L5: no test of a partly filled activated buy stop's remainder escrow | `test_trigger_activatedBuyStopPartFillKeepsExactRemainderEscrow` |
+| Info: stale NatSpec, SPEC section 2 rows, the "strict CEI" wording, and stop-list placement griefing | All fixed or documented |
+
+**What the AI got wrong:**
+- **Issue 006 (H1).** The AI had seen the deep-book revert, but called it an accident and underrated it. The review raised it to High.
+- **Test code:**
+  - The first extended `assertBookSorted` asserted that every listed ID is below `nextOrderId`, which broke 20 Book tests that write orders through the harness. The check was narrowed.
+  - A duplicate `last` variable in the fuzz test was a compile error.
+  - A redundant line in the integration test was removed.
+  - None of these was an engine bug.
+- **Process:**
+  - The scratch Anvil was started in the same command as the port check, so its freshness (chain 31337, block 0) was confirmed only afterwards.
+  - One combined shell command failed to parse and ran nothing. It was redone in parts.
+
+**Mutants:** `^(P6|G |Z |S1)`, 28 mutants: **28 caught, 0 survived**, in 13 min 54 s. Afterwards the source had the fix line, and the full suite passed on it (317 passed).
+
+**Scratch Anvil:**
+- `anvil --port 8546` was fresh: chain 31337, block 0.
+- `Deploy.s.sol` ran with the broadcast and cache redirected, and the repo's `broadcast/` and `cache/` stayed absent. The addresses were the usual ones.
+- The cast stop-limit flow passed every check:
+  - simulated trigger before any trade: 0
+  - stop placed: `StopOrderPlaced`, status 4, `getBestAsk` (0, 0)
+  - trigger at 2: 0 triggered (37,277 gas)
+  - the price falls to 1.8, then the keeper's trigger made 1 triggered and 1 trade (182,193 gas, tx `0xd47c0da1...df508`); Alice +17.5 SGDx; last price 1.75
+  - `NotOrderOwner` on Bob's cancel of Carol's stop; Carol's cancel refunded 2.5 SGDx in full (54,904 gas)
+  - final balances exact; the market and the keeper hold 0
+- The Anvil was then stopped: the port refuses connections and no anvil process remains.
+
+**Sizes:** OrderBook 8,461 B runtime (+1,222) and 9,124 B initcode. MarketFactory 10,508 B runtime and 10,537 B initcode, with 14,068 B left under 24,576. That is below the 1.5 to 3 KB estimate made in Stage 3.
+
+**ABI export:** not run. `export-web.mjs` has no ABI-only mode: it needs a complete broadcast file and a live chain whose bytecode matches `contracts/out`, and it writes `abis.ts` and `deployments.ts` together. Under the human's rule ("if it needs a deployment, don't run it"), the command is left for Person 2 in the handoff.
+
+**Results before commit:** `forge test`: 317 passed, 0 failed (21 suites). `forge fmt --check`: clean.
