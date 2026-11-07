@@ -29,7 +29,7 @@
   - batched multi-party matching (`matchOrders`; 4 buyers and 4 sellers settled in one transaction)
   - conditional stop-limit orders (`placeStopLimitOrder`, `triggerStopOrders`)
 - **The bonus UI is not built yet (Person 2).** The regenerated ABI is already in `web/` (`e375ff6`). The app shows no bonus controls, and Person 2's local chain still needs a redeploy.
-- **AI use:** Person 1 also used Claude in the claude.ai chat as planner and reviewer (Section 2.4), and both teammates used Claude Code throughout, steered by specification files read every session (`CLAUDE.md`, `SPEC.md`, the frozen `CONTRACT_INTERFACE.md`, per-phase prompts). The human made every design trade-off. A fresh, read-only AI reviewer checked each phase.
+- **AI use:** Person 1 also used Claude in the claude.ai chat, minimally, as planner and reviewer (Section 2.4), and both teammates used Claude Code throughout, steered by specification files read every session (`CLAUDE.md`, `SPEC.md`, the frozen `CONTRACT_INTERFACE.md`, per-phase prompts). The human made every design trade-off. A fresh, read-only AI reviewer checked each phase.
 - **Problems found in AI output:** 22 issues are logged in the four-part format: 7 engine (001 to 007) and 15 Person 2 (P2-001 to P2-015).
   - **Highest:** 006 (High availability: one 102-wei stop blocked every stop trigger, fixed) and 004 (High test quality: three matching bugs passed the suite, fixed). For Person 2, two Medium deployment-tooling defects (P2-013, P2-014, fixed).
   - **One Medium engine issue is accepted by design and pinned by a test:** 007 (a limit order can be sandwiched through the fill cap; the loss is bounded by the victim's limit).
@@ -148,7 +148,7 @@ The resulting lifecycle is shown in [Figure 4](#figure-4).
 **What we did first, ourselves:** we read the brief and fixed the option, the role split and the core trading rules.
 
 **How AI was used before any contract code:** to stress-test the plan and turn it into written specification files, in two steps.
-- **The plan: Claude in the claude.ai chat app, before Claude Code was engaged.**
+- **The plan: Claude in the claude.ai chat app (used minimally), before Claude Code was engaged.**
   - **What it did:** Person 1 used one long chat, running from 28 Oct to 8 Nov, to stress-test the brief-based plan. The chat then rewrote it as the Person 1 engine plan, `docs/DEX_Trading_Engine_Plan.md`.
   - **What came out of that review:** buy orders are escrowed too, and the stop trigger has an explicit initial state (`hasTradePrice`). We decided both ourselves, and both are in the plan.
   - **Evidence:** this is the owner's account; the chat transcript is not in the repository. The plan file's title reads "Person 1, built with Claude Code". The repository agrees on the order of events: Claude Code's first session, on 28 Oct, opens by reading this plan, which was already in `docs/` but not yet committed (prompt log, Phase 0).
@@ -174,7 +174,7 @@ The resulting lifecycle is shown in [Figure 4](#figure-4).
 ### 2.2 Tools
 | Tool | Person 1 (engine) | Person 2 [P2 to confirm] |
 |---|---|---|
-| **Claude (claude.ai chat)** | Planner and reviewer: one long chat, 28 Oct to 8 Nov (Section 2.4). Owner's account; the transcript is not in the repository | [P2 to confirm] whether a chat assistant was used |
+| **Claude (claude.ai chat)** | Planner and reviewer, used minimally: one long chat, 28 Oct to 8 Nov (Section 2.4). Owner's account; the transcript is not in the repository | [P2 to confirm] whether a chat assistant was used |
 | **Claude Code** | Opus 5.5 (log header); plan mode for Phase 0. The implementer, which also ran the independent subagent reviews | Opus 5.5, Sonnet 5.5 and Haiku 5.5 by phase (models per phase: `tooling-and-methodology.md`; some not recorded) |
 | **Independent reviewer** | A fresh, read-only Claude Code subagent per phase (1 to 7), plus a final audit | Fresh-context subagents in P2-1 to P2-6 (none for P2-5 wrap-up, P2-6.1, P2-7) |
 | **Foundry 1.8.6** (`forge`, `anvil`, `cast`) | Unit, fuzz and invariant tests, gas, sizes, coverage, scratch-chain `cast` journeys | Contract tests, deploy script, scratch chains |
@@ -203,11 +203,11 @@ The resulting lifecycle is shown in [Figure 4](#figure-4).
   - a mock-wallet browser harness (`web/e2e/mock-wallet.mjs`)
 
 ### 2.4 Workflow per phase
-**Person 1 used a two-tier workflow.** Below, "my" means Person 1.
+**Person 1 used a two-tier workflow.** Below, "my" means Person 1. The chat tier was used minimally; all of the code was written through Claude Code.
 
 | Tier | Tool | Role |
 |---|---|---|
-| Planner and reviewer | Claude in the claude.ai chat (one chat, 28 Oct to 8 Nov) | Wrote the phase prompts, reviewed Claude Code's plans and summaries, and proposed corrections |
+| Planner and reviewer (used minimally) | Claude in the claude.ai chat (one chat, 28 Oct to 8 Nov) | Wrote the phase prompts, reviewed Claude Code's plans and summaries, and proposed corrections |
 | Implementer | Claude Code | Planned and wrote the code and tests, ran the tools, and ran the independent subagent reviews (`/review-engine`) |
 | Decision-maker | Person 1 | Made every final decision |
 
