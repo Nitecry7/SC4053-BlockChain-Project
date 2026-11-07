@@ -1,0 +1,34 @@
+fd8869a	lines 6	08 Nov	Merge engine/phase-8 (Phase 8) into main: engine-final
+e375ff6	lines 31,172	07 Nov	Regenerate web/lib/contracts/abis.ts after Phase 6 (scratch-chain expo
+cd35f8b	lines 109,155	28 Oct	Engine setup: Foundry scaffold, spec docs and draft contract interface
+63aee60	lines 110	01 Nov	Phase 2a: sorted book lists with guarded unlink; freeze interface; nor
+7c73490	lines 110	01 Nov	Phase 1: OrderBook skeleton, interface, mock and test base
+3aba573	lines 128	05 Nov	docs: add product vision and liquid-glass design system under separate
+095b2af	lines 158	24 Oct	Initial commit
+1adcc59	lines 352	07 Nov	Merge engine/phase-6 (Phase 6) into main
+6d1d14c	lines 353	02 Nov	Merge engine/phase-3a into main
+dab79f8	lines 362	07 Nov	Merge engine/phase-4 into main
+dfe7318	lines 363	01 Nov	Merge engine/phase-2a into main
+88cedf7	lines 584	08 Nov	Phase 7 evidence: FOUNDRY_PROFILE=deep run passed (1000 runs x depth 1
+SEV 006	lines 0	High (availability)	High for availability. No funds could be taken, and every owner could still cancel, but the attacker could swi
+SEV 004	lines 0	High (tests)	High for test quality. The engine code itself was correct, so no bug shipped.
+SEV 007	lines 0	Medium	Medium (economic). No escrow is stolen and solvency holds, but a victim can be made to pay up to their own lim
+SEV 002	lines 0	Medium (docs)	Medium, documentation. No funds at risk. `nonReentrant` blocks every write during the gap.
+SEV P2-013	lines 0	Medium	**Medium** (the script could broadcast its transactions to a non-local chain; no funds were involved because t
+SEV P2-014	lines 0	Medium	**Medium** (the front end could be wired to a half-finished deployment; no contract logic was affected and no 
+SEV P2-015	lines 0	Medium	**Medium** (a user could read old balances and the line "Read from chain, refreshed every block" as current an
+SEV P2-006	lines 0	Medium (P2-008 also Low for wording)	Medium. A user could end up with two escrowed orders and a UI that knew about one.
+SEV P2-007	lines 0	Medium (P2-008 also Low for wording)	Medium. The UI could say "Order #N confirmed" for a transaction that was not the one the user signed.
+SEV P2-008	lines 0	Medium (P2-008 also Low for wording)	Medium (duplicate escrow risk) and Low (wrong wording).
+SEV P2-012	lines 0	Medium (P2-008 also Low for wording)	Medium (a confirmed order could be reported as "not confirmed yet", which invites a duplicate order; no funds 
+SEV P2-001	lines 0	Medium for usability / displayed correctness / workflow (no funds at risk)	Medium for usability. The simulation still failed and nothing was sent, but the user got a generic message ins
+SEV P2-003	lines 0	Medium for usability / displayed correctness / workflow (no funds at risk)	Medium for correctness of what the user sees, not for funds: nothing was sent from the wrong account.
+SEV P2-005	lines 0	Medium for usability / displayed correctness / workflow (no funds at risk)	Medium for the workflow, none for the chain. No on-chain state was touched. The tracked generated files were n
+SEV P2-009	lines 0	Medium for usability / displayed correctness / workflow (no funds at risk)	Medium for 1, 4 and 5; Low for 8 and 9.
+SEV 003	lines 0	Low	Low. It needs about 1e59 quote wei or more, so it is only reachable with tokens that have open minting.
+SEV 005	lines 0	Low	Low. No real transaction can come from `address(0)`, and no funds were at risk. A simulated call with a defaul
+SEV 001	lines 0	Latent	Latent. `_unlink` had no production caller yet, so the flaw could only be reached through the test harness. It
+SEV P2-002	lines 0	Low (P2-002: Low to Medium)	Low to Medium. The engine behaved correctly. The ticket's preview, and the warning it shows, were wrong in exa
+SEV P2-004	lines 0	Low (P2-002: Low to Medium)	Low. It is the exact "request pending with no explanation" problem the phase was meant to remove, in one of th
+SEV P2-010	lines 0	Low (P2-002: Low to Medium)	Low for 1 to 4, Low (UX) for 5, process for 6.
+SEV P2-011	lines 0	Low (P2-002: Low to Medium)	Low (display only; no funds or order routing involved).

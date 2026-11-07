@@ -238,7 +238,7 @@ Person 2 followed the same pattern [P2 to confirm]:
 <a id="figure-2"></a>
 ![Figure 2: Engine timeline from git and log dates](diagrams/02-engine-gantt.png)
 
-**Figure 2: Engine timeline from git and prompt-log dates.** Each bar is a calendar day with that phase's merge hash. Commit times are not working hours, so the bars show *when* the work landed, not how long it took. Phase 4 was written on 2 Nov but committed only after the 7 Nov recovery. Person 2's bar is approximate; their log has the detail. [P2 to confirm]
+**Figure 2: Engine timeline from git and prompt-log dates.** Each bar is a calendar day with that phase's merge hash. Commit times are not working hours, so the bars show *when* the work landed, not how long it took. Phase 4 was written on 2 Nov but committed only after the 7 Nov recovery. Person 2's bar spans their non-merge commit dates (5 to 7 Nov; the initial README commit on 24 Oct is excluded), and their log has the detail. [P2 to confirm]
 
 ---
 
@@ -666,6 +666,7 @@ We learned to ask for raw tool output, not summaries, before trusting a claim.
 | Mutation results | [`test-evidence/MUTANTS.md`](../ai-audit/test-evidence/MUTANTS.md), [`phase7/mutants-phase7.txt`](../ai-audit/test-evidence/phase7/mutants-phase7.txt) |
 | Slither and lint | [`test-evidence/phase8/slither.txt`](../ai-audit/test-evidence/phase8/slither.txt), [`slither-triage.md`](../ai-audit/test-evidence/phase8/slither-triage.md) |
 | Coverage, gas, sizes | [`phase8/coverage-summary.txt`](../ai-audit/test-evidence/phase8/coverage-summary.txt), [`gas-report.txt`](../ai-audit/test-evidence/phase8/gas-report.txt), [`sizes.txt`](../ai-audit/test-evidence/phase8/sizes.txt) |
+| Report verification (numbers re-derived, links, hashes, issue IDs, markers) | [`test-evidence/wrapup/report-verification.md`](../ai-audit/test-evidence/wrapup/report-verification.md) |
 | Debugging and replay | [`test-evidence/DEBUGGING.md`](../ai-audit/test-evidence/DEBUGGING.md) |
 | Frontend handoff (signatures, flows, stale files) | [`docs/ENGINE_HANDOFF.md`](../ENGINE_HANDOFF.md) |
 | Demo replay script | [`contracts/script/demo-journey.sh`](../../contracts/script/demo-journey.sh) |

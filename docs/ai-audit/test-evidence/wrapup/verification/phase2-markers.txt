@@ -1,0 +1,39 @@
+18	[P2 to confirm]	SC4053 DEX: AI Audit Report
+19	[P1 + P2 to confirm]	SC4053 DEX: AI Audit Report
+128	[P2 to confirm and expand]	1.4 Intended UI features
+175	[P2 to confirm]	2.2 Tools
+177	[P2 to confirm]	2.2 Tools
+199	[P2 to confirm]	2.3 Custom AI infrastructure
+230	[P2 to confirm]	2.4 Workflow per phase
+241	[P2 to confirm]	2.5 Timeline
+253	[P2 to confirm]	3.1 Specification files
+267	[P2 to confirm]	3.2 Representative prompt chains
+292	[P2 to confirm]	4.1 System
+332	[P2 to confirm]	4.3 What the AI proposed, and what happened to it
+343	[P2 to confirm]	4.3 What the AI proposed, and what happened to it
+344	[P2 to confirm]	4.3 What the AI proposed, and what happened to it
+356	[P2 to confirm]	5.1 Inventory (most severe first)
+357	[P2 to confirm]	5.1 Inventory (most severe first)
+358	[P2 to confirm]	5.1 Inventory (most severe first)
+359	[P2 to confirm]	5.1 Inventory (most severe first)
+360	[P2 to confirm]	5.1 Inventory (most severe first)
+364	[P2 to confirm]	5.1 Inventory (most severe first)
+416	[P2 to confirm]	5.3 Person 2 issues in the four-part format [P2 to confirm]
+437	[P2 to confirm]	5.3 Person 2 issues in the four-part format [P2 to confirm]
+445	[P2 to confirm]	5.4 Reviews, static analysis and audits
+452	[P2 to confirm]	5.4 Reviews, static analysis and audits
+462	[P2 to confirm]	5.5 Accepted limitations (not defects)
+474	[P2 to confirm]	6.1 Layers
+476	[P2 to confirm]	6.1 Layers
+478	[P2 to confirm]	6.1 Layers
+479	[P2 to confirm]	6.1 Layers
+481	[P2 to confirm]	6.1 Layers
+546	[P2 to confirm]	7. Improvements and Refinements
+617	[P2 to add]	8.5 Person 2's lessons
+619	[P2 to confirm]	8.5 Person 2's lessons
+620	[P2 to confirm]	8.5 Person 2's lessons
+624	[P2 to confirm]	8.5 Person 2's lessons
+626	[P1 + P2 to confirm]	8.5 Person 2's lessons
+633	[P2 to confirm]	Requirements traceability
+639	[P2 to confirm]	Requirements traceability
+648	[P2 to confirm]	Requirements traceability

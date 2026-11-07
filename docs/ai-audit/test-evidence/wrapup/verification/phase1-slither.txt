@@ -1,0 +1,111 @@
+# slither 2026-11-07T20:04:51Z
+'forge clean' running (wd: C:\Users\ntuku\projects\SC4053-BlockChain-Project\contracts)
+'forge config --json' running
+'forge build --build-info --deny never --skip ./test/** ./script/** --force' running (wd: C:\Users\ntuku\projects\SC4053-BlockChain-Project\contracts)
+INFO:Detectors:
+Detector: uninitialized-state
+OrderBook._bookHead (src/OrderBook.sol#34) is never initialized. It is used in:
+	- OrderBook.matchOrders(uint256) (src/OrderBook.sol#103-119)
+	- OrderBook.getBestBid() (src/OrderBook.sol#152-155)
+	- OrderBook.getBestAsk() (src/OrderBook.sol#157-160)
+	- OrderBook.getBook(IOrderBook.Side,uint256) (src/OrderBook.sol#162-174)
+	- OrderBook._matchTaker(uint256,uint256) (src/OrderBook.sol#251-265)
+	- OrderBook._heads(uint256) (src/OrderBook.sol#307-310)
+OrderBook._stopHead (src/OrderBook.sol#45) is never initialized. It is used in:
+	- OrderBook._eligibleStop() (src/OrderBook.sol#242-248)
+	- OrderBook._heads(uint256) (src/OrderBook.sol#307-310)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#uninitialized-state-variables
+INFO:Detectors:
+Detector: incorrect-equality
+OrderBook._heads(uint256) (src/OrderBook.sol#307-310) uses a dangerous strict equality:
+	- _orders[orderId].status == Status.PendingTrigger (src/OrderBook.sol#308)
+OrderBook._ranksAhead(uint256,uint256,IOrderBook.Side) (src/OrderBook.sol#371-381) uses a dangerous strict equality:
+	- _orders[a].status == Status.PendingTrigger (src/OrderBook.sol#372)
+OrderBook._ranksAhead(uint256,uint256,IOrderBook.Side) (src/OrderBook.sol#371-381) uses a dangerous strict equality:
+	- priceA == priceB (src/OrderBook.sol#379)
+OrderBook._ranksAhead(uint256,uint256,IOrderBook.Side) (src/OrderBook.sol#371-381) uses a dangerous strict equality:
+	- side == Side.Buy (src/OrderBook.sol#375)
+OrderBook._ranksAhead(uint256,uint256,IOrderBook.Side) (src/OrderBook.sol#371-381) uses a dangerous strict equality:
+	- side == Side.Buy (src/OrderBook.sol#380)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dangerous-strict-equalities
+INFO:Detectors:
+Detector: timestamp
+OrderBook.placeLimitOrder(IOrderBook.Side,uint256,uint256) (src/OrderBook.sol#58-69) uses timestamp for comparisons
+	Dangerous comparisons:
+	- _orders[orderId].status != Status.Filled (src/OrderBook.sol#68)
+OrderBook.triggerStopOrders(uint256) (src/OrderBook.sol#127-145) uses timestamp for comparisons
+	Dangerous comparisons:
+	- _orders[orderId].status != Status.Filled && ! _tryInsert(orderId) (src/OrderBook.sol#142)
+OrderBook._eligibleStop() (src/OrderBook.sol#242-248) uses timestamp for comparisons
+	Dangerous comparisons:
+	- buyId != 0 && lastTradePrice >= _orders[buyId].triggerPrice (src/OrderBook.sol#244)
+	- sellId != 0 && lastTradePrice <= _orders[sellId].triggerPrice (src/OrderBook.sol#246)
+OrderBook._heads(uint256) (src/OrderBook.sol#307-310) uses timestamp for comparisons
+	Dangerous comparisons:
+	- _orders[orderId].status == Status.PendingTrigger (src/OrderBook.sol#308)
+OrderBook._tryInsert(uint256) (src/OrderBook.sol#320-343) uses timestamp for comparisons
+	Dangerous comparisons:
+	- next != 0 && ! _ranksAhead(orderId,next,side) (src/OrderBook.sol#327)
+OrderBook._ranksAhead(uint256,uint256,IOrderBook.Side) (src/OrderBook.sol#371-381) uses timestamp for comparisons
+	Dangerous comparisons:
+	- _orders[a].status == Status.PendingTrigger (src/OrderBook.sol#372)
+	- priceA == priceB (src/OrderBook.sol#379)
+	- side == Side.Buy (src/OrderBook.sol#375)
+	- triggerA < triggerB (src/OrderBook.sol#375)
+	- triggerA > triggerB (src/OrderBook.sol#375)
+	- side == Side.Buy (src/OrderBook.sol#380)
+	- priceA > priceB (src/OrderBook.sol#380)
+	- priceA < priceB (src/OrderBook.sol#380)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#block-timestamp
+INFO:Detectors:
+Detector: costly-loop
+OrderBook._unlink(uint256) (src/OrderBook.sol#348-365) has costly operations inside a loop:
+	- delete _bookPrev[orderId] (src/OrderBook.sol#363)
+	Calls stack containing the loop:
+		OrderBook.matchOrders(uint256)
+		OrderBook._settleFill(uint256,uint256,uint256,bool)
+OrderBook._unlink(uint256) (src/OrderBook.sol#348-365) has costly operations inside a loop:
+	- delete _bookNext[orderId] (src/OrderBook.sol#364)
+	Calls stack containing the loop:
+		OrderBook.matchOrders(uint256)
+		OrderBook._settleFill(uint256,uint256,uint256,bool)
+OrderBook._settleFill(uint256,uint256,uint256,bool) (src/OrderBook.sol#271-299) has costly operations inside a loop:
+	- lastTradePrice = price (src/OrderBook.sol#291)
+	Calls stack containing the loop:
+		OrderBook.matchOrders(uint256)
+OrderBook._settleFill(uint256,uint256,uint256,bool) (src/OrderBook.sol#271-299) has costly operations inside a loop:
+	- hasTradePrice = true (src/OrderBook.sol#292)
+	Calls stack containing the loop:
+		OrderBook.matchOrders(uint256)
+OrderBook._unlink(uint256) (src/OrderBook.sol#348-365) has costly operations inside a loop:
+	- delete _bookPrev[orderId] (src/OrderBook.sol#363)
+	Calls stack containing the loop:
+		OrderBook.triggerStopOrders(uint256)
+OrderBook._unlink(uint256) (src/OrderBook.sol#348-365) has costly operations inside a loop:
+	- delete _bookNext[orderId] (src/OrderBook.sol#364)
+	Calls stack containing the loop:
+		OrderBook.triggerStopOrders(uint256)
+OrderBook._stampBookSeq(uint256) (src/OrderBook.sol#301-303) has costly operations inside a loop:
+	- _bookSeq[orderId] = ++ _lastBookSeq (src/OrderBook.sol#302)
+	Calls stack containing the loop:
+		OrderBook.triggerStopOrders(uint256)
+OrderBook._settleFill(uint256,uint256,uint256,bool) (src/OrderBook.sol#271-299) has costly operations inside a loop:
+	- lastTradePrice = price (src/OrderBook.sol#291)
+	Calls stack containing the loop:
+		OrderBook.triggerStopOrders(uint256)
+		OrderBook._matchTaker(uint256,uint256)
+OrderBook._settleFill(uint256,uint256,uint256,bool) (src/OrderBook.sol#271-299) has costly operations inside a loop:
+	- hasTradePrice = true (src/OrderBook.sol#292)
+	Calls stack containing the loop:
+		OrderBook.triggerStopOrders(uint256)
+		OrderBook._matchTaker(uint256,uint256)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#costly-operations-inside-a-loop
+INFO:Detectors:
+Detector: naming-convention
+Function IOrderBook.PRICE_SCALE() (src/interfaces/IOrderBook.sol#33) is not in mixedCase
+Function IOrderBook.LOT_SIZE() (src/interfaces/IOrderBook.sol#34) is not in mixedCase
+Function IOrderBook.TICK_SIZE() (src/interfaces/IOrderBook.sol#35) is not in mixedCase
+Function IOrderBook.MAX_MATCHES_PER_TX() (src/interfaces/IOrderBook.sol#36) is not in mixedCase
+Function IOrderBook.MAX_INSERT_SCAN() (src/interfaces/IOrderBook.sol#37) is not in mixedCase
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#conformance-to-solidity-naming-conventions
+INFO:Slither:. analyzed (20 contracts with 102 detectors), 27 result(s) found
