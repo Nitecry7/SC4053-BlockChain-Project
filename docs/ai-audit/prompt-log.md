@@ -769,3 +769,23 @@ Their frontend tests' assertions about the placement cap stay correct.
 - **`forge-test-deep.txt`:** the full `FOUNDRY_PROFILE=deep` run (1,000 × 128), running in an isolated copy of `contracts/` since 23:15. Not complete at merge time; it is committed when it ends.
 
 **Result:** no real engine bug found. Every invariant held, including the independent payout ledger.
+
+---
+
+## 2026-11-08: Phase 8 begins, report section drafts (engine)
+
+**Prompt (summary):** After the Phase 7 merge, keep the deep run going in the background. Draft the engine's AI Audit Report sections in `docs/report/` from the real logs, with work that needs no CPU. Run Slither and coverage only after the deep run finishes.
+
+**What the AI produced:**
+- `docs/report/README.md` (an index, the rules, and a merge timeline with commit hashes).
+- Drafts for brief sections 2 to 8 (engine side): `2-methodology-engine.md`, `3-spec-and-prompts-engine.md`, `4-architecture-engine.md` (including a Mermaid diagram), `5-issues-engine.md` (issues 001 to 006 ranked, each in four parts), `6-validation-engine.md`, `7-improvements-engine.md` and `8-lessons-engine.md`.
+- Person 2's `docs/ai-audit/ai-audit-report-draft.md` was not edited. These files are written to slot into the sections where it says "Needs Person 1".
+- Every figure comes from the committed evidence, the issue files, SPEC or git.
+- Slither, coverage, the final audit and the deep-run result are marked pending.
+
+**What the AI got wrong:**
+- Its first Section 6 draft took the reach-test counts from a run that had been declared void, because it ran during the orphan-mutant window.
+- On checking, the clean committed run (`phase7/forge-test-default.txt`) gives identical counts, as the test is deterministic. The draft now cites that file.
+- The Phase 6 log entry says `OrderBook.Stop.t.sol` has 41 tests. The committed run shows 42 (39 in `OrderBookStopTest` and 3 in `OrderBookStopReentrancyTest`). The report uses 42.
+
+**Deep run status at commit time:** still running (Windows `forge.exe`, about 40 MB of memory), started 7 Nov 23:15 in an isolated copy of `contracts/`.
