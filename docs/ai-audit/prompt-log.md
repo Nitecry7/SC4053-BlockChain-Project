@@ -409,3 +409,41 @@ pinned submodule. A plain copy would have committed thousands of vendored files 
 - Fix `.gitignore`: Person 2's change removed the `docs/project.pdf` rule and left a stray `]`. Restore the rule, and keep `docs/Development_Project.pdf` tracked (the repo is private).
 - Finish Phase 4 with a journey test using the brief's numbers. The `matchOrders` re-entry test waits for Phase 5.
 - Tell Person 2 about the interface comment change, and that the ABI needs re-exporting after Phase 4 merges.
+
+---
+
+## 2026-11-07: Phase 4, finish (review, mutants, merge)
+
+**Prompt (summary):** Finish Phase 4: add a journey test with the brief's exact numbers (Alice sells 100 at 2, Bob buys 40, Alice cancels and receives exactly 60). Defer the `matchOrders` re-entry test to Phase 5 (it is still a stub) and note it in the Phase 5 row. Run an independent review, log real flaws, re-run the earlier mutants and add new ones, run build, test and fmt, log, commit, merge into `main` with `--no-ff`, push, and create `engine/phase-5`. Also: fix `.gitignore` (stray `]`, restore the `docs/project.pdf` rule) and check the tools.
+
+**Tool check:** `slither --version` 0.11.6. `solc-select versions` 0.8.24. `node` and `npm` were not found in Git Bash or PowerShell, and Node was not installed.
+
+**What the AI produced:**
+- `test_cancel_briefJourneyAliceSells100BobBuys40AliceGets60Back`: every balance is exact at each step, and the book holds 100, then 60, then 0.
+- The Phase 5 row in ENGINE_PHASES.md now includes the deferred `matchOrders` re-entry test.
+- A commit fixing `.gitignore` on its own.
+
+**Independent review (fresh subagent, read-only, no session context):** It found no High or Medium issue and no code bug. It found three Low test gaps:
+
+| Finding | Outcome |
+|---|---|
+| L1: the `cancelOrder` status check is masked by `_unlink`'s guard, so deleting it survives | `test_cancel_statusCheckRejectsLinkedTerminalOrder` writes Filled or Cancelled onto a linked order through the harness. The Phase 6a row was updated |
+| L2: no minimum-size cancel (1 lot at 1 tick escrows 1 wei of quote) | `test_cancel_minimumSizeBuyRefundsOneWei`, `test_cancel_minimumSizeSellRefundsOneLot` |
+| L3: no fuzz test of cancel | `testFuzz_cancel_partialFillThenCancelRefundsExactRemainder` (1,000 runs) checks against the reference cost `fill * price / PRICE_SCALE` |
+
+The Info notes were not acted on: an equivalent mutant (I1), `_unlink`'s guard as defence in depth (I2), reentrancy tests to recheck when the stubs are replaced in Phases 5 and 6 (I3), PendingTrigger deferred to Phase 6a (I4), and redeploying the factory and re-exporting the ABI after the merge (I5).
+
+None of these is a bug in AI-written engine code, so no issue file was added.
+
+**Mutants** (one at a time on `OrderBook.sol`, fuzz tests excluded, source restored after each run):
+- Before the new tests: 13 caught, 4 survived. C1 (status check removed), R1 and R2 (refunds skipped at 1 wei and at one lot), and R3 (status check weakened) survived. R4 survived too.
+- After the new tests: 16 of 17 caught. The re-run earlier mutants were G (guard removed, 16 tests failed), Z (issue 005), S1, and C1 to C6. The new ones were N1 to N4 and R1 to R4.
+- R4 survives as an equivalent mutant. It recomputes the buy refund as `(amount - filled) * price / PRICE_SCALE`. Lot and tick sizes make that exactly equal to `lockedQuote`, so no test can tell them apart.
+
+**Results:** `forge build --sizes`: OrderBook 6,812 B runtime and 7,475 B initcode. MarketFactory 8,859 B runtime and 8,888 B initcode. Both have room under EIP-170 and EIP-3860. `forge test`: 238 passed, 0 failed, 0 skipped (15 suites). `forge fmt --check`: clean.
+
+**What the AI got wrong:** In the first version of the L1 test, `forged = original` aliased the memory struct, so the "restore" wrote the forged status back, and `assertBookSorted` failed with "order in the book is not live". It was fixed by reading a separate copy. This was a test-code mistake, not an engine bug.
+
+**Human decisions:** The `matchOrders` re-entry test moves to Phase 5. `docs/Development_Project.pdf` stays tracked (the repo is private).
+
+**Follow-up for Person 2:** OrderBook bytecode changed in Phase 4, so the deployed MarketFactory still creates markets with the stub `cancelOrder`. Redeploy, re-export the ABI, and add UI messages for `NotOrderOwner` and `OrderNotActive`.

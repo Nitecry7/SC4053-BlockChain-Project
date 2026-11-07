@@ -112,6 +112,119 @@ contract OrderBookCancelTest is OrderBookBase {
         _assertChecks();
     }
 
+    /// @dev The brief's journey with its exact numbers: Alice sells 100 at 2, Bob buys 40, Alice cancels the other 60.
+    function test_cancel_briefJourneyAliceSells100BobBuys40AliceGets60Back() public {
+        uint256 ask = _place(alice, SELL, 2e18, 100e18);
+        _assertBalances(alice, -100e18, 0);
+        assertEq(base.balanceOf(address(book)), 100e18, "book holds the escrowed 100");
+
+        uint256 bid = _place(bob, BUY, 2e18, 40e18);
+        _assertStatus(bid, IOrderBook.Status.Filled);
+        _assertStatus(ask, IOrderBook.Status.PartiallyFilled);
+        assertEq(book.getOrder(ask).filled, 40e18);
+        _assertBalances(alice, -100e18, 80e18);
+        _assertBalances(bob, 40e18, -80e18);
+        assertEq(base.balanceOf(address(book)), 60e18, "book holds the unfilled 60");
+        assertEq(quote.balanceOf(address(book)), 0);
+        _assertChecks();
+
+        uint256 aliceBaseBefore = base.balanceOf(alice);
+        vm.expectEmit(address(book));
+        emit IOrderBook.OrderCancelled(ask, alice, 60e18, 0);
+        _cancel(alice, ask);
+
+        assertEq(base.balanceOf(alice) - aliceBaseBefore, 60e18, "Alice receives exactly 60");
+        _assertStatus(ask, IOrderBook.Status.Cancelled);
+        assertEq(book.getOrder(ask).filled, 40e18, "filled part untouched");
+        _assertBalances(alice, -40e18, 80e18);
+        _assertBalances(bob, 40e18, -80e18);
+        assertEq(base.balanceOf(address(book)), 0);
+        assertEq(quote.balanceOf(address(book)), 0);
+        assertEq(book.getBook(SELL, 1).length, 0);
+        assertEq(book.getBook(BUY, 1).length, 0);
+        _assertChecks();
+    }
+
+    /// @dev Smallest possible orders: one lot at one tick. The buy escrows exactly 1 wei of quote.
+    function test_cancel_minimumSizeBuyRefundsOneWei() public {
+        uint256 bid = _place(bob, BUY, 1e9, 1e9);
+        assertEq(book.getOrder(bid).lockedQuote, 1, "1 wei escrowed");
+
+        _cancel(bob, bid);
+
+        _assertBalances(bob, 0, 0);
+        assertEq(quote.balanceOf(address(book)), 0);
+        _assertChecks();
+    }
+
+    function test_cancel_minimumSizeSellRefundsOneLot() public {
+        uint256 ask = _place(alice, SELL, 1e9, 1e9);
+
+        _cancel(alice, ask);
+
+        _assertBalances(alice, 0, 0);
+        assertEq(base.balanceOf(address(book)), 0);
+        _assertChecks();
+    }
+
+    /// @dev Filled and Cancelled orders are never linked in practice, so `_unlink`'s guard would also revert. Writing
+    /// the status directly onto a linked order checks that cancelOrder's own status check rejects it.
+    function test_cancel_statusCheckRejectsLinkedTerminalOrder() public {
+        IOrderBook.Status[2] memory terminal = [IOrderBook.Status.Filled, IOrderBook.Status.Cancelled];
+        uint256 ask = _place(alice, SELL, 2e18, 1e18);
+        IOrderBook.Order memory original = book.getOrder(ask);
+
+        for (uint256 i = 0; i < terminal.length; i++) {
+            IOrderBook.Order memory forged = book.getOrder(ask); // a separate copy: `= original` would alias it
+            forged.status = terminal[i];
+            book.writeOrder(forged);
+
+            vm.prank(alice);
+            vm.expectRevert(IOrderBook.OrderNotActive.selector);
+            book.cancelOrder(ask);
+
+            assertEq(book.bookHead(SELL), ask, "still linked");
+            _assertBalances(alice, -1e18, 0);
+            book.writeOrder(original);
+            _assertChecks();
+        }
+    }
+
+    /// @dev Random side, price, size and partial fill, then cancel. Checks both traders against the reference cost
+    /// fill * price / PRICE_SCALE, which is exact for aligned inputs.
+    function testFuzz_cancel_partialFillThenCancelRefundsExactRemainder(
+        bool makerSells,
+        uint256 priceTicks,
+        uint256 amountLots,
+        uint256 fillLots
+    ) public {
+        priceTicks = bound(priceTicks, 1, 1e12);
+        amountLots = bound(amountLots, 1, 1e12);
+        fillLots = bound(fillLots, 0, amountLots - 1);
+        uint256 price = priceTicks * 1e9;
+        uint256 amount = amountLots * 1e9;
+        uint256 fill = fillLots * 1e9;
+        int256 cost = int256(fill * price / 1e18);
+
+        uint256 id = _place(alice, makerSells ? SELL : BUY, price, amount);
+        if (fill != 0) _place(bob, makerSells ? BUY : SELL, price, fill);
+
+        _cancel(alice, id);
+
+        _assertStatus(id, IOrderBook.Status.Cancelled);
+        assertEq(book.getOrder(id).filled, fill);
+        if (makerSells) {
+            _assertBalances(alice, -int256(fill), cost);
+            _assertBalances(bob, int256(fill), -cost);
+        } else {
+            _assertBalances(alice, int256(fill), -cost);
+            _assertBalances(bob, -int256(fill), cost);
+        }
+        assertEq(base.balanceOf(address(book)), 0);
+        assertEq(quote.balanceOf(address(book)), 0);
+        _assertChecks();
+    }
+
     function test_cancel_buyTakerRemainderWithPriceImprovementRefundsLockedQuote() public {
         _place(alice, SELL, 2e18, 4e18);
         uint256 bid = _place(bob, BUY, 3e18, 10e18);
