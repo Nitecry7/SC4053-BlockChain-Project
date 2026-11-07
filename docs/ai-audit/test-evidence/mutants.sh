@@ -2,7 +2,7 @@
 # Mutation check for contracts/src/OrderBook.sol.
 #
 # Run from the repo root (Git Bash or any bash with GNU sed):
-#   bash docs/ai-audit/test-evidence/mutants.sh "^(P5|G |Z |S1)"   # per phase: that phase's mutants + smoke set
+#   bash docs/ai-audit/test-evidence/mutants.sh "^(P6|G |Z |S1)"   # per phase: that phase's mutants + smoke set
 #   bash docs/ai-audit/test-evidence/mutants.sh                    # every mutant (slow, ~1 compile per mutant;
 #                                                                  # run the full set once, in Phase 8)
 # The argument is a bash regex matched against each mutant's name. Smoke set: G (cancel guard), Z (issue 005),
@@ -58,9 +58,9 @@ run "Z   zero-address owner check removed (issue 005)" \
 run "S1  zero-value refund guard in _settleFill removed" \
   's/if (refund != 0) IERC20(quoteToken).safeTransfer(buyOrder.trader, refund);/IERC20(quoteToken).safeTransfer(buyOrder.trader, refund);/'
 run "C1  cancel status check removed" \
-  's/if (order.status != Status.Open \&\& order.status != Status.PartiallyFilled) revert OrderNotActive();//'
+  's/^        ) revert OrderNotActive();$/        ) {}/'
 run "C2  PartiallyFilled not cancellable" \
-  's/ \&\& order.status != Status.PartiallyFilled) revert OrderNotActive/) revert OrderNotActive/'
+  's/order.status != Status.Open \&\& order.status != Status.PartiallyFilled$/order.status != Status.Open/'
 run "C3  cancel skips _unlink" \
   's/^        _unlink(orderId);$//'
 run "C4  cancel does not zero lockedQuote" \
@@ -82,7 +82,7 @@ run "R1  quote refund skipped at 1 wei" \
 run "R2  base refund skipped at one lot" \
   's/if (refundBase != 0) IERC20(baseToken)/if (refundBase > 1e9) IERC20(baseToken)/'
 run "R3  cancel status check weakened to Cancelled only" \
-  's/if (order.status != Status.Open \&\& order.status != Status.PartiallyFilled) revert OrderNotActive();/if (order.status == Status.Cancelled) revert OrderNotActive();/'
+  's/order.status != Status.Open \&\& order.status != Status.PartiallyFilled$/order.status == Status.Cancelled/; s/^                \&\& order.status != Status.PendingTrigger$/                \&\& true/'
 run "R4  buy refund recomputed from price (EQUIVALENT: expected to survive)" \
   's/uint256 refundQuote = order.lockedQuote;/uint256 refundQuote = order.side == Side.Buy ? (order.amount - order.filled) * order.price \/ PRICE_SCALE : 0;/'
 
@@ -122,5 +122,57 @@ run "P5p empty-side check needs both sides empty (Phase 5 review M1)" \
 run "P5q empty bid side not detected (EQUIVALENT: price 0 never crosses)" \
   's/if (bidId == 0 || askId == 0) break;/if (askId == 0) break;/'
 
+# --- Phase 6: stop-limit ---
+run "P6a placeStopLimitOrder nonReentrant removed" \
+  's/^        nonReentrant$//'
+run "P6b triggerStopOrders nonReentrant removed" \
+  's/function triggerStopOrders(uint256 maxCount) external nonReentrant returns/function triggerStopOrders(uint256 maxCount) external returns/'
+run "P6c zero trigger price accepted" \
+  's/if (price == 0 || (isStop \&\& triggerPrice == 0)) revert ZeroPrice();/if (price == 0) revert ZeroPrice();/'
+run "P6d trigger price tick not checked" \
+  's/if (price % TICK_SIZE != 0 || triggerPrice % TICK_SIZE != 0) revert InvalidTickSize();/if (price % TICK_SIZE != 0) revert InvalidTickSize();/'
+run "P6e stop escrowed but never listed" \
+  's/^        _insert(orderId);$//'
+run "P6f escrow taken at the trigger price, not the limit" \
+  's/lockedQuote: side == Side.Buy ? requiredQuote(amount, price) : 0,/lockedQuote: side == Side.Buy ? requiredQuote(amount, triggerPrice == 0 ? price : triggerPrice) : 0,/'
+run "P6g cancel rejects PendingTrigger" \
+  's/^                \&\& order.status != Status.PendingTrigger$/                \&\& true/'
+run "P6h no hasTradePrice guard" \
+  's/^        if (!hasTradePrice) return 0;$//'
+run "P6i buy stop needs a strictly higher price" \
+  's/lastTradePrice >= _orders\[buyId\].triggerPrice/lastTradePrice > _orders[buyId].triggerPrice/'
+run "P6j sell stop needs a strictly lower price" \
+  's/lastTradePrice <= _orders\[sellId\].triggerPrice/lastTradePrice < _orders[sellId].triggerPrice/'
+run "P6k buy eligibility inverted" \
+  's/lastTradePrice >= _orders\[buyId\].triggerPrice/lastTradePrice <= _orders[buyId].triggerPrice/'
+run "P6l no fresh bookSeq on activation" \
+  's/^            _stampBookSeq(orderId);$//'
+run "P6m budget per activation, not shared" \
+  's/budget -= _matchTaker(orderId, budget);/_matchTaker(orderId, MAX_MATCHES_PER_TX);/'
+run "P6n activated remainder neither rested nor refunded" \
+  's/^            if (_orders\[orderId\].status != Status.Filled \&\& !_tryInsert(orderId)) _closeAndRefund(orderId);$//'
+run "P6o maxCount ignored" \
+  's/while (triggered < maxCount) {/while (triggered < MAX_MATCHES_PER_TX) {/'
+run "P6p status not set Open on activation" \
+  's/^            _orders\[orderId\].status = Status.Open;$//'
+run "P6q equal triggers: new stop jumps ahead" \
+  's/return side == Side.Buy ? triggerA < triggerB : triggerA > triggerB;/return side == Side.Buy ? triggerA <= triggerB : triggerA >= triggerB;/'
+run "P6r sell stops sorted ascending" \
+  's/return side == Side.Buy ? triggerA < triggerB : triggerA > triggerB;/return side == Side.Buy ? triggerA < triggerB : triggerA < triggerB;/'
+run "P6s stop lists ignored (everything uses the book list)" \
+  's/^        if (_orders\[orderId\].status == Status.PendingTrigger) return _stopHead;$//'
+run "P6t StopOrderTriggered reports price 0" \
+  's/emit StopOrderTriggered(orderId, lastTradePrice);/emit StopOrderTriggered(orderId, 0);/'
+run "P6u triggered count not incremented" \
+  's/^            triggered++;$//'
+
+run "P6v StopOrderTriggered reports the trigger price (Phase 6 review L1)" \
+  's/emit StopOrderTriggered(orderId, lastTradePrice);/emit StopOrderTriggered(orderId, _orders[orderId].triggerPrice);/'
+run "P6w ineligible buy head hides an eligible sell head (Phase 6 review L2)" \
+  's/if (buyId != 0 \&\& lastTradePrice >= _orders\[buyId\].triggerPrice) return buyId;/if (buyId != 0) return lastTradePrice >= _orders[buyId].triggerPrice ? buyId : 0;/'
+run "P6x unplaceable activated stop reverts the call (issue 006, pre-fix code)" \
+  's/if (_orders\[orderId\].status != Status.Filled \&\& !_tryInsert(orderId)) _closeAndRefund(orderId);/if (_orders[orderId].status != Status.Filled) _insert(orderId);/'
+run "P6y unplaceable activated stop silently dropped (no refund)" \
+  's/\&\& !_tryInsert(orderId)) _closeAndRefund(orderId);/\&\& !_tryInsert(orderId)) {}/'
 echo "---"
 echo "caught=$caught survived=$survived other=$other"

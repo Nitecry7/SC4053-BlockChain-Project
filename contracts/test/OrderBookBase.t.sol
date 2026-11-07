@@ -52,22 +52,30 @@ abstract contract OrderBookBase is Test {
         assertEq(quote.balanceOf(address(book)), sumQuote, "quote held != lockedQuote on active buys");
     }
 
-    /// @dev Walks both lists and checks the links, the side and status of each order, and strict priority order.
-    /// Then checks SPEC section 4 for every order placed: Open and PartiallyFilled orders are in the book, others not.
+    /// @dev Walks the two book lists and the two stop lists and checks the links, the side and status of each order,
+    /// and strict priority order. Then checks SPEC section 4 for every order placed: Open and PartiallyFilled orders
+    /// are in the book and nowhere else, PendingTrigger orders are in their stop list and nowhere else, and Filled or
+    /// Cancelled orders are in no list.
     function assertBookSorted() internal view {
-        _assertSideSorted(IOrderBook.Side.Buy);
-        _assertSideSorted(IOrderBook.Side.Sell);
-
         uint256 nextId = book.nextOrderId();
+        bool[] memory inBook = new bool[](nextId);
+        bool[] memory inStops = new bool[](nextId);
+        _walkBook(IOrderBook.Side.Buy, inBook);
+        _walkBook(IOrderBook.Side.Sell, inBook);
+        _walkStops(IOrderBook.Side.Buy, inStops);
+        _walkStops(IOrderBook.Side.Sell, inStops);
+
         for (uint256 id = 1; id < nextId; id++) {
-            IOrderBook.Order memory order = book.readOrder(id);
-            bool live = order.status == IOrderBook.Status.Open || order.status == IOrderBook.Status.PartiallyFilled;
-            bool inBook = book.bookHead(order.side) == id || book.bookPrev(id) != 0;
-            assertEq(inBook, live, "book membership does not match status");
+            IOrderBook.Status status = book.readOrder(id).status;
+            bool live = status == IOrderBook.Status.Open || status == IOrderBook.Status.PartiallyFilled;
+            assertEq(inBook[id], live, "book membership does not match status");
+            assertEq(
+                inStops[id], status == IOrderBook.Status.PendingTrigger, "stop-list membership does not match status"
+            );
         }
     }
 
-    function _assertSideSorted(IOrderBook.Side side) private view {
+    function _walkBook(IOrderBook.Side side, bool[] memory seen) private view {
         uint256 prev = 0;
         uint256 current = book.bookHead(side);
         uint256 steps = 0;
@@ -75,6 +83,11 @@ abstract contract OrderBookBase is Test {
         while (current != 0) {
             assertLt(steps, MAX_BOOK_WALK, "book walk did not end: cycle in list");
             steps++;
+            // Orders written through the harness have IDs past nextOrderId: walked and checked, but not tracked.
+            if (current < seen.length) {
+                assertFalse(seen[current], "order listed twice");
+                seen[current] = true;
+            }
 
             IOrderBook.Order memory order = book.readOrder(current);
             assertEq(uint8(order.side), uint8(side), "order on the wrong side");
@@ -92,6 +105,44 @@ abstract contract OrderBookBase is Test {
                     assertGt(prevPrice, order.price, "bids not descending");
                 } else {
                     assertLt(prevPrice, order.price, "asks not ascending");
+                }
+            }
+
+            prev = current;
+            current = book.bookNext(current);
+        }
+    }
+
+    /// @dev Stop lists: buy stops by triggerPrice ascending, sell stops descending, equal triggers in placement order.
+    function _walkStops(IOrderBook.Side side, bool[] memory seen) private view {
+        uint256 prev = 0;
+        uint256 current = book.stopHead(side);
+        uint256 steps = 0;
+
+        while (current != 0) {
+            assertLt(steps, MAX_BOOK_WALK, "stop walk did not end: cycle in list");
+            steps++;
+            // Orders written through the harness have IDs past nextOrderId: walked and checked, but not tracked.
+            if (current < seen.length) {
+                assertFalse(seen[current], "order listed twice");
+                seen[current] = true;
+            }
+
+            IOrderBook.Order memory order = book.readOrder(current);
+            assertEq(uint8(order.side), uint8(side), "stop on the wrong side");
+            assertEq(book.bookPrev(current), prev, "stop prev link does not match the walk");
+            assertEq(
+                uint8(order.status), uint8(IOrderBook.Status.PendingTrigger), "stop list holds a non-pending order"
+            );
+
+            if (prev != 0) {
+                uint256 prevTrigger = book.readOrder(prev).triggerPrice;
+                if (prevTrigger == order.triggerPrice) {
+                    assertLt(prev, current, "equal triggers not in placement order");
+                } else if (side == IOrderBook.Side.Buy) {
+                    assertLt(prevTrigger, order.triggerPrice, "buy stops not ascending by trigger");
+                } else {
+                    assertGt(prevTrigger, order.triggerPrice, "sell stops not descending by trigger");
                 }
             }
 

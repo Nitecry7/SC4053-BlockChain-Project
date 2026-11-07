@@ -6,7 +6,7 @@ interface ([CONTRACT_INTERFACE.md](../CONTRACT_INTERFACE.md), `contracts/src/int
 `matchOrders` went from `revert()` stubs to real code.
 
 - Part 1: cancel (Bonus 1) and batch matching (Bonus 2). **Ready.**
-- Part 2: stop-limit (Bonus 3). Placeholder, coming in Phase 6.
+- Part 2: stop-limit (Bonus 3). **Ready.**
 
 ## Part 1: cancel and batch matching
 
@@ -41,7 +41,7 @@ node --test contracts/script/export-web.test.mjs
   change. `abis.ts` will change: the `cancelOrder` input is named `orderId`, and the `matchOrders` input and output are
   named `maxMatches` and `matchesDone`. Selectors are unchanged.
 - MetaMask may need "Clear activity tab data" after the Anvil restart (see DEPLOYMENT.md).
-- Sizes on main now: OrderBook 7,239 B runtime and 7,902 B initcode; MarketFactory 9,286 B runtime and 9,315 B initcode.
+- Sizes after Part 1: OrderBook 7,239 B runtime and 7,902 B initcode; MarketFactory 9,286 B runtime and 9,315 B initcode. (Part 2 has the sizes after stop-limit.)
 
 ### Functions
 
@@ -123,8 +123,8 @@ The brief's journey, as verified on the scratch chain:
 | `web/components/trade/order-result.tsx:121-126` | The `hitCap` notice says "`matchOrders` is not available yet". It is available: point to the Match orders action instead |
 | `web/lib/errors.ts` | No entries for `NotOrderOwner`, `OrderNotActive`, `InvalidMaxCount` (table above) |
 | `web/lib/order-plan.ts:39`, `web/lib/order-plan.test.ts:76`, `web/lib/trading.integration.test.ts:258` | Comments and test names say `matchOrders` is a stub or not available. The assertions themselves are still correct: placement is still capped at 10 fills and still leaves the remainder crossed. Only the wording is stale |
-| `web/lib/tx-errors.test.ts:45` | Test name says "a stub like cancelOrder". The empty-revert case is still valid for `placeStopLimitOrder` and `triggerStopOrders` until Phase 6 |
-| `docs/DEPLOYMENT.md` | "Size check" quotes OrderBook 6,325 B and MarketFactory 8,358 B. The last bullet says four functions have unnamed parameters, but now only the two stop-limit stubs do |
+| `web/lib/tx-errors.test.ts:45` | Test name says "a stub like cancelOrder". No engine function reverts with empty data any more (Phase 6 implemented the last two stubs). The test still checks a valid decoder path, but its name is stale |
+| `docs/DEPLOYMENT.md` | "Size check" quotes OrderBook 6,325 B and MarketFactory 8,358 B. The last bullet says four functions have unnamed parameters. After Phase 6 none do, once the ABI is regenerated |
 
 ### Notes for Person 2 (nothing of yours was edited)
 - `Deploy.s.sol` and the factories needed **no** change: the deploy worked unchanged on the scratch chain.
@@ -133,10 +133,100 @@ The brief's journey, as verified on the scratch chain:
 
 ## Part 2: stop-limit (Bonus 3)
 
-_Placeholder. Phase 6 will fill this in:_
-- `placeStopLimitOrder` and `triggerStopOrders`
-- the `StopOrderPlaced` and `StopOrderTriggered` events
-- `cancelOrder` on PendingTrigger (4) orders
-- how to show pending stops (they are not in `getBook`)
-- the trigger button
-- the re-run steps
+**On main:** the merge commit titled "Merge engine/phase-6 (Phase 6) into main". `git log --oneline -1 main` shows it.
+
+Phase 6 changes OrderBook bytecode again, so **the re-run steps in Part 1 apply again**: fresh Anvil, deploy, export, `--check`. If you have not redeployed since Part 1, do it once now and you get cancel, batch matching and stop-limit together. No function, event or error was added: the stop-limit pieces were already in the frozen interface. Only the named parameters in `abis.ts` change, because the stubs are now implemented.
+
+### Functions
+
+| Signature | Who may call | Returns | Reverts with |
+|---|---|---|---|
+| `placeStopLimitOrder(uint8 side, uint256 triggerPrice, uint256 limitPrice, uint256 amount) returns (uint256 orderId)` | Anyone, for themselves | the new order ID (IDs are shared with limit orders) | `ZeroAmount`, `ZeroPrice` (limit **or** trigger is 0), `InvalidLotSize`, `InvalidTickSize` (limit **or** trigger off the 1e9 tick), checked in that order. `BookTooDeep` if more than 100 stops on that side rank ahead of it. ERC20 errors if the escrow approval or balance is short |
+| `triggerStopOrders(uint256 maxCount) returns (uint256 triggered)` | Anyone. The caller sends and receives no tokens | the number of stops activated, `0..maxCount` | `InvalidMaxCount` if `maxCount == 0` or `> MAX_MATCHES_PER_TX()` (10). **Returns 0, no revert**, before the first trade or when nothing is eligible |
+| `cancelOrder(uint256 orderId)` | Owner | — | Now also accepts **PendingTrigger (4)** orders and refunds the full escrow |
+
+**Escrow and approval:** the escrow is taken at placement, at the **limit** price, exactly like a limit order. Approve:
+- for a buy stop, `requiredQuote(amount, limitPrice)` quote
+- for a sell stop, `amount` base
+
+The same `order-plan.ts` helpers apply, using `limitPrice`.
+
+**Eligibility,** checked only inside `triggerStopOrders`:
+- a **buy** stop when `lastTradePrice() >= triggerPrice`
+- a **sell** stop when `lastTradePrice() <= triggerPrice`
+
+A stop that is already eligible when placed still waits for the next `triggerStopOrders` call.
+
+### Events, and when they fire
+
+| Event | Fires when |
+|---|---|
+| `StopOrderPlaced(uint256 indexed orderId, address indexed trader, uint8 side, uint256 triggerPrice, uint256 limitPrice, uint256 amount)` | Once per successful `placeStopLimitOrder`, after the escrow pull. **There is no `OrderPlaced` for a stop** |
+| `StopOrderTriggered(uint256 indexed orderId, uint256 lastTradePrice)` | Once per activation inside `triggerStopOrders`. The second field is the price that made it eligible, **not** the trigger price. Any `Trade` events for that order follow it in the same transaction |
+| `OrderCancelled(...)` | As in Part 1, and also for a pending stop (full refund). **Also emitted inside `triggerStopOrders`** when an activated stop cannot enter the book, because more than 100 orders rank ahead of its limit price: the engine cancels it and refunds the remainder instead of failing the call (issue 006). The order's trader is in the event; the caller of the trigger is not |
+| `Trade(...)` | Fills made by activated stops. The stop is always the **taker**, and the price is the resting maker's price |
+
+### Order status for stops
+
+| `status` | Meaning for the UI |
+|---|---|
+| 4 PendingTrigger | Waiting. Its escrow is held, it is **not** in `getBook` / best bid or ask, and it cannot fill |
+| 0 Open / 1 PartiallyFilled | Activated, and now an ordinary resting limit order at `price` (the limit price) |
+| 2 Filled | Activated and fully filled |
+| 3 Cancelled | Cancelled by the owner, or by the engine at activation if the book was too deep. Tell these apart from the transaction that emitted `OrderCancelled`: `cancelOrder` versus `triggerStopOrders` |
+
+`order.triggerPrice` is non-zero for every stop, before and after activation, so it marks an order as a stop.
+
+### UI suggestions
+
+**Placing.** Add a "Stop-limit" order type to the ticket with two prices.
+- Explain it in one line: "When the last trade reaches the trigger, this becomes a limit order at your limit price."
+- For a sell stop-loss, usually trigger ≤ last and limit ≤ trigger. For a buy stop, usually trigger ≥ last and limit ≥ trigger. The engine does not enforce either, so warn instead of blocking.
+- Show the escrow (as for a limit order) and that it is taken now.
+
+**Showing pending stops.**
+- They are not in the book views. List them in **My orders** with status "Waiting for trigger", showing the trigger, limit, size and escrow, and a **Cancel** button, which refunds in full.
+- `getUserOrderIds` + `getOrder` already return them. For a market-wide list, read `StopOrderPlaced` logs and keep the IDs whose `getOrder(id).status == 4`.
+- Optionally mark a pending stop "eligible now" when `hasTradePrice()` and the eligibility rule above hold. Then it fires on the next trigger call.
+
+**Trigger button.** Show a **Trigger stops** action whenever at least one pending stop is eligible.
+1. Simulate `triggerStopOrders(10)` from the connected account. The return value is the number that would activate, and 0 means hide or disable the button.
+2. Send it.
+3. Decode `StopOrderTriggered`, `Trade` and any `OrderCancelled` logs.
+4. Repeat while it returns 10.
+
+Anyone can press it, and the caller's balances never change apart from gas. After triggering, the book can be **left crossed**: all activations in one call share 10 fills. If so, show the Part 1 **Match orders** action.
+
+**Errors to add** to `web/lib/errors.ts`, beyond Part 1: none new. `InvalidMaxCount` (Part 1) covers `triggerStopOrders`, and `BookTooDeep` already has text. Consider a stop-specific wording for `BookTooDeep` from `placeStopLimitOrder`: "Too many stop orders on this side rank ahead of this trigger."
+
+### Known limitations to show or mention (SPEC section 8)
+- `lastTradePrice` is set by any single trade, even 1 lot. An attacker can move it to set off stops, so they are for teaching purposes only.
+- If a trigger call's shared 10-fill budget runs out, an activated stop can rest crossed. A fast trader can then fill it at its **limit** price before anyone presses Match orders. It never trades worse than its limit.
+- An activated stop behind more than 100 better-priced orders is cancelled and refunded rather than resting.
+
+### Verified on a scratch chain
+Run on Anvil port 8546. The Phase 6 build was deployed with `Deploy.s.sol`, unchanged, and the addresses were the usual fresh-chain values. The flow then ran with `cast`, and every check passed:
+
+| Step | Result |
+|---|---|
+| Simulated `triggerStopOrders(10)` before any trade | returns 0 |
+| Alice sells 1@2, Bob buys 1@2 | 1 `Trade`; last price 2 |
+| Alice `placeStopLimitOrder(1 /*Sell*/, 1.8e18, 1.7e18, 10e18)` | `StopOrderPlaced`; status 4; the market holds her 10 NTU; `getBestAsk()` is `(0, 0)` |
+| Carol `placeStopLimitOrder(0 /*Buy*/, 5e18, 2.5e18, 1e18)` | pending, with 2.5 SGDx escrowed |
+| Keeper `triggerStopOrders(10)` at price 2 | success, 0 triggered (37,277 gas) |
+| Bob bids 10@1.75 and 1@1.8; Alice sells 1@1.8 | last price falls to 1.8 |
+| Keeper (account 4, no tokens): simulated return 1, then sent | 1 `StopOrderTriggered`, 1 `Trade` (182,193 gas). The stop sold 10 NTU into Bob's 1.75 bid: Alice +17.5 SGDx, last price 1.75 |
+| Simulated trigger again | 0 |
+| Bob `cancelOrder(4)` | reverts `NotOrderOwner` |
+| Carol `cancelOrder(4)`, her pending buy stop | `OrderCancelled`, full 2.5 SGDx refunded (54,904 gas) |
+
+Final balances:
+- Alice: 9,988 NTU and 10,021.3 SGDx
+- Bob: 10,012 NTU and 9,978.7 SGDx
+- Carol: 10,000 SGDx
+- the keeper: 0 and 0
+- the market: 0 and 0
+
+The same flow is an automated test: `test_stop_tradeMovesPriceKeeperTriggersSellStopAndItFills` in `contracts/test/Integration.Factory.t.sol`.
+
+**Sizes now:** OrderBook 8,461 B runtime and 9,124 B initcode; MarketFactory 10,508 B runtime and 10,537 B initcode. That leaves 14,068 B under the 24,576 B limit.
