@@ -929,3 +929,24 @@ Each must be checked against the source before drawing. Use one colour-blind-saf
 **What the AI got wrong:** its first attempt to write the sections through a shell heredoc failed on quoting, so nothing was written. It switched to writing files directly.
 
 **What the human did:** wrote Sections 1 and 8.1 to 8.4 and set the checking rules.
+
+## 2026-11-08: Report, the claude.ai chat assistant added
+**Phase:** wrap-up, report. **Branch:** `docs/chat-assistant`.
+
+**Prompt (summary):** Person 1 used Claude in the claude.ai app, in one long chat from 28 Oct to 8 Nov, as planner and reviewer. Add this accurately in four places:
+- **1.6:** the chat stress-tested the brief-based plan and rewrote it as `docs/DEX_Trading_Engine_Plan.md`, before Claude Code was engaged.
+- **Section 2:** a two-tier workflow. The chat wrote the phase prompts, reviewed plans and summaries, and proposed corrections; Claude Code implemented and ran the subagent reviews; the human made every decision. Use only facts in this log, attributing logged decisions as "my corrections (drafted with the chat assistant)".
+- **Section 3:** the phase prompts were drafted in the chat and refined in Claude Code.
+- **Section 8:** a lesson on the two tiers, including the chat's factual errors in the report drafts.
+
+**What the AI did:**
+- **1.6:** rewritten as two steps (the chat, then Claude Code).
+- **2.2:** a tools row for the chat.
+- **2.4:** a tier table, and a table of six corrections, each tied to the log entry that records it as a human decision. The correction entries checked were Phase 0 planning (1) and (2), "Human decision, O1", Phase 2b "Human decisions", the Phase 6 H1 choice and "Human decision on M-1".
+- **3.1 and 3.2:** wording updated.
+- **8.3:** item 7 added.
+- **Executive summary and report rules:** the chat statements are flagged as the owner's account, because there is no committed transcript.
+
+**What the AI got wrong / flagged:** nothing new was invented. The plan file's own title says "built with Claude Code", while the owner says the plan was written in the chat before Claude Code was engaged. The report quotes the title and gives the owner's account; it does not resolve the difference.
+
+**What the human did:** stated the chat's role and dates, and the attribution rule.

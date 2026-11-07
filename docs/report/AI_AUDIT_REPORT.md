@@ -17,6 +17,7 @@
 - **Two markers flag text that a teammate must confirm before submission:**
   - **[P2 to confirm]** marks text adapted from Person 2's records: [`docs/ai-audit/ai-audit-report-draft.md`](../ai-audit/ai-audit-report-draft.md), [`prompt-log-person2.md`](../ai-audit/prompt-log-person2.md), [`tooling-and-methodology.md`](../ai-audit/tooling-and-methodology.md) and the `p2-*` issue and evidence files.
   - **[P1 + P2 to confirm]** marks text that needs both teammates.
+- **One exception, marked where it appears:** statements about Person 1's claude.ai chat (Sections 1.6, 2.4 and 3.1) are Person 1's own account, because the chat transcript is not committed.
 - **Person 1's parts** come from [`docs/ai-audit/prompt-log.md`](../ai-audit/prompt-log.md), issues 001 to 007, and the engine evidence.
 
 ---
@@ -28,7 +29,7 @@
   - batched multi-party matching (`matchOrders`; 4 buyers and 4 sellers settled in one transaction)
   - conditional stop-limit orders (`placeStopLimitOrder`, `triggerStopOrders`)
 - **The bonus UI is not built yet (Person 2).** The regenerated ABI is already in `web/` (`e375ff6`). The app shows no bonus controls, and Person 2's local chain still needs a redeploy.
-- **AI use:** both teammates used Claude Code throughout, steered by specification files read every session (`CLAUDE.md`, `SPEC.md`, the frozen `CONTRACT_INTERFACE.md`, per-phase prompts). The human made every design trade-off. A fresh, read-only AI reviewer checked each phase.
+- **AI use:** Person 1 also used Claude in the claude.ai chat as planner and reviewer (Section 2.4), and both teammates used Claude Code throughout, steered by specification files read every session (`CLAUDE.md`, `SPEC.md`, the frozen `CONTRACT_INTERFACE.md`, per-phase prompts). The human made every design trade-off. A fresh, read-only AI reviewer checked each phase.
 - **Problems found in AI output:** 22 issues are logged in the four-part format: 7 engine (001 to 007) and 15 Person 2 (P2-001 to P2-015).
   - **Highest:** 006 (High availability: one 102-wei stop blocked every stop trigger, fixed) and 004 (High test quality: three matching bugs passed the suite, fixed). For Person 2, two Medium deployment-tooling defects (P2-013, P2-014, fixed).
   - **One Medium engine issue is accepted by design and pinned by a test:** 007 (a limit order can be sandwiched through the fill cap; the loss is bounded by the victim's limit).
@@ -146,8 +147,11 @@ The resulting lifecycle is shown in [Figure 4](#figure-4).
 
 **What we did first, ourselves:** we read the brief and fixed the option, the role split and the core trading rules.
 
-**How AI was used before any contract code:** to stress-test the plan and turn it into written specification files. The repository records it this way:
-- **The plan.** `docs/DEX_Trading_Engine_Plan.md` is titled "Person 1, built with Claude Code". It already contains the review's outcomes that we then decided on ourselves: buy orders are escrowed too, and the stop trigger has an explicit initial state (`hasTradePrice`).
+**How AI was used before any contract code:** to stress-test the plan and turn it into written specification files, in two steps.
+- **The plan: Claude in the claude.ai chat app, before Claude Code was engaged.**
+  - **What it did:** Person 1 used one long chat, running from 28 Oct to 8 Nov, to stress-test the brief-based plan. The chat then rewrote it as the Person 1 engine plan, `docs/DEX_Trading_Engine_Plan.md`.
+  - **What came out of that review:** buy orders are escrowed too, and the stop trigger has an explicit initial state (`hasTradePrice`). We decided both ourselves, and both are in the plan.
+  - **Evidence:** this is the owner's account; the chat transcript is not in the repository. The plan file's title reads "Person 1, built with Claude Code". The repository agrees on the order of events: Claude Code's first session, on 28 Oct, opens by reading this plan, which was already in `docs/` but not yet committed (prompt log, Phase 0).
 - **The specification files.** `CLAUDE.md`, `SPEC.md` and the `CONTRACT_INTERFACE.md` draft were written in Claude Code's Phase 0 plan-mode session on 28 Oct (`cd35f8b`). The AI found seven specification gaps, (a) to (g), and the human replaced two of its fixes (Section 3.2).
 - **The first contract code.** Claude Code was asked to write it only on 1 Nov (Phase 1), after those files were committed. It therefore built against our specification rather than inventing one.
 
@@ -170,7 +174,8 @@ The resulting lifecycle is shown in [Figure 4](#figure-4).
 ### 2.2 Tools
 | Tool | Person 1 (engine) | Person 2 [P2 to confirm] |
 |---|---|---|
-| **Claude Code** | Opus 5.5 (log header); plan mode for Phase 0 | Opus 5.5, Sonnet 5.5 and Haiku 5.5 by phase (models per phase: `tooling-and-methodology.md`; some not recorded) |
+| **Claude (claude.ai chat)** | Planner and reviewer: one long chat, 28 Oct to 8 Nov (Section 2.4). Owner's account; the transcript is not in the repository | [P2 to confirm] whether a chat assistant was used |
+| **Claude Code** | Opus 5.5 (log header); plan mode for Phase 0. The implementer, which also ran the independent subagent reviews | Opus 5.5, Sonnet 5.5 and Haiku 5.5 by phase (models per phase: `tooling-and-methodology.md`; some not recorded) |
 | **Independent reviewer** | A fresh, read-only Claude Code subagent per phase (1 to 7), plus a final audit | Fresh-context subagents in P2-1 to P2-6 (none for P2-5 wrap-up, P2-6.1, P2-7) |
 | **Foundry 1.8.6** (`forge`, `anvil`, `cast`) | Unit, fuzz and invariant tests, gas, sizes, coverage, scratch-chain `cast` journeys | Contract tests, deploy script, scratch chains |
 | **Static analysis** | Slither 0.11.6 and `forge lint` on `OrderBook.sol` (Phase 8) | Slither 0.11.6 on Person 2's contracts and script; `forge lint` |
@@ -198,10 +203,29 @@ The resulting lifecycle is shown in [Figure 4](#figure-4).
   - a mock-wallet browser harness (`web/e2e/mock-wallet.mjs`)
 
 ### 2.4 Workflow per phase
+**Person 1 used a two-tier workflow.** Below, "my" means Person 1.
+
+| Tier | Tool | Role |
+|---|---|---|
+| Planner and reviewer | Claude in the claude.ai chat (one chat, 28 Oct to 8 Nov) | Wrote the phase prompts, reviewed Claude Code's plans and summaries, and proposed corrections |
+| Implementer | Claude Code | Planned and wrote the code and tests, ran the tools, and ran the independent subagent reviews (`/review-engine`) |
+| Decision-maker | Person 1 | Made every final decision |
+
+**Evidence:** the chat's role is the owner's account, and its transcript is not in the repository. The prompt log records each of the corrections below as a human decision or a human change to the AI's proposal. This report therefore attributes them as **my corrections (drafted with the chat assistant):**
+
+| Correction | Prompt-log entry |
+|---|---|
+| Lot and tick sizes instead of the AI's `AmountTooSmall` | Phase 0 planning, 28 Oct: "Human changes to the AI's proposal" (1) |
+| One shared fill budget for `triggerStopOrders`, instead of `maxCount × MAX_MATCHES_PER_TX` | Phase 0 planning, 28 Oct (2) |
+| The `bookSeq` tie-break decided at once (O1), on the day it was found, before any code. SPEC.md had left it "to decide before Phase 6" | Phase 0 scaffold, 28 Oct: "Human decision, O1" |
+| Escrow order: follow SPEC.md, pulling escrow before matching, where the Phase 2b prompt said to pull last | Phase 2b, 1 Nov: "Human decisions" |
+| Issue 006: auto-cancel and refund, option (a) of the four | Phase 6, 7 Nov |
+| Issue 007: document and pin by a test rather than change the engine | Phase 8, 8 Nov: "Human decision on M-1" |
+
 <a id="figure-1"></a>
 ![Figure 1: AI-assisted workflow per phase](diagrams/01-ai-workflow.png)
 
-**Figure 1: AI-assisted workflow per phase (engine).** The human approves each phase prompt (`docs/ENGINE_PHASES.md`). Every AI change then passes real test output, a fresh read-only reviewer and mutation testing before it is logged and merged. A surviving mutant sends the work back to implementation.
+**Figure 1: AI-assisted workflow per phase (engine).** The human approves each phase prompt (`docs/ENGINE_PHASES.md`, drafted in the chat). Every AI change then passes real test output, a fresh read-only reviewer and mutation testing before it is logged and merged. A surviving mutant sends the work back to implementation.
 
 Person 2 followed the same pattern [P2 to confirm]:
 1. a read-only planning session approved by the owner
@@ -225,13 +249,13 @@ Person 2 followed the same pattern [P2 to confirm]:
 | [`CLAUDE.md`](../../CLAUDE.md) | Standing rules loaded every session |
 | [`SPEC.md`](../../SPEC.md) | The behaviour contract. Prompts cite its sections, and code and tests cite its rules (A1 to A8) by name |
 | [`CONTRACT_INTERFACE.md`](../../CONTRACT_INTERFACE.md) | The frozen ABI. "Do not add any error, event or function that is not in the interface" forced fixes to stay inside the agreed surface (issues 001 and 006) |
-| [`docs/ENGINE_PHASES.md`](../ENGINE_PHASES.md) | The phase table and the verbatim prompts. Tests that reviews found missing were added to the rows of later phases |
+| [`docs/ENGINE_PHASES.md`](../ENGINE_PHASES.md) | The phase table and the verbatim prompts. Person 1 drafted the prompts in the claude.ai chat (Section 2.4) and refined them in Claude Code. Tests that reviews found missing were added to the rows of later phases |
 | [`docs/MARKET_FACTORY.md`](../MARKET_FACTORY.md), [`PRODUCT.md`](../../PRODUCT.md), [`DESIGN.md`](../../DESIGN.md) | Person 2's specifications [P2 to confirm] |
 
 ### 3.2 Representative prompt chains
 **Engine (Person 1; full text in `docs/ai-audit/prompt-log.md`):**
 1. **Phase 0 planning, 28 Oct (plan mode):**
-   - The AI found seven specification gaps, (a) to (g). The human accepted most of its fixes but **replaced two**:
+   - The AI found seven specification gaps, (a) to (g). The human accepted most of its fixes but **replaced two** (my corrections, drafted with the chat assistant):
      - `AmountTooSmall` became lot and tick sizes, because the AI's fix only guarded the total cost, not each partial fill.
      - A per-activation trigger budget became one shared budget, because the AI's version multiplied the worst-case gas.
    - Writing SPEC exposed the order-ID tie problem, which led to `bookSeq` (O1).
@@ -577,6 +601,10 @@ We learned to ask for raw tool output, not summaries, before trusting a claim.
 4. **Mutation testing,** to measure test quality, not just test count.
 5. **Humans make design trade-offs.** The agent surfaced every fork clearly: keeping a crossed book, documenting dust griefing, auto-cancelling blocked stops, accepting issue 007. The decision and the responsibility stayed with us.
 6. **Log as you go.** Because the prompt log and the issue files were written during development, this report was a matter of assembly, not reconstruction.
+7. **Separate planning and review from implementation.** The claude.ai chat planned and reviewed; Claude Code implemented. That gave a second opinion at every step.
+   - **The chat assistant was not reliable either.** It made factual errors in the report drafts: in Sections 1 and 8, an engine test count of 335 instead of 245, and credits given to the wrong party (the gas fix, issue 002, and who wrote SPEC.md).
+   - **The check against the repository caught them.** Claude Code compared the drafts with the repository before they were merged (prompt log, 8 Nov).
+   - **So the second opinion needs checking too.** Neither tier is a source of truth; the repository is.
 
 ### 8.4 Recommendations for future AI-driven dApp development
 - **Treat every AI claim as unverified** until you have seen the command output that supports it.
