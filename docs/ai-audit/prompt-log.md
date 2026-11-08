@@ -1157,3 +1157,16 @@ Each must be checked against the source before drawing. Use one colour-blind-saf
 - relayed Person 2's decision on screenshots
 - designed the two-call recording workflow and the 9-minute safety margin
 - required confirmation of the pacing and the rubric coverage before any commit
+
+## 2026-11-08: Short recording sheets
+**Phase:** wrap-up.
+
+**Prompt (summary):** the three video files were too much to read while recording. The user asked for one simple voice-over script with clear cues and one step-by-step file of what to open during the 9 minutes.
+
+**What the AI did:**
+- added `VIDEO_CALL1_CLICKS.md`: 32 one-line steps under time headings, each with its hold
+- added `VIDEO_CALL2_VOICEOVER.md`: each line under its ▶ on-screen cue
+- checked by script: the lines equal `VIDEO_SCRIPT.md` word for word, and the holds equal the cue sheet's
+- linked both from the cue sheet and the README
+
+**What the human did:** judged the full documents too dense to use live, and asked for the two short sheets.

@@ -1,5 +1,7 @@
 # Video cue sheet: two Zoom calls
 
+> **Recording? Use the short versions:** [`VIDEO_CALL1_CLICKS.md`](VIDEO_CALL1_CLICKS.md) (Call 1: what to click, step by step) and [`VIDEO_CALL2_VOICEOVER.md`](VIDEO_CALL2_VOICEOVER.md) (Call 2: what to say, cue by cue). This sheet is the full version, with the checkpoints, the requirements table and the rules.
+
 We make the video in two calls:
 
 | Call | Who does what | Output |

@@ -484,7 +484,7 @@ bash contracts/script/demo-journey.sh
 | [docs/FRONTEND.md](docs/FRONTEND.md) | The front end's architecture, the trading, creation and dashboard flows, transaction hardening, the test suites and known limits |
 | [docs/MARKET_FACTORY.md](docs/MARKET_FACTORY.md) | The accepted MarketFactory architecture, its workflow diagram, the comparison with manual deployment, and tradeoffs |
 | [docs/report/AI_AUDIT_REPORT.md](docs/report/AI_AUDIT_REPORT.md) | **The final AI Audit Report**, in the brief's eight sections |
-| [docs/VIDEO_PLAN.md](docs/VIDEO_PLAN.md), [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md), [docs/VIDEO_CUE_SHEET.md](docs/VIDEO_CUE_SHEET.md) | How to build the demo environment, the demo script, and the step-by-step sheet for recording it (silent capture, then voice-over) |
+| [docs/VIDEO_PLAN.md](docs/VIDEO_PLAN.md), [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md), [docs/VIDEO_CUE_SHEET.md](docs/VIDEO_CUE_SHEET.md), [docs/VIDEO_CALL1_CLICKS.md](docs/VIDEO_CALL1_CLICKS.md), [docs/VIDEO_CALL2_VOICEOVER.md](docs/VIDEO_CALL2_VOICEOVER.md) | How to build the demo environment, the demo script, and the step-by-step sheet for recording it (silent capture, then voice-over) |
 | [docs/BONUS_INTEGRATION.md](docs/BONUS_INTEGRATION.md) | How the three bonus features were integrated into the front end |
 | [PRODUCT.md](PRODUCT.md) | Product purpose, users, what is implemented today, and the verification status |
 | [DESIGN.md](DESIGN.md) | The approved visual system for the web app |
