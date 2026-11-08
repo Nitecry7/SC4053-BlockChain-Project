@@ -2,7 +2,7 @@
 
 **Status: prepared, not recorded.** Nothing here claims that the video exists. The spoken words are in [`VIDEO_SCRIPT.md`](VIDEO_SCRIPT.md); this file is how to prepare and record.
 
-**Duration: 7:30 is provisional.** The assignment brief (`docs/Development_Project.pdf`) says nothing about a video, its length, its format or its file name. The 7:30 target (inside a 6 to 8 minute window) is the team's own plan. Check the final NTULearn instructions before recording, and change the script's timing if they say otherwise.
+**Requirements (NTULearn):** at most **10 minutes** and **300 MB**, file **`GroupName.mp4`**; start with a quick introduction to the architecture; a detailed hands-on demo of the solution deployed locally; a README detailed enough to reproduce the demo. The 7:30 target leaves margin under the 10-minute limit. Read-along version of the script: [`VIDEO_CUE_SHEET.md`](VIDEO_CUE_SHEET.md).
 
 **Speakers.** Person 1 (engine, Solidity security, invariant testing, engine audit, AI audit method) only speaks. Person 2 (front end, factories, deployment, integration) operates the terminal, the browser, MetaMask and the screen share for the whole video, and speaks as well.
 
@@ -153,7 +153,7 @@ Alice's order #1 reads Partially Filled (40 of 100) before the cancel and Cancel
 
 **Scene 3** (the crossed-book structure is checked by `demo-journey.sh` step 3 and, in MetaMask, by `TESTING.md` Test 13): the seed posts 22 asks of 1 NTU at 2 (orders #3 to #24) and two bids of 11 NTU (limit 3, order #25; limit 2.5, order #26); each bid fills the 10-fill cap and rests 1 NTU crossed. The keeper's one transaction settles #23 and #24 against #25 and #26: 2 fills, 2 NTU, 4 SGDx, 1.5 SGDx of price improvement returned, orders #23 to #26 Filled, the keeper's token balances unchanged. After it: Alice 9,949 NTU and 10,102 SGDx.
 
-**Scene 4** (the 4 NTU at 1.9 for 7.6 SGDx scenario is the tested `TESTING.md` Test 14; here the owner is Alice and the keeper is account 4, so the **account and order id differ and the numbers must be confirmed in the rehearsal**): Alice's stop is order #27 (Pending Trigger, trigger 1.8, limit 1.7, 10 NTU, 10 NTU escrowed, Alice 9,939 NTU). `move-price 1.8` makes the last trade 1.8, so the stop is Eligible Now but still Pending Trigger. `add-bid 1.9 4` rests a bid. The keeper's trigger activates #27 and it fills 4 NTU at 1.9 (the bid's price) for 7.6 SGDx; order #27 reads Partially Filled with 6 NTU resting at 1.7; the last trade is 1.9.
+**Scene 4** (the 4 NTU at 1.9 for 7.6 SGDx scenario is the tested `TESTING.md` Test 14; here the owner is Alice and the keeper is account 4, so the account and order id differ; a chain rehearsal on 8 Nov of this exact sequence on a fresh deployment confirmed every value below, with Alice ending at 9,939 NTU and 10,109.6 SGDx): Alice's stop is order #27 (Pending Trigger, trigger 1.8, limit 1.7, 10 NTU, 10 NTU escrowed, Alice 9,939 NTU). `move-price 1.8` makes the last trade 1.8, so the stop is Eligible Now but still Pending Trigger. `add-bid 1.9 4` rests a bid. The keeper's trigger activates #27 and it fills 4 NTU at 1.9 (the bid's price) for 7.6 SGDx; order #27 reads Partially Filled with 6 NTU resting at 1.7; the last trade is 1.9.
 
 **Differences you will see:** gas figures, transaction hashes and block numbers.
 
@@ -223,7 +223,7 @@ DEMO_PORT=8550 bash contracts/script/demo-journey.sh      # ✏️ starts and st
 
 ## 10. Recording-day checklist (only real preparation tasks)
 
-- [ ] NTULearn instructions read for the video: required or not, length, format, file name, how to submit.
+- [x] NTULearn instructions for the video: at most 10 minutes and 300 MB, `GroupName.mp4`, architecture first, hands-on local demo, README to reproduce it.
 - [ ] Recording environment built (Steps 0 to 6) and rehearsed once with a stopwatch.
 - [ ] Clean browser profile with a throwaway MetaMask: Alice, Bob and Keeper imported, addresses checked, tokens imported, all three connected to `http://localhost:3103`, RPC `http://127.0.0.1:8549`.
 - [ ] Reset done for the real take (section 6); nonces read as 0.
@@ -235,7 +235,7 @@ DEMO_PORT=8550 bash contracts/script/demo-journey.sh      # ✏️ starts and st
 ## 11. After recording
 
 1. Check the file: play it from the start; both voices; popups visible; text readable at the video's resolution; no key or phrase; length near 7:30; the segment 5 narration says the book was prepared off camera.
-2. Save the final file and name it as NTULearn requires (not specified in the brief).
+2. Save the final file as **`GroupName.mp4`** (your group's name). Check it is at most 10 minutes and 300 MB; if it is larger, re-export at 1080p or lower before uploading.
 3. Stop the recording environment. Identify before killing:
    ```bash
    ss -ltnp | grep -E ':(8549|3103)\b'          # 🔍 note the pid of each
@@ -249,6 +249,5 @@ DEMO_PORT=8550 bash contracts/script/demo-journey.sh      # ✏️ starts and st
 
 ## 12. Open decisions for the team
 
-- The required video length, format and file name (NTULearn).
 - Whether a live listing in Segment 3 stays in or becomes a read-only look if the rehearsal runs long.
-- Whether the crossed-book preparation is recorded with Zoom's pause (the default here) or kept on camera for about 25 seconds more, which the 7:30 budget does not have.
+- Whether the crossed-book preparation is recorded with Zoom's pause (the default here) or kept on camera for about 25 seconds more, which the 10-minute limit would allow.

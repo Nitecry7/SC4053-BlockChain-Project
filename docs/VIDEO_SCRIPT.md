@@ -1,8 +1,10 @@
 # Video script: SC4053 DEX demo (word for word)
 
-Companion to [`VIDEO_PLAN.md`](VIDEO_PLAN.md), which has the setup, the recording instructions and the fallbacks. **Person 2 operates the screen, MetaMask and the terminal for the whole video. Person 1 only speaks.** Read the quoted sentences aloud as written; the text outside the quotes is for the person who needs it.
+Companion to [`VIDEO_PLAN.md`](VIDEO_PLAN.md), which has the setup, the recording instructions and the fallbacks. To read along while recording, use [`VIDEO_CUE_SHEET.md`](VIDEO_CUE_SHEET.md): the same words, interleaved step by step with the actions. **Person 2 operates the screen, MetaMask and the terminal for the whole video. Person 1 only speaks.** Read the quoted sentences aloud as written; the text outside the quotes is for the person who needs it.
 
-**Duration: 7:30 is provisional.** The assignment brief (`docs/Development_Project.pdf`) does not mention a video or give a duration, so the length, format and file name must be checked against the final NTULearn instructions before recording. Nothing in this file says the video has been recorded.
+**Requirements (NTULearn):** a short demo video of at most **10 minutes** and **300 MB**, named **`GroupName.mp4`**. It must start with a quick introduction to the architecture (Segments 1 and 2) and contain a detailed hands-on demo of the locally deployed solution (Segments 3 to 6), with a README that lets the markers reproduce it (`README.md`, "Reproduce the demo"). The 7:30 plan leaves about two minutes of margin for MetaMask waits. Nothing in this file says the video has been recorded.
+
+**Rehearsed on chain (8 Nov).** Segments 3 to 6 were replayed with `cast` and the two helper scripts on a fresh scratch Anvil deployed exactly as in `VIDEO_PLAN.md` Step 2. Every balance, order number and status in the "Expected on screen" lines below matched, including order #27 and the Bonus 3 amounts. MetaMask and the app's screens were not part of that rehearsal.
 
 **Placeholders.** `[Person 1's name]` and `[Person 2's name]` are for each speaker to say their own name; they are the only blanks.
 
@@ -95,13 +97,13 @@ Companion to [`VIDEO_PLAN.md`](VIDEO_PLAN.md), which has the setup, the recordin
 **P2:** "That is Bonus one. Alice cancels the unfilled remainder, confirms once, and exactly sixty NTU return to her wallet. The order reads Cancelled and has left the book."
 
 - **Handoff cue:** P2's last line ends the segment. P2 then pauses the Zoom recording and opens Terminal B (Segment 5). P1 speaks first after the recording resumes.
-- **If it does not work:** If a MetaMask prompt does not appear, open the extension from the toolbar (the app says so). If a transaction is stuck pending, stop the take and use the reset procedure in `docs/VIDEO_PLAN.md`. If the Cancel button misbehaves, run in the terminal: `cast send <market> "cancelOrder(uint256)" 1 --from 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 --unlocked --rpc-url http://127.0.0.1:8549` and say that it is a terminal action.
+- **If it does not work:** If a MetaMask prompt does not appear, open the extension from the toolbar (the app says so). If a transaction is stuck pending, stop the take and use the reset procedure in `docs/VIDEO_PLAN.md`. If the Cancel button misbehaves, run in the terminal: `cast send 0xCafac3dD18aC6c6e92c921884f9E4176737C052c "cancelOrder(uint256)" 1 --from 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 --unlocked --rpc-url http://127.0.0.1:8549` and say that it is a terminal action.
 
 ### Segment 5: Bonus 2: batch matching by a keeper (3:40 to 4:25)
 
 - **Show:** Terminal B (the demo terminal), then the Trade page showing the Match Orders panel, then the Keeper's result card, then the terminal again.
-- **Person 2 does:** **Pause the Zoom recording.** In Terminal B run `scripts/seed-crossed-book.sh seed --rpc-url http://127.0.0.1:8549`, wait for its final "Result: ready" line, run `scripts/seed-crossed-book.sh status --rpc-url http://127.0.0.1:8549` and check that it says the book is CROSSED, then **resume the recording**. P1 starts speaking as soon as recording resumes. In MetaMask switch to **Keeper**; on Trade press **Review match**, then **Confirm match**, Confirm in MetaMask. Then run `scripts/seed-crossed-book.sh verify-after --rpc-url http://127.0.0.1:8549` while P1 speaks the last line.
-- **Expected on screen:** The Match Orders panel appears (best bid at or above best ask). The review shows `matchOrders(10)`, about 2 fills, a gas estimate and "no token approval is needed". After the block: "Matched: 2 fills settled", 2 NTU and 4 SGDx, price improvement returned 1.5 SGDx, orders #23 to #26 Filled, "Still crossed afterwards: No". `verify-after` ends with "Result: every check passed".
+- **Person 2 does:** **Pause the Zoom recording.** In Terminal B run `scripts/seed-crossed-book.sh seed --rpc-url http://127.0.0.1:8549`, wait for its final line "Result: the book is crossed and ready", run `scripts/seed-crossed-book.sh status --rpc-url http://127.0.0.1:8549` and check that it says the book is CROSSED, then **resume the recording**. P1 starts speaking as soon as recording resumes. In MetaMask switch to **Keeper**; on Trade press **Review match**, then **Confirm match**, Confirm in MetaMask. Then run `scripts/seed-crossed-book.sh verify-after --rpc-url http://127.0.0.1:8549` while P1 speaks the last line.
+- **Expected on screen:** The Match Orders panel appears (best bid at or above best ask). The review shows `matchOrders(10)`, about 2 fills, a gas estimate and "no token approval is needed". After the block: "Matched: 2 fills settled", 2 NTU and 4 SGDx, price improvement returned 1.5 SGDx, orders #23 to #26 Filled, "Still Crossed Afterwards: No". `verify-after` ends with "Result: every check passed".
 
 **Say:**
 
@@ -118,7 +120,7 @@ Companion to [`VIDEO_PLAN.md`](VIDEO_PLAN.md), which has the setup, the recordin
 
 - **Show:** The Trade page: the Stop-Limit tab, the result card, My Orders, then Terminal B, then the Trigger Stops panel and its result card.
 - **Person 2 does:** 1) Alice active. **Stop-Limit** tab, **Sell NTU**, Trigger Price `1.8`, Limit Price `1.7`, Amount `10`, **Review stop-limit order**, **Approve 10 NTU** (Confirm), **Place sell stop-limit order** (Confirm). Point at My Orders. 2) Terminal B: `scripts/seed-stop-orders.sh move-price 1.8 --rpc-url http://127.0.0.1:8549`, then `scripts/seed-stop-orders.sh add-bid 1.9 4 --rpc-url http://127.0.0.1:8549`. 3) Back in the browser point at the **Eligible Now** chip. Switch MetaMask to Keeper, press **Review trigger**, **Confirm trigger**, Confirm in MetaMask.
-- **Expected on screen:** After 1: "Stop-limit order #27 placed and pending", status Pending Trigger, "Waiting for price", not in the Order Book; My Orders shows Trigger Price 1.8000 and Limit Price 1.7000. After 2: the script prints that the last trade price is 1.8 and that a trigger call would now activate 1 stop; then a resting buy of 4 NTU at 1.9. Then: Eligible Now chip beside the amber Pending Trigger badge, and a Trigger Stops panel. After 3: "Triggered: 1 stop order activated", order #27 Partially Filled, 4 NTU and 7.6 SGDx exchanged, last trade price 1.9; 6 NTU rest at 1.7.
+- **Expected on screen:** After 1: "Stop-limit order #27 placed and pending", status Pending Trigger, "Waiting for price", not in the Order Book; My Orders shows Trigger Price 1.8000 and Limit Price 1.7000. After 2: the script prints that the last trade price is 1.8 and that a trigger call would now activate 1 stop; then a resting buy of 4 NTU at 1.9. Then: Eligible Now chip beside the amber Pending Trigger badge, and a Trigger Stops panel. After 3: "Triggered: 1 stop order activated", order #27 Partially Filled, 4 NTU and 7.6 SGDx exchanged (Alice 10,109.6 SGDx), last trade price 1.9; 6 NTU rest at 1.7.
 
 **Say:**
 
@@ -128,10 +130,10 @@ Companion to [`VIDEO_PLAN.md`](VIDEO_PLAN.md), which has the setup, the recordin
 
 **P2:** "Now two other traders trade at one point eight, and a bid for four NTU at one point nine rests. The stop shows Eligible Now. The keeper reviews and triggers."
 
-**P1:** "The stop activated and filled four NTU at one point nine, the resting bid's price, not the trigger and not the limit. Six NTU rest at the limit, and seven point six SGDx came back."
+**P1:** "The stop activated and filled four NTU at one point nine, the resting bid's price, not the trigger and not the limit. Six NTU rest at the limit, and Alice received seven point six SGDx."
 
-- **Handoff cue:** After "…seven point six SGDx came back." P2 opens the VS Code window with the evidence tabs.
-- **If it does not work:** If the Trigger Stops panel does not appear, run `scripts/seed-stop-orders.sh status --rpc-url http://127.0.0.1:8549`: it prints how many stops a trigger would activate (it must say 1). If the UI trigger fails, run in the terminal `cast send <market> "triggerStopOrders(uint256)" 10 --from 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65 --unlocked --rpc-url http://127.0.0.1:8549` and narrate it as a terminal action.
+- **Handoff cue:** After "…Alice received seven point six SGDx." P2 opens the VS Code window with the evidence tabs.
+- **If it does not work:** If the Trigger Stops panel does not appear, run `scripts/seed-stop-orders.sh status --rpc-url http://127.0.0.1:8549`: it prints how many stops a trigger would activate (it must say 1). If the UI trigger fails, run in the terminal `cast send 0xCafac3dD18aC6c6e92c921884f9E4176737C052c "triggerStopOrders(uint256)" 10 --from 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65 --unlocked --rpc-url http://127.0.0.1:8549` and narrate it as a terminal action.
 
 ### Segment 7: Solidity security, testing and audit evidence (5:40 to 6:30)
 
@@ -217,8 +219,9 @@ Use these only if a wait is longer than about five seconds. They are not counted
 
 ## 6. Values that can differ when you record
 
+- **Market address** in the terminal fallbacks is `0xCafac3dD18aC6c6e92c921884f9E4176737C052c`, the NTU / SGDx market on a fresh Anvil deployed by Step 2 (the same as `web/lib/contracts/deployments.ts`).
 - **Order numbers** (#1, #2, #23 to #26, #27) follow from the order of actions on a fresh chain: the journey uses #1 and #2, the crossed-book seed #3 to #26, the stop #27. A different order of actions changes them; read them off the screen.
 - **Gas estimates and gas used** differ from run to run and between machines. Do not read them aloud.
 - **Transaction hashes** are different on every chain and are not read aloud.
-- **Bonus 3 amounts** (4 NTU, 7.6 SGDx, last price 1.9) are the tested values of `docs/TESTING.md` Test 14; this video uses Alice as the stop owner and Anvil account 4 as the keeper instead of accounts 5 and 6, so rehearse once and confirm the screen says the same.
+- **Bonus 3 amounts** (4 NTU, 7.6 SGDx, last price 1.9) are the tested values of `docs/TESTING.md` Test 14; this video uses Alice as the stop owner and Anvil account 4 as the keeper instead of accounts 5 and 6, and the chain rehearsal of 8 Nov confirmed the same values with these accounts (order #27, 4 NTU at 1.9, 7.6 SGDx to Alice, 6 NTU resting at 1.7).
 - **Balances after the crossed-book seed** follow `contracts/script/demo-journey.sh` step 3 (for example Alice 9,949 NTU and 10,102 SGDx), which that script checks.
