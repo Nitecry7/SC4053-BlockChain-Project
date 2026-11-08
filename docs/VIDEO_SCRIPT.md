@@ -4,7 +4,7 @@ Companion to [`VIDEO_PLAN.md`](VIDEO_PLAN.md), which has the setup, the recordin
 
 **How we record: two Zoom calls.** In **Call 1** Person 2 shares the screen and performs every action in silence while Zoom records; Person 1 keeps the stopwatch. In **Call 2** one of us plays that silent recording through Zoom and both read the quoted lines over it while Zoom records again; that second recording is the video. The cue sheet [`VIDEO_CUE_SHEET.md`](VIDEO_CUE_SHEET.md) splits this file into the two calls: Part A has the actions with how long to hold each screen, and Part B has the lines with the on-screen cue that starts each one. This file keeps both together and adds the expected values and fallbacks. Read the quoted sentences aloud as written; the text outside the quotes is for the person who needs it.
 
-**Requirements (NTULearn):** a short demo video of at most **10 minutes** and **300 MB**, named **`GroupName.mp4`**. It must start with a quick introduction to the architecture (Segments 1 and 2) and contain a detailed hands-on demo of the locally deployed solution (Segments 3 to 6), with a README that lets the markers reproduce it (`README.md`, "Reproduce the demo"). The silent recording of Call 1 aims at **9:00** and must not pass **9:30**, which keeps at least 30 seconds of safety under the limit; the voice-over adds only a second or two. The cue sheet maps each requirement of the brief (issuance, listing, limit orders, automatic matching with partial fills, Bonuses 1 to 3) to the segment that shows it. Nothing in this file says the video has been recorded.
+**Requirements (NTULearn):** a short demo video of at most **10 minutes** and **300 MB**, named **`GroupName.mp4`**. It must start with a quick introduction to the architecture (Segments 1 and 2) and contain a detailed hands-on demo of the locally deployed solution (Segments 3 to 6). The video covers only these: the testing and the AI audit are in the report, and the closing line points there, with a README that lets the markers reproduce it (`README.md`, "Reproduce the demo"). The silent recording of Call 1 aims at **9:00** and must not pass **9:30**, which keeps at least 30 seconds of safety under the limit; the voice-over adds only a second or two. The cue sheet maps each requirement of the brief (issuance, listing, limit orders, automatic matching with partial fills, Bonuses 1 to 3) to the segment that shows it. Nothing in this file says the video has been recorded.
 
 **Rehearsed on chain (8 Nov).** Segments 3 to 6 were replayed with `cast` and the two helper scripts on a fresh scratch Anvil deployed exactly as in `VIDEO_PLAN.md` Step 2. Every balance, order number and status in the "Expected on screen" lines below matched, including order #27 and the Bonus 3 amounts. MetaMask and the app's screens were not part of that rehearsal.
 
@@ -14,18 +14,16 @@ Companion to [`VIDEO_PLAN.md`](VIDEO_PLAN.md), which has the setup, the recordin
 
 | # | Start | End | Segment | Speaker(s) | Words | Speaking seconds at 2.1 words/s (about) | Footage seconds (Call 1 target) |
 |---|---|---|---|---|---|---|---|
-| 1 | 0:00 | 0:35 | Introduction and motivation | P1 and P2 (P1 30, P2 38) | 68 | 32 | 35 |
+| 1 | 0:00 | 0:35 | Introduction and motivation | P1 and P2 (P1 21, P2 38) | 59 | 28 | 35 |
 | 2 | 0:35 | 1:20 | Architecture | P1 and P2 (P1 41, P2 48) | 89 | 42 | 45 |
 | 3 | 1:20 | 2:26 | ERC20 issuance and market listing (live) | P1 and P2 (P1 18, P2 51) | 69 | 33 | 66 |
 | 4 | 2:26 | 4:20 | Limit orders, escrow, partial fill, maker price and cancel (live) | P1 and P2 (P1 64, P2 87) | 151 | 72 | 114 |
 | 5 | 4:20 | 5:29 | Bonus 2: batch matching by a keeper | P1 and P2 (P1 56, P2 24) | 80 | 38 | 69 |
 | 6 | 5:29 | 6:59 | Bonus 3: stop-limit order, trigger and execution | P1 and P2 (P1 66, P2 72) | 138 | 66 | 90 |
-| 7 | 6:59 | 7:51 | Solidity security, testing and audit evidence | P1 (P1 101, P2 0) | 101 | 48 | 52 |
-| 8 | 7:51 | 8:37 | AI-assisted methodology and lessons | P1 and P2 (P1 49, P2 34) | 83 | 40 | 46 |
-| 9 | 8:37 | 8:58 | Limitations and conclusion | P1 and P2 (P1 21, P2 17) | 38 | 18 | 21 |
-| | 0:00 | 8:58 | **Total** | P1 446 (54%), P2 371 (45%) | **817** | 389 | 538 |
+| 7 | 6:59 | 7:27 | Limitations and conclusion | P1 and P2 (P1 35, P2 17) | 52 | 25 | 28 |
+| | 0:00 | 7:27 | **Total** | P1 301 (47%), P2 337 (53%) | **638** | 304 | 447 |
 
-**How the time is used.** The start and end times are the Call 1 footage plan, the same as the cue sheet's checkpoints (Part A): about 8:58 in total, and never more than 9:30. The voice-over is spoken over that footage. The 817 words take about 6 minutes 29 seconds at a calm 2.1 words per second (126 words per minute, slower than conversation). Every hold in the cue sheet gives its line that time plus a two-second breath. The rest is clicks, MetaMask confirmations shown long enough to read, and account switches. Person 2 also performs every action, so the word split understates Person 2's share of the work.
+**How the time is used.** The start and end times are the Call 1 footage plan, the same as the cue sheet's checkpoints (Part A): about 7:27 in total. Going slower than this is fine, up to 9:00; never past 9:30. The voice-over is spoken over that footage. The 638 words take about 5 minutes 4 seconds at a calm 2.1 words per second (126 words per minute, slower than conversation). Every hold in the cue sheet gives its line that time plus a two-second breath. The rest is clicks, MetaMask confirmations shown long enough to read, and account switches. Person 2 also performs every action, so the word split understates Person 2's share of the work.
 
 **Counts are estimates, not measurements.** The words were counted by script from the quoted text; the seconds are the plan. The real timing is Call 1's.
 
@@ -45,9 +43,9 @@ Companion to [`VIDEO_PLAN.md`](VIDEO_PLAN.md), which has the setup, the recordin
 
 **P2:** "Hello, I'm [Person 2's name]. Most exchanges are custodial: they hold your keys, so one hack can take your funds. We built a decentralized exchange where your tokens stay in your own wallet until you place an order."
 
-**P1:** "I'm [Person 1's name]. I wrote the on-chain trading engine. We'll run every core feature and all three bonuses live, then show how we tested it and how AI helped."
+**P1:** "I'm [Person 1's name]. I wrote the on-chain trading engine. We'll run every core feature and all three bonuses live."
 
-- **Handoff cue:** P1 finishes with "…how AI helped." P2 immediately opens the Figure 3 tab.
+- **Handoff cue:** P1 finishes with "…all three bonuses live." P2 opens the Figure 3 tab.
 - **If it does not work:** If the page does not load, pause the Call 1 recording, fix it, and resume on the Overview page. Nothing about it is said in the voice-over.
 
 ### Segment 2: Architecture (0:35 to 1:20)
@@ -136,48 +134,20 @@ Companion to [`VIDEO_PLAN.md`](VIDEO_PLAN.md), which has the setup, the recordin
 
 **P1:** "The stop activated and filled four NTU at one point nine, the resting bid's price, not the trigger and not the limit. Six NTU rest at the limit, and Alice received seven point six SGDx."
 
-- **Handoff cue:** After "…Alice received seven point six SGDx." P2 opens the VS Code window with the evidence tabs.
+- **Handoff cue:** After "…Alice received seven point six SGDx." P2 switches back to the app's Overview page (Segment 7).
 - **If it does not work:** If the Trigger Stops panel does not appear, run `scripts/seed-stop-orders.sh status --rpc-url http://127.0.0.1:8549`: it prints how many stops a trigger would activate (it must say 1). If the UI trigger fails, run in the terminal `cast send 0xCafac3dD18aC6c6e92c921884f9E4176737C052c "triggerStopOrders(uint256)" 10 --from 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65 --unlocked --rpc-url http://127.0.0.1:8549` and narrate it as a terminal action.
 
-### Segment 7: Solidity security, testing and audit evidence (6:59 to 7:51)
-
-- **Show:** First `docs/report/diagrams/10-evidence-map.png` (Figure 10), then `docs/ai-audit/ENGINE_SECURITY_SUMMARY.md` scrolled to the "Verification evidence" table. Optional if time allows: `docs/ai-audit/test-evidence/phase7/forge-test-deep.txt` at the line `runs: 1000, calls: 128000`.
-- **Person 2 does:** Switch to Figure 10 on "Now the evidence…", scroll the table to the Foundry, invariants, coverage, Slither and mutation rows as they are named, then to the "Final independent audit" heading.
-- **Expected on screen:** The evidence map with four kinds of evidence; the table rows 335 tests, 1,000 x 128 = 128,000 invariant calls, 100% coverage, Slither 27 results 0 real, mutation testing.
-
-**Say:**
-
-**P1:** "Now the evidence behind the engine. We ran three hundred thirty-five Foundry tests, with full line and branch coverage of the order book. A stateful invariant suite replayed one hundred twenty-eight thousand random calls against an independent reference ledger, with no violations. Slither reported twenty-seven results, none real. Of sixty-seven deliberate mutants, sixty-five were caught, and the other two are documented as equivalent. A final AI audit found no critical or high issue. The one accepted medium issue, a dust sandwich through the fill cap, is documented and pinned by a test. It was an AI audit, not a human one."
-
-- **Handoff cue:** After "…not a human one." P2 switches to the AI-methodology tabs.
-- **If it does not work:** If a file will not open, stay on Figure 10 and the summary table; every number is on one of them.
-
-### Segment 8: AI-assisted methodology and lessons (7:51 to 8:37)
-
-- **Show:** `CLAUDE.md` (top), `docs/ai-audit/issues/006-stop-activation-booktoodeep-blocks-all-triggers.md` (section 4, Evidence), the `docs/ai-audit/issues/` folder listing (24 files), then `docs/ai-audit/issues/p2-017-cancelled-stop-labelled-activated.md` (title and section 1).
-- **Person 2 does:** Open the four tabs in this order as the sentences come; keep each on screen for the length of its sentence.
-- **Expected on screen:** A specification file, an issue with a failing-then-passing record, the folder of 24 issue files, and the P2-017 issue.
-
-**Say:**
-
-**P1:** "We set the rules in specification files; the AI coded inside them. A fresh AI reviewer checked each phase, and we decided every fix. It found issue six: about one hundred two wei could block every trigger, and we chose auto-cancel. We logged twenty-four issues, each with its evidence."
-
-**P2:** "On the front end, mock-wallet tests passed while real MetaMask exposed a stale-nonce problem and a misleading label on a cancelled stop. Different kinds of evidence prove different things, so we kept them apart."
-
-- **Handoff cue:** After "…so we kept them apart." P2 switches back to the app's Overview page.
-- **If it does not work:** If time is short, drop the folder listing and keep issue 006 and issue P2-017.
-
-### Segment 9: Limitations and conclusion (8:37 to 8:58)
+### Segment 7: Limitations and conclusion (6:59 to 7:27)
 
 - **Show:** The app's Overview page, or the report's executive summary, whichever is already open.
-- **Person 2 does:** Stay on one screen for 21 seconds, then stop the Call 1 recording. In Call 2 the host stops the recording when the silent video ends.
+- **Person 2 does:** Stay on one screen for 28 seconds, then stop the Call 1 recording. In Call 2 the host stops the recording when the silent video ends.
 - **Expected on screen:** A calm closing frame.
 
 **Say:**
 
 **P2:** "In summary, ERC20 issuance, listing, limit orders, partial fills and all three bonuses work end to end."
 
-**P1:** "The limits: a local chain only, an AI audit only, and we did not run the MetaMask failure cases. Thank you."
+**P1:** "Our tests, security checks and AI audit are documented in the AI Audit Report. The limits: a local chain only, an AI audit only, and we did not run the MetaMask failure cases. Thank you."
 
 - **Handoff cue:** End of video.
 - **If it does not work:** If Call 1 ran over 9:30, take it again as the cue sheet says (Part A, "If the take runs long"): pause during waits; never shorten the lines or the holds, and never cut a feature.
@@ -189,7 +159,6 @@ Companion to [`VIDEO_PLAN.md`](VIDEO_PLAN.md), which has the setup, the recordin
 | Segments 3, 4 and 6 (issuance, listing, orders, cancel, stop-limit placement and trigger) | **Live**: every MetaMask transaction is performed on camera |
 | Segment 5, building the crossed book | **Prepared off camera** (24 orders, run with the recording paused) and **said so aloud**; the matching transaction itself is live |
 | Segment 6 price moves (`move-price`, `add-bid`) | Live terminal commands from the project's helper script; they are trades by two other accounts, not a staged result |
-| Segments 7 and 8 | Files shown, not executed. No test is run on camera |
 
 If a clip of any earlier run is ever played in place of a live action, say "this is a recording of the same step" in the sentence. Do not edit a clip in as if it were live.
 
@@ -203,11 +172,7 @@ If a clip of any earlier run is ever played in place of a live action, say "this
 | Cancel returns exactly the unfilled remainder | `docs/TESTING.md` Test 12; `demo-journey.sh` step 2 |
 | `matchOrders` is permissionless, the caller gains nothing, 2 fills, 2 NTU, 4 SGDx, keeper unchanged | `SPEC.md` section 6; `docs/TESTING.md` Test 13 (owner-run in MetaMask on a scratch chain); `scripts/seed-crossed-book.sh` |
 | Stop-limit: eligible is not activated, activation does not guarantee a fill, fill at the bid's price 1.9, 4 NTU, 7.6 SGDx | `docs/TESTING.md` Test 14 and section 14-4 (owner-run, read back from the chain); report section 6.9 |
-| 335 Foundry tests, 100% coverage, 128,000 invariant calls, Slither 27 results 0 real, 65 of 67 mutants caught | `docs/ai-audit/ENGINE_SECURITY_SUMMARY.md`; report section 6.1 and Figure 10 |
-| Final audit: no critical or high, AI not human, one accepted medium (issue 007) | `ENGINE_SECURITY_SUMMARY.md`; report sections 5.4 and 6.4 |
-| Issue six: about 102 wei blocked every trigger | `docs/ai-audit/issues/006-stop-activation-booktoodeep-blocks-all-triggers.md` |
-| 24 issues logged | `docs/ai-audit/issues/` (7 engine, 17 Person 2) |
-| MetaMask exposed a stale nonce and a misleading cancelled-stop label | report section 8.5; issue `p2-017`; `docs/TESTING.md` section 14-4 |
+| Testing, security checks and the AI audit are documented in the report | `docs/report/AI_AUDIT_REPORT.md` sections 5 and 6; `docs/ai-audit/ENGINE_SECURITY_SUMMARY.md` |
 | MetaMask failure cases were not run | report section 6.1 and `docs/SUBMISSION_CHECKLIST.md` |
 
 Nothing in the script claims that a MetaMask rejection, an account switch during a request, an outage or a chain reset was tested in MetaMask: they were not.

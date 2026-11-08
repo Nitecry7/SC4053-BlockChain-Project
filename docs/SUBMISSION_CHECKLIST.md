@@ -35,7 +35,7 @@ Test numbers below are recorded results from earlier runs, not new executions.
 | Prompt logs | Person 1 and Person 2, separate files | `docs/ai-audit/prompt-log.md`, `prompt-log-person2.md` |
 | Tools and models per phase | Written | `docs/ai-audit/tooling-and-methodology.md` |
 | User and test documentation | README Quick Start, Beginner's Guide, deployment, testing and front-end guides | `README.md`, `docs/BEGINNERS_GUIDE.md`, `DEPLOYMENT.md`, `TESTING.md`, `FRONTEND.md` |
-| Demo video package | Runbook, word-for-word script and a cue sheet for the two-call recording (a silent screen capture aimed at 9:00 and never over 9:30, then a voice-over; under the 10-minute limit; every brief requirement and all three bonuses shown live); the on-chain sequence of Segments 3 to 6 was rehearsed with `cast` on a fresh scratch chain (8 Nov) and every expected value matched; README section "Reproduce the demo". **Video not recorded; the MetaMask rehearsal is not done** | `docs/VIDEO_PLAN.md`, `docs/VIDEO_SCRIPT.md`, `docs/VIDEO_CUE_SHEET.md` |
+| Demo video package | Runbook, word-for-word script and a cue sheet for the two-call recording (a silent screen capture of about 7:30, never over 9:00, then a voice-over; under the 10-minute limit; every brief requirement and all three bonuses shown live); the on-chain sequence of Segments 3 to 6 was rehearsed with `cast` on a fresh scratch chain (8 Nov) and every expected value matched; README section "Reproduce the demo". **Video not recorded; the MetaMask rehearsal is not done** | `docs/VIDEO_PLAN.md`, `docs/VIDEO_SCRIPT.md`, `docs/VIDEO_CUE_SHEET.md` |
 
 ## 3. Remaining human activities
 
@@ -46,7 +46,7 @@ Test numbers below are recorded results from earlier runs, not new executions.
   - [ ] one timed run of Part A against its checkpoints, and a 1-minute test of the two-call pipeline played back
   - [ ] the clean browser profile with a throwaway MetaMask (Alice, Bob, Keeper) set up
   - [ ] the backup clip: `DEMO_PORT=8550 bash contracts/script/demo-journey.sh` recorded once (`VIDEO_PLAN.md`, section 9)
-  - [ ] Call 1: the silent screen capture made and checked (about 9:00, at most 9:30, readable, no key or phrase)
+  - [ ] Call 1: the silent screen capture made and checked (about 7:30, at most 9:00, readable, no key or phrase)
   - [ ] Call 2: the voice-over recorded over it, played back and checked (both voices in time with the picture)
   - [ ] the file saved as `GroupName.mp4`, at most 10 minutes and 300 MB, and the recording environment stopped and `/tmp/sc4053-demo` removed
 - [ ] **Agree the shared-file wording**: `CLAUDE.md` still names the brief `docs/project.pdf`, while the file in the repository is `docs/Development_Project.pdf`. `CLAUDE.md` is shared, so neither teammate has edited it.

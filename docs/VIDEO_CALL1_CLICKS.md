@@ -2,7 +2,7 @@
 
 Mics muted. Start the stopwatch when you press Record.
 **Go slowly.** "Hold" means keep the screen still and count the seconds.
-Aim to finish at about **9:00**, and never later than **9:30**.
+Aim to finish at about **7:30**. Going slower is fine, up to **9:00**; never past **9:30**.
 
 ---
 
@@ -48,17 +48,8 @@ Aim to finish at about **9:00**, and never later than **9:30**.
 25. Browser → point at **Eligible Now** → **hold 8 s**
 26. MetaMask → switch to **Keeper** → **Review trigger** → **Confirm trigger** → Confirm → **hold 19 s** (point at 4 NTU, 1.9, 7.6 SGDx)
 
-## 6:59 · Security evidence
-27. VS Code → **Figure 10** (evidence map) → **hold 22 s**
-28. **ENGINE_SECURITY_SUMMARY.md** → scroll slowly through the table → **hold 30 s**
-
-## 7:51 · AI methodology
-29. **CLAUDE.md** → **hold 13 s**
-30. **Issue 006** (section 4) → after 7 s show the **issues folder** → **hold 14 s** in total
-31. **Issue p2-017** → **hold 19 s**
-
-## 8:37 · Ending
-32. Back to the app's **Overview** page → **hold 21 s** → **⏹ Stop recording**
+## 6:59 · Ending
+27. Back to the app's **Overview** page → **hold 28 s** → **⏹ Stop recording**
 
 ---
 

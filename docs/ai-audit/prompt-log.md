@@ -1170,3 +1170,19 @@ Each must be checked against the source before drawing. Use one colour-blind-saf
 - linked both from the cue sheet and the README
 
 **What the human did:** judged the full documents too dense to use live, and asked for the two short sheets.
+
+## 2026-11-08: Video limited to the features
+**Phase:** wrap-up.
+
+**Prompt (summary):** the user questioned why the video spends its last minutes on testing and AI methodology when the video requirements ask only for the architecture and a hands-on demo. They asked for confirmation that every feature of the brief and all bonuses are shown.
+
+**What the AI did:**
+- **Removed Segments 7 (security evidence) and 8 (AI methodology)** from the script, the cue sheet, the plan and both short sheets.
+  - Person 1's intro no longer promises "how we tested it and how AI helped".
+  - The closing line now points to the AI Audit Report.
+  - Plan: about 7:30; slower is fine up to 9:00, never past 9:30.
+- **Mapped each requirement of the brief** to its Call 1 step and Call 2 line: issuance, listing, buy and sell limit orders, automatic execution, partial fill, Bonuses 1 to 3.
+- **Checked the claims** against `DemoToken.sol` (OpenZeppelin ERC20, 18 decimals, no owner) and `seed-crossed-book.sh` (four distinct trader accounts).
+- **Checked by script** that the three sheets' lines are identical and that the holds still fit.
+
+**What the human did:** spotted that the two segments were not required by the video brief, and asked for the feature coverage to be confirmed.

@@ -2,7 +2,7 @@
 
 **Status: prepared, not recorded.** Nothing here claims that the video exists. The spoken words are in [`VIDEO_SCRIPT.md`](VIDEO_SCRIPT.md); this file is how to prepare and record.
 
-**Requirements (NTULearn):** at most **10 minutes** and **300 MB**, file **`GroupName.mp4`**; start with a quick introduction to the architecture; a detailed hands-on demo of the solution deployed locally; a README detailed enough to reproduce the demo. We record in two Zoom calls (section 5): a silent screen capture that aims at **9:00** and never passes **9:30**, then a voice-over on top of it, which keeps at least 30 seconds of safety under the 10-minute limit. The step-by-step sheet for both calls is [`VIDEO_CUE_SHEET.md`](VIDEO_CUE_SHEET.md).
+**Requirements (NTULearn):** at most **10 minutes** and **300 MB**, file **`GroupName.mp4`**; start with a quick introduction to the architecture; a detailed hands-on demo of the solution deployed locally; a README detailed enough to reproduce the demo. We record in two Zoom calls (section 5): a silent screen capture that aims at about **7:30** (slower is fine up to **9:00**, never past **9:30**), then a voice-over on top of it, which keeps at least 30 seconds of safety under the 10-minute limit. The step-by-step sheet for both calls is [`VIDEO_CUE_SHEET.md`](VIDEO_CUE_SHEET.md).
 
 **Roles.** Person 2 (front end, factories, deployment, integration) operates the terminal, the browser, MetaMask and the screen share in Call 1, and speaks in Call 2. Person 1 (engine, Solidity security, invariant testing, engine audit, AI audit method) keeps the stopwatch and notes the segment times in Call 1, and speaks in Call 2.
 
@@ -170,7 +170,7 @@ Menu names change between Zoom versions, so look for the equivalent. Zoom's own 
 
 1. **Create and join.** Person 2 starts a **New meeting** as host and sends Person 1 the link. Person 1 joins.
 2. **Mute both microphones** and keep them muted for the whole recording, so that Call 1 has no sound. Turn off Windows notifications (Focus Assist or Do Not Disturb).
-3. **Share the whole screen,** not one window. MetaMask's confirmation popup is a separate window and would be missing from a single-window share. Arrange the browser (demo profile) and Terminal B side by side on that one screen, with VS Code ready for Segments 7 and 8.
+3. **Share the whole screen,** not one window. MetaMask's confirmation popup is a separate window and would be missing from a single-window share. Arrange the browser (demo profile) and Terminal B side by side on that one screen, with the Figure 3 tab ready for Segment 2.
 4. **Privacy.**
    - Use the clean profile (Step 5) and close other windows.
    - Set a short terminal prompt (`PS1='$ '`) and run `clear`.
@@ -181,7 +181,7 @@ Menu names change between Zoom versions, so look for the equivalent. Zoom's own 
 6. **Do Part A** of the cue sheet, holding each screen for its time. Person 1 writes down the stopwatch time at the start of each segment and compares it with the checkpoints.
 7. **Pause and resume** with Zoom's pause button for the crossed-book preparation (Segment 5), and to fix a failed step (cue sheet, Part A). The recording continues in the same file. Person 1 pauses the stopwatch at the same time.
 8. **Stop and save.** Press **Stop recording**, then end the meeting. Zoom converts the recording. On Windows the default folder is `Documents\Zoom`, in a sub-folder named for the date and time, with an `.mp4` inside. Copy it somewhere safe and name it, for example, `call1-silent.mp4`.
-9. **Check it** (cue sheet, "After Call 1"): about 9:00 and no more than 9:30, silent, readable, with no key or phrase. If it is too long, take it again after the reset (section 6), pausing during waits as the cue sheet says.
+9. **Check it** (cue sheet, "After Call 1"): about 7:30 and no more than 9:00, silent, readable, with no key or phrase. If it is too long, take it again after the reset (section 6), pausing during waits as the cue sheet says.
 
 ### Between the calls
 
@@ -225,15 +225,9 @@ If a transaction sits pending during the take, do not click Speed up or Cancel r
 | The Trigger Stops panel does not appear | The stop is not yet eligible | Run `scripts/seed-stop-orders.sh status --rpc-url "$RPC"`: it must report 1 stop that would activate |
 | A live action fails twice | Anything else | Use the terminal commands given in the script's fallbacks and say they are terminal actions, or play the backup clip clearly introduced as a clip |
 
-## 8. Evidence to open before recording
+## 8. What to open before recording
 
-Open these in this order, in tabs or editor windows, so Person 2 switches by clicking:
-1. `docs/report/diagrams/03-system-architecture.png` (Figure 3, report section 4.1).
-2. `docs/report/diagrams/10-evidence-map.png` (Figure 10, report section 6.1).
-3. `docs/ai-audit/ENGINE_SECURITY_SUMMARY.md`, scrolled to "Verification evidence".
-4. Optional: `docs/ai-audit/test-evidence/phase7/forge-test-deep.txt` at `runs: 1000, calls: 128000`.
-5. `CLAUDE.md`, then `docs/ai-audit/issues/006-stop-activation-booktoodeep-blocks-all-triggers.md` (section 4), the `docs/ai-audit/issues/` folder, and `docs/ai-audit/issues/p2-017-cancelled-stop-labelled-activated.md`.
-6. Optional extras for the AI segment: Figure 1 (`01-ai-workflow.png`) and Figure 9 (`09-issues-by-phase.png`).
+Only `docs/report/diagrams/03-system-architecture.png` (Figure 3, report section 4.1), in a browser tab next to the app, for Segment 2. The video shows the features only; the testing and AI-audit evidence is in the report, and the closing line points there.
 
 No test is run on camera. Do not open any file or terminal that shows a private key.
 
@@ -257,7 +251,7 @@ DEMO_PORT=8550 bash contracts/script/demo-journey.sh      # ✏️ starts and st
 - [ ] Clean browser profile with a throwaway MetaMask: Alice, Bob and Keeper imported, addresses checked, tokens imported, all three connected to `http://localhost:3103`, RPC `http://127.0.0.1:8549`.
 - [ ] Reset done for the real take (section 6); nonces read as 0.
 - [ ] No private key, recovery phrase or personal tab visible; notifications off; Terminal A minimized.
-- [ ] Evidence files open (section 8).
+- [ ] Figure 3 open (section 8).
 - [ ] Two-call pipeline tested with a 1-minute sample (section 6): readable text, voices in time, no thumbnail over the content.
 - [ ] Call 1: whole screen shared, both microphones muted, record on this computer, Person 1 has a stopwatch and the cue sheet's Part A.
 - [ ] Call 2: headsets, microphone test, the silent file on the sharer's computer, the cue sheet's Part B with the "At" column filled in, scripts on other screens.
@@ -265,7 +259,7 @@ DEMO_PORT=8550 bash contracts/script/demo-journey.sh      # ✏️ starts and st
 
 ## 11. After recording
 
-1. Check the final file from Call 2: play it from the start; both voices, in time with the picture; popups visible; text readable at the video's resolution; no key or phrase; length about 9:00, at most 9:30 plus a few seconds, and under 10:00; the Segment 5 narration says the book was prepared off camera. Keep the silent file from Call 1 too, in case the voice-over has to be redone.
+1. Check the final file from Call 2: play it from the start; both voices, in time with the picture; popups visible; text readable at the video's resolution; no key or phrase; length about 7:30, at most 9:00 plus a few seconds, and under 10:00; the Segment 5 narration says the book was prepared off camera. Keep the silent file from Call 1 too, in case the voice-over has to be redone.
 2. Save the final file as **`GroupName.mp4`** (your group's name). Check it is at most 10 minutes and 300 MB; if it is larger, re-export at 1080p or lower before uploading.
 3. Stop the recording environment. Identify before killing:
    ```bash
@@ -281,4 +275,4 @@ DEMO_PORT=8550 bash contracts/script/demo-journey.sh      # ✏️ starts and st
 ## 12. Open decisions for the team
 
 - Settled: the live token creation and listing in Segment 3 always stay in, because ERC20 issuance and token listing are required features. Only a failure (Segment 3 fallback) replaces them with the Markets page.
-- The crossed-book preparation is cut out with Zoom's pause. Keeping it on camera would add about 25 seconds, which Call 1's 9:00 target does not leave room for.
+- The crossed-book preparation is cut out with Zoom's pause. Keeping it on camera would add about 25 seconds; the 7:30 plan has room for it, but a 25-second wait adds nothing to the demo.
