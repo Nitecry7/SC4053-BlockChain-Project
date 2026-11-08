@@ -22,14 +22,14 @@ Screenshots are labelled the same way: **Reference render** = a screenshot of th
 
 These are different kinds of evidence. An automated pass says nothing about MetaMask, and a mock-wallet pass says nothing about the real wallet.
 
-| Layer | Recorded result (AI-run; updated 2026-11-08, P2-8B.1 and P2-8B.2) | Where |
+| Layer | Recorded result (AI-run; updated 2026-11-08, P2-8B.1 to P2-8B.3) | Where |
 |---|---|---|
-| Unit tests (`npm test`) | **447 passed, 59 gated tests skipped** (P2-8B.2; 410 and 48 in P2-8B.1) | `web/` |
-| Contracts (`forge test`) | **335 passed** (P2-8B.1, 2026-11-08; 185 before the engine's bonus phases; not re-run in P2-8B.2, no Solidity change) | `contracts/` |
+| Unit tests (`npm test`) | **497 passed, 64 gated tests skipped** (P2-8B.3; 447 and 59 in P2-8B.2, 410 and 48 in P2-8B.1) | `web/` |
+| Contracts (`forge test`) | **335 passed** (P2-8B.1 and again once in P2-8B.3, 2026-11-08, no Solidity change; 185 before the engine's bonus phases; not run in P2-8B.2) | `contracts/` |
 | Exporter (`node --test contracts/script/export-web.test.mjs`) | 21 passed | repo root |
-| Real chain, unlocked Anvil dev accounts, scratch Anvil 8546 | **59 passed** (trading, creation, hardening and the new `cancel.integration.test.ts`, 11; 48 before). These suites refuse to run on 8545 and, for `cancel`, on a chain that is not freshly deployed | `p2-7-hardening.md`, `p2-8b2-cancellation.md` |
-| Browser, **mock wallet**, scratch server 3100 | `e2e` 13, `e2e:create` 14, `e2e:dashboard` 14, `e2e:hardening` 9, `e2e:liveness` 11 and `e2e:cancel` 13 passed (P2-8B.2; `e2e:cancel` is new; outages are simulated by blocking browser requests). **A leftover allowance on a reused scratch chain makes `e2e` fail (7 passed, 6 failed in P2-8B.1); it now checks and says so first. Restart and redeploy the scratch chain before a run.** | `p2-8a1-fixes.md`, `p2-8a2-liveness.md`, `p2-8b01-preflight.md`, `p2-8b2-cancellation.md` |
-| **Manual MetaMask (Windows Brave)** | SPEC worked example: Tests 1 to 4 reported by the owner (Tests 5 and 6 not separately reported). DTT creation, listing and a trade, reported by the owner (Section F) | Section F |
+| Real chain, unlocked Anvil dev accounts, scratch Anvil 8546 | **64 passed** (trading, creation, hardening, `cancel.integration.test.ts` 11, and the new `match.integration.test.ts` 5: the four-trader scenario with a token-less keeper, repeated matching, `InvalidMaxCount`, a real no-op receipt). These suites refuse to run on 8545 and, for `cancel` and `match`, on a chain that is not freshly deployed; `match` also proves each snapshot revert by chain state | `p2-7-hardening.md`, `p2-8b2-cancellation.md`, `p2-8b3-batch-matching.md` |
+| Browser, **mock wallet**, scratch server 3100 | `e2e` 13, `e2e:create` 14, `e2e:dashboard` 14, `e2e:hardening` 9, `e2e:liveness` 11, `e2e:cancel` 13 and `e2e:match` 15 passed (P2-8B.3; `e2e:match` is new; 89 in total; outages are simulated by blocking browser requests). **A leftover allowance on a reused scratch chain makes `e2e` fail (7 passed, 6 failed in P2-8B.1); it now checks and says so first. Restart and redeploy the scratch chain before a run.** | `p2-8a1-fixes.md`, `p2-8a2-liveness.md`, `p2-8b01-preflight.md`, `p2-8b2-cancellation.md` |
+| **Manual MetaMask (Windows Brave)** | SPEC worked example: Tests 1 to 4 reported by the owner (Tests 5 and 6 not separately reported). DTT creation, listing and a trade, reported by the owner (Section F). Cancel-order happy path (Test 12) and Match orders happy path (Test 13), reported by the owner on 2026-11-08 and cross-checked read-only against the chain | Section F |
 
 The automated rows were run in this repository's WSL environment. They are not a deployment check, and they do not prove any MetaMask behaviour.
 
@@ -423,6 +423,85 @@ After 7f or 7g you may need to reset MetaMask's cached nonce (Section E, item 1)
 
 Screenshots still needed: the confirmation panel, MetaMask's single prompt, and the result card.
 
+## Test 13: match crossed orders (P2-8B.3)
+
+**Status: happy path (13b, 13d, 13e) performed by the owner with MetaMask on 2026-11-08 (owner-reported, then independently re-read from the chain by the AI); 13a, 13c, 13f, 13g and 13h not performed.** Details, the full transaction hash and the receipt: `ai-audit/test-evidence/person2/p2-8b3-batch-matching.md`, section 9. The same behaviour also passed a mock-wallet browser run (`npm run e2e:match`, 15 cases) and a real-chain suite on a scratch Anvil (`lib/match.integration.test.ts`, 5 cases); see `ai-audit/test-evidence/person2/p2-8b3-batch-matching.md`. This test is done on a **scratch chain** (port 8546), never on your main chain, because it needs a crossed book that takes 24 transactions to build.
+
+**Why a script builds the book.** The engine matches an incoming order against the other side straight away, so a crossed book only exists when a placement stops at the engine's 10-fill cap and leaves a remainder. That needs more than ten resting orders to cross. `scripts/seed-crossed-book.sh` builds the engine hand-off's scenario with Anvil's unlocked development accounts (no private key is used or printed), **without ever sending `matchOrders`**: the keeper does that, in MetaMask.
+
+### 13-0. Preparation (what was prepared on 2026-11-08, and how to redo it)
+**The scratch chain.** Verified by the AI on 2026-11-08 before it was touched: Anvil on 8546 (`anvil --port 8546`), chain id 31337, freshly deployed, empty book, no allowances, no pending transactions, keeper holding nothing. Then the script was run on it. To check or redo the state at any time (read-only unless you say `seed`):
+```bash
+cd <repo root>
+scripts/seed-crossed-book.sh status                   # read-only: book heads, balances, and what matchOrders(10) WOULD do (an eth_call)
+scripts/seed-crossed-book.sh                          # seed: refuses unless the chain is clean, then builds and independently verifies the crossed book
+scripts/seed-crossed-book.sh verify-after             # read-only: run it AFTER the keeper's transaction
+```
+The script **refuses port 8545**, any chain id other than 31337 and any non-local host. Before placing anything it checks: chain 31337, contract code at the market and both tokens, an empty book, zero allowances for accounts 0 to 4, no transaction waiting in the pool, the keeper (Anvil account 4) holding no NTU and no SGDx, enough balance for the orders, and that `matchOrders` simulates as 0 on the empty book. If any check fails it prints the reasons and changes nothing. After placing it verifies, from the chain: best bid at or above best ask, two resting buys and two resting sells, each buy filled 10 of 11 (the engine's cap), exactly 20 `Trade` events and none from matchOrders, a simulated `matchOrders(10)` of 2 fills, the keeper still empty and no leftover allowance. It writes only a small record of public balances to `~/.local/state/sc4053/crossed-book-8546.env`, never in the repository, and it does not touch `abis.ts` or `deployments.ts` (it only reads the addresses).
+
+To start from nothing (only if you want to): stop the scratch Anvil (only that one), then
+```bash
+anvil --port 8546                                   # a new terminal; leave it running
+cd contracts
+mkdir -p /tmp/sc4053-scratch/broadcast /tmp/sc4053-scratch/cache
+FOUNDRY_BROADCAST=/tmp/sc4053-scratch/broadcast FOUNDRY_CACHE_PATH=/tmp/sc4053-scratch/cache \
+  forge script script/Deploy.s.sol:Deploy --rpc-url http://127.0.0.1:8546 --broadcast --unlocked --sender 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+cd ..
+```
+The two `FOUNDRY_` variables keep the scratch deployment out of the repository's `contracts/broadcast` and `contracts/cache` (a plain scratch deploy would overwrite the record the exporter reads for your main chain, issue P2-005). **Do not run the exporter**: on a fresh Anvil the addresses equal the committed `deployments.ts` (checked byte-identical in P2-8B.1), so nothing needs exporting.
+
+**The app for the scratch chain.** The app on port 3000 reads 8545, so it cannot show this chain. A second copy of the app, built to read 8546, is served on **http://localhost:3100** (it was started by the AI from a copy of `web/`, so your dev server's `.next` folder is untouched). To rebuild it yourself:
+```bash
+mkdir -p /tmp/sc4053-scratch && rsync -a --exclude .next web/ /tmp/sc4053-scratch/web/
+cd /tmp/sc4053-scratch/web
+NEXT_PUBLIC_RPC_URL=http://127.0.0.1:8546 npx next build
+NEXT_PUBLIC_RPC_URL=http://127.0.0.1:8546 npx next start -p 3100
+```
+Stop it afterwards with Ctrl+C in its terminal (or kill only the process that `ss -ltnp | grep :3100` shows).
+
+**MetaMask on the scratch chain.** MetaMask identifies a network by its chain id, and this chain has the same id as your main one (31337), so it cannot tell them apart. While you test, point MetaMask's network at the scratch node, and **switch it back afterwards**:
+1. Open the network list, choose **Anvil Local** (the network from section A9), and open its settings (menu names vary by MetaMask version).
+2. Add a second RPC URL **`http://127.0.0.1:8546`** to that network and select it. If your MetaMask version offers only one URL per network, edit the URL instead and change it back to `http://127.0.0.1:8545` at the end.
+3. While MetaMask points at 8546, do **not** use the app on port 3000 (it reads 8545): the two would disagree (section E, "different RPC URLs with the same chain id"). Use **http://localhost:3100**.
+4. **Nonces.** MetaMask remembers nonces per chain id, which is what stranded your transactions after an Anvil restart. The keeper account has sent nothing on either chain (nonce 0 on 8545 and on 8546, checked read-only on 2026-11-08), so no stale nonce is expected. If a transaction ever stays pending, do not reset anything: compare `cast nonce <account> --rpc-url http://127.0.0.1:8546` with the nonce shown in MetaMask, and follow `docs/DEPLOYMENT.md`, "Troubleshooting a local chain". Do not run `evm_revert` or restart the scratch Anvil once MetaMask has sent a transaction to it, for the same reason.
+
+**Import the keeper.** The keeper is **Anvil account 4**, address **`0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65`**. It holds no NTU and no SGDx (that is the point: matching needs no tokens), only the free test ETH for gas. Get its key the way section B4 shows, with account **index 4** instead of 1, then import it as section B5 describes:
+```bash
+read -r -s ANVIL_MNEMONIC                                   # the phrase from any default Anvil banner; nothing is echoed
+cast wallet address --private-key "$(cast wallet private-key "$ANVIL_MNEMONIC" 4)"   # sanity check: must print 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
+cast wallet private-key "$ANVIL_MNEMONIC" 4                 # prints the key for the MetaMask import (do not save or share it)
+unset ANVIL_MNEMONIC
+```
+Anvil's keys are public and for local disposable chains only. Check the **address** under the account name in MetaMask is `0x15d3…6A65` before you do anything.
+
+**Before the match, record the balances** with `scripts/seed-crossed-book.sh status`. The values below are the prepared chain's, taken at the end of the seed on 2026-11-08 (yours will differ if the chain's history differs; the *changes* are what matter):
+
+| Account | NTU | SGDx |
+|---|---|---|
+| 0 (bidder at 2.5) | 970020 | 969957.5 |
+| 1 (seller) | 9979 | 10040 |
+| 2 (bidder at 3) | 10020 | 9957 |
+| 3 (seller) | 9979 | 10040 |
+| 4 (**keeper**) | 0 | 0 |
+| market (escrow) | 2 | 5.5 |
+
+The four resting orders on the prepared chain are #45 (account 1's sell at 2), #46 (account 3's sell at 2), #47 (account 2's buy at 3) and #48 (account 0's buy at 2.5). If you re-seed, the numbers are higher: read them from the script's output.
+
+| # | Do this | Expect |
+|---|---|---|
+| 13a | Open **http://localhost:3100/trade** with no wallet connected (MetaMask on the scratch node) | A **Match orders** panel titled "Buy and sell orders on this book can be matched": the best buy order (#47, 3 SGDx) is at or above the best sell order (#45, 2 SGDx); anyone can send it, you pay gas, no approval, you neither send nor receive trading tokens, at most 10 fills per transaction, another call may be needed. **Review match** is disabled with "Connect your wallet on Anvil to send a matching transaction". The Order book lists two **Sell (ask)** rows at 2 and two **Buy (bid)** rows (3 and 2.5); the depth panel's spread reads **Crossed**, not a number. It never says how many fills there will be |
+| 13b | Connect MetaMask with the **keeper** (`0x15d3…6A65`) and press **Review match** | A review: `matchOrders(10)`, "Settles at most 10 fills", **Simulated now (an estimate): about 2 fills**, a gas estimate (about 0.2 million; yours may differ), "No token approval is needed". MetaMask shows **no** request yet; **Not now** closes it without sending anything |
+| 13c | Press **Confirm match** and, in MetaMask, press **Reject** | "You rejected the match request"; nothing was sent; no result card. Run `scripts/seed-crossed-book.sh status`: the book is **still crossed**. Press **Try again**: the notice returns |
+| 13d | Review, **Confirm match** again, and this time confirm in MetaMask | The wallet-waiting notice, and MetaMask shows **one** transaction to the order book (no approval). Nothing says "Matched" until the block: then **"Matched: 2 fills settled"**, a table of the two `Trade` events (maker #45 `0x7099…79C8` to taker #47 `0x3C44…93BC`, and maker #46 `0x90F7…b906` to taker #48 `0xf39F…2266`; each 1 NTU at 2 SGDx, total 2), totals **2 NTU** and **4 SGDx**, "Price improvement returned to buyers **1.5 SGDx**", orders #45, #46, #47 and #48 **Filled**, "Still crossed afterwards: No", and a link to the transaction. The Match orders panel closes when you press **Close** |
+| 13e | In the terminal run `scripts/seed-crossed-book.sh verify-after` | Every line **PASS** and "Result: every check passed". Changes from the recorded balances: account 1 **+2 SGDx**; account 3 **+2 SGDx**; account 2 **+1 NTU, +1 SGDx**; account 0 **+1 NTU, +0.5 SGDx**; the keeper's NTU and SGDx **unchanged** (MetaMask shows its ETH fell by the gas); the market **−2 NTU, −5.5 SGDx** (0 left); the book empty; 22 `Trade` events since the seed (20 from the capped placements, 2 from the match); the last two came from a transaction **sent by the keeper to the market calling `matchOrders`** |
+| 13f | Open the linked transaction | Two `Trade` events and the matching token transfers; there is no separate "matching" event, because the engine emits none |
+| 13g | Re-seed (`scripts/seed-crossed-book.sh`: it works again once the book is empty and nothing is approved), start a match, and switch MetaMask to another account while the request is open | "Your account or network changed"; no result is shown for either account |
+| 13h | A remainder that needs **two** calls (22 asks and one bid of 22) | **Not scripted.** Covered by the mock-wallet suite and the real-chain suite only; the first call settles 10 fills and offers **Review another match**, and nothing is sent until you press it |
+
+**Performed on 2026-11-08 (owner-reported):** 13b (keeper `0x15d3…6A65` through MetaMask to the scratch app on port 3100, RPC 8546: Review match showed `matchOrders(10)`, about 2 fills, a gas estimate of **277124**, no approval), 13d (confirmed in MetaMask: block 78, 2 fills, #45 with #47 and #46 with #48 at 1 NTU for 2 SGDx, 2 NTU and 4 SGDx settled, 1.5 SGDx returned, all four orders Filled, no longer crossed, **224189** gas used) and 13e (`scripts/seed-crossed-book.sh verify-after`: every check passed). The transaction was then re-read from the chain by the AI: `0x52162ab7d8b916a6aba588cbc940e30a2cebfe2e620f597cf63c072a111ec779`, block 78, from the keeper, nonce 0, to the market, calldata `matchOrders(10)`, status success, 224,189 gas, two `Trade` events.
+
+**Not performed (no report, no independent evidence):** 13a (the view without a wallet; the AI saw it only in a headless browser), 13c (a MetaMask rejection), 13f (the transaction page), 13g (an account switch mid-request) and 13h. **Screenshots are still to be supplied;** the full transaction hash is recorded in the evidence file.
+
 ---
 
 # E. Troubleshooting and FAQ
@@ -516,6 +595,7 @@ There is no background process. Matching happens **inside the transaction of a n
 | 11. The node stops and comes back | **No** | Procedure only |
 | 12. Cancel an order (P2-8B.2), happy path (12a to 12f) | **Yes, by the owner, 2026-11-08** (a different journey: sell 5 NTU at 2, buy 2 at 2.2, cancel the 3 NTU remainder) | Owner report; chain read-only on 8545: order 1 Cancelled, filled 2e18, `OrderCancelled` refund 3e18; Alice 969,998 NTU and 970,004 SGDx; market escrow 0. No screenshots or hashes recorded yet |
 | 12g to 12i, outage and chain reset during a cancel | **No** | Procedures only. Mock-wallet and real-chain evidence: `ai-audit/test-evidence/person2/p2-8b2-cancellation.md` |
+| 13. Match crossed orders (P2-8B.3) | **Partly** | Owner-reported, 2026-11-08 (13b, 13d, 13e: the keeper's matching transaction on the scratch chain, then `verify-after`). 13a, 13c, 13f, 13g and 13h not performed (Test 13). Mock-wallet and real-chain evidence: `ai-audit/test-evidence/person2/p2-8b3-batch-matching.md`. Needs a long `cast` setup because the book can only cross through the 10-fill cap |
 
 The orders were created on-chain at 2026-11-05 15:00:21 UTC (order 1) and 15:29:48 UTC (order 2); the owner reported the result on 2026-11-06. The same SPEC example also passed in the automated mock-wallet browser run and in the real-chain suite on a scratch Anvil: see [`ai-audit/test-evidence/person2/p2-5-trading.md`](ai-audit/test-evidence/person2/p2-5-trading.md).
 

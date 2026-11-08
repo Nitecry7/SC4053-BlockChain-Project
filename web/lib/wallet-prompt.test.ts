@@ -57,3 +57,14 @@ describe("wallet pending guidance", () => {
     expect(failureCopy("switch", { kind: "rejected", title: "", detail: "" }).title).toMatch(/network switch/);
   });
 });
+
+describe("match requests (P2-8B.3)", () => {
+  it("are worded as a match request, never as an order or a cancel", () => {
+    const w = waitingCopy("match", 0);
+    expect(w.title).toBe("Match request sent to your wallet");
+    expect(successCopy("match").title).toBe("Matching confirmed on-chain");
+    const rejected = failureCopy("match", { kind: "rejected", title: "x", detail: "y" });
+    expect(rejected.title).toBe("You rejected the match request");
+    expect(rejected.body).toMatch(/Nothing was sent/);
+  });
+});

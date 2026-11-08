@@ -281,7 +281,7 @@ export async function runOrder(deps: RunnerDeps, p: RunParams, dispatch: Dispatc
  * names only; it never changes which function is called). Found by the real-chain test (issue p2-001) and extended in
  * P2-6 for `InvalidTokens` and `UnsupportedDecimals`.
  */
-const ERROR_DEFINITIONS = (() => {
+export const ERROR_DEFINITIONS = (() => {
   const seen = new Map<string, (typeof demoTokenAbi)[number]>();
   for (const item of [...demoTokenAbi, ...orderBookAbi, ...tokenFactoryAbi, ...marketFactoryAbi]) {
     if (item.type !== "error") continue;

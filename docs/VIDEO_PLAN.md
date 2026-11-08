@@ -11,7 +11,8 @@
 | Item | Needed for | Status on 8 Nov |
 |---|---|---|
 | Base trading UI (place order, partial fill, order history) | Segment 3 | Built (Person 2) |
-| **Cancel button, Match orders button, stop-limit form and Trigger stops button** | Segments 3c, 4a, 4b in the UI | **Not built yet** (Person 2; see `docs/ENGINE_HANDOFF.md`). If they are missing, use the **terminal path** in each segment |
+| **Cancel button and Match orders panel** | Segments 3c and 4a in the UI | **Built** (P2-8B.2 and P2-8B.3; Cancel's happy path run with MetaMask by the owner, Match orders: happy path confirmed with MetaMask by the owner on a scratch chain, 2026-11-08, but not yet rehearsed on the recording chain). Rehearse them on the recording chain; the **terminal path** in each segment remains the fallback |
+| **Stop-limit form and Trigger stops button** | Segment 4b in the UI | **Not built yet** (Person 2; see `docs/ENGINE_HANDOFF.md`). Use the **terminal path** |
 | Your local chain runs the current engine | Every UI segment | **Redeploy needed**: a fresh Anvil, then deploy and export (below) |
 
 ## Setup (do this before recording)
@@ -100,7 +101,7 @@ Scroll to step 3 of its output:
 - One `Keeper matchOrders(10)` transaction settled all four: orders 23 to 26 Filled.
 - Balances: Alice 9,949 NTU / 10,102 SGDx; Carol 9,989 / 10,022; Bob 10,051 / 9,898; Dan 970,011 / 969,978; **Keeper 0 / 0**; market 0 / 0.
 
-**UI path** (only if Person 2's Match orders button exists): create the same crossed book on the app's chain with the `cast` lines from `demo-journey.sh` step 3, using `--rpc-url http://127.0.0.1:8545`. Then press **Match orders** from the Keeper account and show the two fills.
+**UI path** (the Match orders panel exists since P2-8B.3; its happy path was confirmed with MetaMask by the owner on a scratch chain on 2026-11-08, but **not yet rehearsed on the recording chain**): create the same crossed book on the app's chain with the `cast` lines from `demo-journey.sh` step 3 (or the setup in `docs/TESTING.md`, Test 13), using `--rpc-url http://127.0.0.1:8545`. Open Trade as the token-less Keeper account, press **Review match**, then **Confirm match**, and show the two fills in the result table. The spread reads **Crossed** until it is settled.
 
 ### 4b. Stop-limit (Bonus 3)
 **Say:** a stop-limit waits, escrowed, until the last trade price reaches its trigger. Then anyone can activate it, and it becomes a normal limit order.

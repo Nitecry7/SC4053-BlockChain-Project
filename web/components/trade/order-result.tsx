@@ -121,8 +121,8 @@ export function OrderResult({ outcome, state }: { outcome: OrderOutcome; state: 
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden />
           <span>
             The engine matches at most {maxMatches?.toString()} orders per transaction. The remainder was placed on the book and may still cross the other
-            side. Matching only happens inside transactions; nothing matches it in the background, and the engine&rsquo;s{" "}
-            <span className="font-mono">matchOrders</span> is not available yet.
+            side. Matching only happens inside transactions; nothing matches it in the background. If the book is now crossed, the{" "}
+            <strong className="font-semibold">Match orders</strong> panel below the book lets anyone settle it with a separate transaction.
           </span>
         </p>
       )}

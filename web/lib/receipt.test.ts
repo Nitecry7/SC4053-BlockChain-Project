@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ALICE, BOB, EVIL, MARKET, NTU, SGDX, approval, dec, orderCancelled, orderPlaced, resetLogIndex, specExampleLogs, trade, transfer,
 } from "./test-logs";
-import { decodeCancelReceipt, decodeOrderReceipt, decodeTxEvents, reconcileOrder } from "./receipt";
+import { decodeCancelReceipt, decodeMatchReceipt, decodeOrderReceipt, decodeTxEvents, reconcileOrder } from "./receipt";
 
 // The logs are SYNTHETIC (built with viem's event encoders in test-logs.ts, not captured from a chain). The
 // chain-backed equivalents are in trading.integration.test.ts, run against a scratch Anvil.
@@ -211,5 +211,52 @@ describe("decodeCancelReceipt (P2-8B.2)", () => {
     expect(events.map((e) => e.kind)).toEqual(["OrderCancelled", "Transfer"]);
     expect(events[0]).toMatchObject({ kind: "OrderCancelled", orderId: 1n, refundBase: dec("60"), refundQuote: 0n });
     expect(unrecognised).toBe(0);
+  });
+});
+
+describe("decodeMatchReceipt (P2-8B.3)", () => {
+  const pair = { market: MARKET, baseToken: NTU, quoteToken: SGDX };
+  const CAROL = "0x90F79bf6EB2c4f870365E785982E1f101E93b906" as typeof ALICE;
+
+  // Two fills in one transaction: Alice (sell) with Bob (buy) at 2, Carol (sell) with Bob at 3 (Bob's earlier bid is the maker).
+  const twoFills = () => {
+    resetLogIndex();
+    return [
+      trade(MARKET, 1n, 3n, ALICE, BOB, dec("2"), dec("1"), dec("2")),
+      transfer(NTU, MARKET, BOB, dec("1")),
+      transfer(SGDX, MARKET, ALICE, dec("2")),
+      transfer(SGDX, MARKET, BOB, dec("1")), // price improvement refund (bid 3 against maker 2)
+      trade(MARKET, 2n, 3n, CAROL, BOB, dec("2"), dec("1"), dec("2")),
+      transfer(NTU, MARKET, BOB, dec("1")),
+      transfer(SGDX, MARKET, CAROL, dec("2")),
+    ];
+  };
+
+  it("returns every Trade from the market in log order, and what the market paid out per token", () => {
+    const r = decodeMatchReceipt({ logs: twoFills(), ...pair });
+    expect(r.fills).toHaveLength(2);
+    expect(r.fills[0]).toMatchObject({ makerOrderId: 1n, takerOrderId: 3n, maker: ALICE, taker: BOB, price: dec("2"), baseAmount: dec("1"), quoteAmount: dec("2") });
+    expect(r.fills[1]).toMatchObject({ makerOrderId: 2n, maker: CAROL });
+    expect(r.baseOut).toBe(dec("2"));
+    expect(r.quoteOut).toBe(dec("5")); // 2 + 1 refund + 2
+    expect(r.baseTo[BOB.toLowerCase()]).toBe(dec("2"));
+    expect(r.quoteTo[ALICE.toLowerCase()]).toBe(dec("2"));
+    expect(r.quoteTo[BOB.toLowerCase()]).toBe(dec("1"));
+  });
+
+  it("a transaction with no Trade logs is a no-op: zero fills, nothing invented", () => {
+    resetLogIndex();
+    expect(decodeMatchReceipt({ logs: [], ...pair })).toEqual({ fills: [], baseOut: 0n, quoteOut: 0n, baseTo: {}, quoteTo: {} });
+  });
+
+  it("ignores trades and transfers emitted by another contract (spoofing) and another market's fills", () => {
+    resetLogIndex();
+    const OTHER_MARKET = "0x5FbDB2315678afecb367f032d93F642f64180aa3" as typeof ALICE;
+    const logs = [
+      trade(EVIL, 1n, 3n, ALICE, BOB, dec("2"), dec("1"), dec("2")),
+      trade(OTHER_MARKET, 7n, 8n, ALICE, BOB, dec("2"), dec("1"), dec("2")),
+      transfer(NTU, ALICE, BOB, dec("5")), // not from the market
+    ];
+    expect(decodeMatchReceipt({ logs, ...pair })).toEqual({ fills: [], baseOut: 0n, quoteOut: 0n, baseTo: {}, quoteTo: {} });
   });
 });

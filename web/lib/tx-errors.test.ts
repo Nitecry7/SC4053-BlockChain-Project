@@ -42,7 +42,7 @@ describe("describeTxError: contract reverts decoded through real viem errors (sy
     expect(describeTxError(e)).toMatchObject({ kind: "reverted", errorName: "SafeERC20FailedOperation" });
   });
 
-  it("an empty revert (a stub like cancelOrder) is reported as a revert without inventing a name", async () => {
+  it("an empty revert (no engine function reverts this way any more; the decoder path is still valid) is reported as a revert without inventing a name", async () => {
     const e = await simulateWithRevert("0x");
     const d = describeTxError(e);
     expect(d.kind).toBe("reverted");

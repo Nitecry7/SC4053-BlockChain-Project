@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/registry/page-header";
 import { useMarketChoice } from "@/hooks/use-market-choice";
 import { marketHref } from "@/lib/market-select";
 import { MarketPicker } from "./market-picker";
+import { MatchPanel } from "./match-panel";
 import { MyOrders } from "./my-orders";
 import { OrderTicket } from "./order-ticket";
 
@@ -44,6 +45,7 @@ function TradeTerminal({ market, onSelect }: { market: Address; onSelect: (m: Ad
             <DepthPanel state={state} />
             <BookPanel state={state} levels={8} />
           </div>
+          <MatchPanel state={state} />
           <MyOrders state={state} />
         </div>
         <div className="min-w-0 max-xl:order-1">

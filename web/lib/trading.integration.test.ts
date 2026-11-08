@@ -255,7 +255,7 @@ describe.skipIf(!ENABLED)("trading lifecycle on a real scratch chain (Anvil, unl
     expect(r.decoded.refundQuote).toBe(0n);
   });
 
-  it("the fill cap: 12 crossing makers, only 10 are matched and the remainder rests crossed (matchOrders is a stub)", async () => {
+  it("the fill cap: 12 crossing makers, only 10 are matched and the remainder rests crossed (Match orders can then settle it)", async () => {
     // One approval, then 12 one-NTU sells at 2 from Alice (so no per-order approvals are needed).
     await drive(runApproval, ALICE, { side: "sell", price: dec("2"), amount: dec("12"), collateralToken: "base", collateral: dec("12") });
     for (let i = 0; i < 12; i++) outcomeOf(await placeLikeTheUi(ALICE, "sell", "2", "1"));

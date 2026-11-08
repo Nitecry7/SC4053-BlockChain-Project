@@ -197,6 +197,44 @@ export function decodeCancelReceipt(input: {
   };
 }
 
+export type MatchReceipt = {
+  /** The `Trade` events the market emitted in this transaction, in log order. Empty is a legitimate no-op (nothing crossed). */
+  fills: DecodedTrade[];
+  /** Everything the market paid out in this transaction, per token (the tokens' own `Transfer(market -> anyone)` events). */
+  baseOut: bigint;
+  quoteOut: bigint;
+  /** The same payouts per recipient (lower-case address), so each trader's receipt can be checked against their own trades. */
+  baseTo: Record<string, bigint>;
+  quoteTo: Record<string, bigint>;
+};
+
+/**
+ * Reads what a `matchOrders` transaction actually did. `matchOrders` has no event of its own: each settled fill is a
+ * `Trade` from the market. Only logs emitted BY the requested market (and its two tokens) count, so another market's
+ * trades in the same transaction cannot be reported as ours, and zero `Trade` logs yields zero fills, never a made-up one.
+ */
+export function decodeMatchReceipt(input: { logs: readonly RawLog[]; market: Address; baseToken: Address; quoteToken: Address }): MatchReceipt {
+  const { logs, market, baseToken, quoteToken } = input;
+  const fills = decodeFrom<OrderBookEvent>(orderBookAbi, logs, market)
+    .filter((e): e is { eventName: "Trade"; args: DecodedTrade } => e.eventName === "Trade" && e.args !== undefined)
+    .map((e) => e.args);
+  const paid = (token: Address) => {
+    const to: Record<string, bigint> = {};
+    let total = 0n;
+    for (const t of decodeFrom<TokenEvent>(demoTokenAbi, logs, token)
+      .filter((e): e is Extract<TokenEvent, { eventName: "Transfer" }> => e.eventName === "Transfer")
+      .map((e) => e.args)
+      .filter((t) => same(t.from, market))) {
+      to[t.to.toLowerCase()] = (to[t.to.toLowerCase()] ?? 0n) + t.value;
+      total += t.value;
+    }
+    return { to, total };
+  };
+  const base = paid(baseToken);
+  const quote = paid(quoteToken);
+  return { fills, baseOut: base.total, quoteOut: quote.total, baseTo: base.to, quoteTo: quote.to };
+}
+
 export type TxEvent =
   | { kind: "OrderPlaced"; market: Address; orderId: bigint; trader: Address; side: Side; price: bigint; amount: bigint }
   | ({ kind: "Trade"; market: Address } & DecodedTrade)

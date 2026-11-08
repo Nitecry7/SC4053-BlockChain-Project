@@ -76,6 +76,10 @@ const CONTRACT_ERROR_TEXT: Record<string, { title: string; detail: string }> = {
     title: "This order can no longer be cancelled",
     detail: "It is already filled or cancelled. Your orders are being re-read.",
   },
+  InvalidMaxCount: {
+    title: "Invalid match count",
+    detail: "A matching call must settle between 1 and the market's per-transaction limit of fills (MAX_MATCHES_PER_TX). The app sends that limit, so this should not happen: reload the page and try again.",
+  },
   ReentrancyGuardReentrantCall: { title: "The order book rejected a re-entrant call", detail: "Nothing was changed." },
   SafeERC20FailedOperation: {
     title: "The token transfer failed",

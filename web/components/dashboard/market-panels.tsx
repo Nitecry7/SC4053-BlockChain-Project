@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/data/states";
 import { PairMark } from "@/components/data/token-mark";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketRegistry, useMarketSnapshot, useTokenDetails, useTradeStats, type BookLevel, type RegisteredMarket } from "@/hooks/use-dex-data";
+import { bookSpread } from "@/lib/crossed-book";
 import { buildDepth, position } from "@/lib/depth";
 import { quoteCost } from "@/lib/units";
 import { cn } from "@/lib/utils";
@@ -55,7 +56,10 @@ function MarketSummary({ state }: { state: DashboardState }) {
   const b = state.pair.base.symbol;
   const q = state.pair.quote.symbol;
   const cells = [
-    { label: "Spread", value: spread !== undefined ? <Amount value={spread} visible={4} showTail={false} symbol={q} /> : "—" },
+    {
+      label: "Spread",
+      value: spread.kind === "spread" ? <Amount value={spread.value} visible={4} showTail={false} symbol={q} /> : spread.kind === "crossed" ? "Crossed" : "—",
+    },
     { label: "Trades", value: trades ? trades.count.toString() : "…" },
     { label: "Base volume", value: trades ? <Amount value={trades.baseVolume} visible={2} showTail={false} symbol={b} /> : "…" },
     { label: "Quote volume", value: trades ? <Amount value={trades.quoteVolume} visible={2} showTail={false} symbol={q} /> : "…" },
@@ -120,16 +124,16 @@ export function MarketBoard({ state, limit = 4 }: { state: DashboardState; limit
   );
 }
 
-/** Best ask minus best bid, when both sides rest; undefined otherwise (no spread to state). */
-function spreadOf(snap: { bestBid: { price: bigint }; bestAsk: { price: bigint } } | undefined) {
-  if (!snap || snap.bestBid.price === 0n || snap.bestAsk.price === 0n) return undefined;
-  return snap.bestAsk.price - snap.bestBid.price;
+/** Best ask minus best bid when both sides rest and the book is not crossed; "crossed" or "none" otherwise (see `bookSpread`). */
+function spreadOf(snap: { bestBid: { id: bigint; price: bigint }; bestAsk: { id: bigint; price: bigint } } | undefined) {
+  return snap ? bookSpread(snap.bestBid, snap.bestAsk) : ({ kind: "none" } as const);
 }
 
 /** Real cumulative depth from `getBook`, drawn as a step chart; an honest empty state when nothing rests. */
 export function DepthPanel({ state }: { state: DashboardState }) {
   const snap = state.market.data;
   const depth = snap ? buildDepth(snap.bids, snap.asks) : undefined;
+  const spread = spreadOf(snap);
   const pair = `${state.pair.base.symbol} / ${state.pair.quote.symbol}`;
   const W = 460;
   const H = 150;
@@ -172,13 +176,19 @@ export function DepthPanel({ state }: { state: DashboardState }) {
           </p>
           <p className="text-[0.6875rem] text-muted-foreground">Last trade price</p>
         </div>
-        {spreadOf(snap) !== undefined && (
+        {spread.kind === "spread" && (
           <div className="text-right">
             <p className="tabular text-[0.9375rem] font-semibold">
-              <Amount value={spreadOf(snap)!} visible={4} showTail={false} />
+              <Amount value={spread.value} visible={4} showTail={false} />
               <span className="ml-1 text-xs font-medium text-muted-foreground">{state.pair.quote.symbol}</span>
             </p>
             <p className="text-[0.6875rem] text-muted-foreground">Spread (best ask − best bid)</p>
+          </div>
+        )}
+        {spread.kind === "crossed" && (
+          <div className="text-right">
+            <p className="text-[0.9375rem] font-semibold text-warn">Crossed</p>
+            <p className="text-[0.6875rem] text-muted-foreground">Best bid is at or above best ask</p>
           </div>
         )}
       </div>

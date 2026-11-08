@@ -340,7 +340,7 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
                   {estimate.crossedRemainder && (
                     <dd className="col-span-2 text-[0.6875rem] text-warn">
                       The engine matches at most {snap?.maxMatchesPerTx.toString()} orders per transaction. The rest would be placed on the book and could stay
-                      crossed; nothing matches it in the background.
+                      crossed; nothing matches it in the background, but anyone can settle it afterwards with Match orders.
                     </dd>
                   )}
                   {estimate.bookSnapshotExhausted && (

@@ -285,7 +285,7 @@ Two `glass-raised` cards at 18px radius, one for the wallet and one for the netw
 - **Address chip:** shortened mono address with the full address available on hover.
 - **Token and pair marks:** circular letter coins with gradient and ring; a pair is two coins overlapping by 6px.
 - **Side badge:** a pill at 0.6875rem semibold, `buy/15` with Buy Mint text or `sell/15` with Sell Rose text, always carrying the word Buy or Sell.
-- **Depth chart:** stair-step bid and ask areas with a 2px line, faint grid, labelled axes and a legend with coloured dots plus the words "Buyers (bids)" and "Sellers (asks)". With no data it shows a dash, not a flat line.
+- **Depth chart:** stair-step bid and ask areas with a 2px line, faint grid, labelled axes and a legend with coloured dots plus the words "Buyers (bids)" and "Sellers (asks)". With no data it shows a dash, not a flat line. When the book is crossed, its spread reads "Crossed" in the warning colour, never a number (a spread is not defined for a crossed book).
 - **Tables:** shadcn table with a bottom border under the header row; registry tables are filterable.
 
 ### Empty and unavailable states
@@ -326,7 +326,7 @@ Motion is minimal and functional: colour and background transitions on interacti
 ### Don't:
 - **Don't** redesign, re-theme or add a light mode; the approved design is dark-only.
 - **Don't** show a USD value, a 24h change, a price history or any figure the contracts and `Trade` events cannot produce.
-- **Don't** make a disabled or unbuilt control look functional (Match orders and stop-limit controls do not exist yet). Show **Cancel** only for the connected account's own eligible orders (Open, PartiallyFilled or PendingTrigger) and only on a verified chain, built from the existing design system: the lilac link style, the glass panel and the shared wallet-waiting, status and failure components.
+- **Don't** make a disabled or unbuilt control look functional (stop-limit controls do not exist yet). Show **Match orders** only while the market reports a crossed book (best bid at or above best ask) and on a verified chain, using the same review, wallet-waiting and result pattern as Cancel. Show **Cancel** only for the connected account's own eligible orders (Open, PartiallyFilled or PendingTrigger) and only on a verified chain, built from the existing design system: the lilac link style, the glass panel and the shared wallet-waiting, status and failure components.
 - **Don't** convey buy or sell, or any status, by colour alone.
 - **Don't** round chain values for display or use floating-point arithmetic for token amounts.
 - **Don't** add tracked uppercase eyebrow labels above headings.

@@ -30,3 +30,13 @@ describe("describeError", () => {
     expect(describeError(loop).kind).toBe("unknown");
   });
 });
+
+describe("describeTxError: InvalidMaxCount (P2-8B.3)", () => {
+  it("is named and explained instead of shown as raw revert data", async () => {
+    const { describeTxError } = await import("./errors");
+    const e = Object.assign(new Error("x"), { name: "ContractFunctionExecutionError", cause: Object.assign(new Error("y"), { name: "ContractFunctionRevertedError", data: { errorName: "InvalidMaxCount" } }) });
+    const d = describeTxError(e);
+    expect(d).toMatchObject({ kind: "reverted", errorName: "InvalidMaxCount", title: "Invalid match count" });
+    expect(d.detail).toMatch(/MAX_MATCHES_PER_TX/);
+  });
+});
