@@ -1,5 +1,6 @@
 "use client";
 
+import { ActingAs } from "@/components/wallet/acting-as";
 import { CircleCheck, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { Amount } from "@/components/data/amount";
@@ -11,6 +12,7 @@ import type { MyOrder } from "@/hooks/use-dex-data";
 import type { CancelOutcome } from "@/lib/cancel-runner";
 import { isBusy } from "@/lib/order-flow";
 import { canCancel, collateralHeld, expectedRefund, remainingBase, statusLabel } from "@/lib/order-status";
+import { OrderStatusBadge } from "@/components/data/order-status-badge";
 import { cn } from "@/lib/utils";
 import { TxStatus } from "./tx-status";
 
@@ -26,7 +28,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 const primary =
-  "h-10 rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] px-4 text-[0.8125rem] font-semibold text-white shadow-[inset_0_1px_5px_rgb(255_255_255/0.2),0_10px_24px_-12px_rgb(124_92_242/0.8)] transition-[filter] hover:brightness-110 disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-[linear-gradient(100deg,rgb(101_86_204/0.4),rgb(162_139_248/0.4)_49%,rgb(120_98_220/0.4))] disabled:text-white/70 disabled:shadow-none disabled:hover:brightness-100";
+  "h-10 rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] px-4 text-[0.8125rem] font-semibold text-white shadow-[inset_0_1px_5px_rgb(255_255_255/0.2),0_10px_24px_-12px_rgb(124_92_242/0.8)] transition-[filter] hover:brightness-105 disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-[linear-gradient(100deg,rgb(101_86_204/0.4),rgb(162_139_248/0.4)_49%,rgb(120_98_220/0.4))] disabled:text-white/70 disabled:shadow-none disabled:hover:brightness-100";
 
 /**
  * Cancelling one of the connected account's orders: a confirmation that states the refund before anything is sent, the
@@ -92,12 +94,13 @@ export function CancelPanel({
           ) : (
             <>
               <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-[0.75rem]">
+                <ActingAs address={state.account.address} />
                 <Row label="Order">
                   {order.side === 0 ? "Buy" : "Sell"} <Amount value={order.amount} visible={4} showTail={false} symbol={base.symbol} /> at{" "}
                   <Amount value={order.price} visible={4} showTail={false} symbol={quote.symbol} />
                 </Row>
-                <Row label="Status">{statusLabel(order.status)}</Row>
-                <Row label="Filled so far">
+                <Row label="Status"><OrderStatusBadge status={order.status} /></Row>
+                <Row label="Filled So Far">
                   <Amount value={order.filled} visible={4} showTail={false} symbol={base.symbol} />
                 </Row>
                 <Row label={refund ? `You get back (${symbolOf(refund.token)})` : "You get back"}>
@@ -205,7 +208,7 @@ function CancelResult({ outcome, state, onClose }: { outcome: CancelOutcome; sta
             Order #{outcome.orderId.toString()} {bad ? "cancelled, but the checks disagree" : "cancelled"}
           </p>
           <p className="text-[#c3cce0]">
-            Status on-chain now: <span data-testid="cancel-status" className="font-medium text-foreground">{statusLabel(outcome.latest.status)}</span>
+            Status on-chain now: <OrderStatusBadge status={outcome.latest.status} data-testid="cancel-status" className="ml-1 align-middle" />
           </p>
           <p className="text-[#c3cce0]">
             Confirmed in block {outcome.blockNumber.toString()}; read from the receipt&rsquo;s <span className="font-mono">OrderCancelled</span> event and from{" "}
@@ -242,7 +245,7 @@ function CancelResult({ outcome, state, onClose }: { outcome: CancelOutcome; sta
         <Row label="Filled before the cancel">
           <Amount value={outcome.after.filled} visible={4} showTail={false} symbol={base.symbol} /> of <Amount value={outcome.after.amount} visible={4} showTail={false} />
         </Row>
-        <Row label="Unfilled part released">
+        <Row label="Unfilled Part Released">
           <Amount value={remainingBase(outcome.after)} visible={4} showTail={false} symbol={base.symbol} />
         </Row>
         <Row label={`${base.symbol} in your wallet now`}>{state.balances.data?.[0] !== undefined ? <Amount value={state.balances.data[0]} visible={4} showTail={false} /> : "…"}</Row>

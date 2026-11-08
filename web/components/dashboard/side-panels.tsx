@@ -11,11 +11,11 @@ export function CreateListPanel({ state }: { state: DashboardState }) {
   const tokens = useTokenRegistry(state.live);
   const markets = useMarketRegistry(state.live);
   const rows = [
-    { icon: Layers, title: "Create token", href: "/create-token", text: "Issue a new 18-decimal ERC-20 through TokenFactory.", count: tokens.total, unit: "issued" },
-    { icon: Store, title: "List market", href: "/list-market", text: "Open an order book for a token pair through MarketFactory.", count: markets.total, unit: "listed" },
+    { icon: Layers, title: "Create Token", href: "/create-token", text: "Issue a new 18-decimal ERC-20 through TokenFactory.", count: tokens.total, unit: "issued" },
+    { icon: Store, title: "List Market", href: "/list-market", text: "Open an order book for a token pair through MarketFactory.", count: markets.total, unit: "listed" },
   ];
   return (
-    <Panel id="create" title="Create & list">
+    <Panel id="create" title="Create & List">
       <ul className="space-y-2.5">
         {rows.map((r) => (
           <li key={r.title}>

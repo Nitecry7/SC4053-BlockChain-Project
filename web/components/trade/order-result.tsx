@@ -8,6 +8,7 @@ import type { DashboardState } from "@/components/dashboard/use-dashboard";
 import { useAllowance } from "@/hooks/use-dex-data";
 import type { OrderOutcome } from "@/lib/order-runner";
 import { collateralHeld, remainingBase, statusLabel } from "@/lib/order-status";
+import { OrderStatusBadge } from "@/components/data/order-status-badge";
 import { cn } from "@/lib/utils";
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
@@ -50,7 +51,7 @@ export function OrderResult({ outcome, state }: { outcome: OrderOutcome; state: 
         <div className="min-w-0 text-[0.75rem] leading-relaxed">
           <p className="text-[0.8125rem] font-semibold">
             Order #{decoded.orderId.toString()} {outcome.problems.length > 0 ? "mined, but the checks disagree:" : "confirmed:"}{" "}
-            <span data-testid="order-status">{statusLabel(atBlock.status)}</span>
+            <OrderStatusBadge status={atBlock.status} data-testid="order-status" />
           </p>
           <p className="text-[#c3cce0]">
             {isBuy ? "Buy" : "Sell"} {base.symbol}. Confirmed in block {outcome.blockNumber.toString()}; read from the receipt and from{" "}
@@ -72,7 +73,7 @@ export function OrderResult({ outcome, state }: { outcome: OrderOutcome; state: 
             <Amount value={decoded.refundQuote} visible={4} showTail={false} symbol={quote.symbol} />
           </Row>
         )}
-        <Row label="Remaining unfilled">
+        <Row label="Remaining Unfilled">
           <Amount value={remainingBase(atBlock)} visible={4} showTail={false} symbol={base.symbol} />
         </Row>
       </Group>
@@ -81,7 +82,7 @@ export function OrderResult({ outcome, state }: { outcome: OrderOutcome; state: 
         <Row label={held ? `Collateral (${held.token === "quote" ? quote.symbol : base.symbol})` : "Collateral"}>
           {held ? <Amount value={held.amount} visible={4} showTail={false} symbol={held.token === "quote" ? quote.symbol : base.symbol} /> : "—"}
         </Row>
-        <Row label="Escrowed when placed">
+        <Row label="Escrowed When Placed">
           <Amount value={decoded.escrowPulled} visible={4} showTail={false} symbol={collateralToken.symbol} />
         </Row>
       </Group>

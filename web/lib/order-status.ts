@@ -25,14 +25,17 @@ export function statusName(status: number): OrderStatusName | "Unknown" {
 
 const LABELS: Record<OrderStatusName | "Unknown", string> = {
   Open: "Resting",
-  PartiallyFilled: "Partly filled",
+  PartiallyFilled: "Partially Filled",
   Filled: "Filled",
   Cancelled: "Cancelled",
-  PendingTrigger: "Pending trigger",
+  PendingTrigger: "Pending Trigger",
   Unknown: "Unknown",
 };
 
-/** Plain wording for the UI. "Resting" means it sits on the live book; a pending stop order does not. */
+/**
+ * Plain wording for the UI, in Title Case because these are badge labels. "Resting" (the engine's `Open`) means the order sits on
+ * the live book; a pending stop order does not. Sentences that embed a status lower-case it (`statusLabel(s).toLowerCase()`).
+ */
 export const statusLabel = (status: number): string => LABELS[statusName(status)];
 
 /** Is the order on the live book (matchable by others)? A pending stop-limit order is not. */
@@ -72,3 +75,18 @@ export function expectedRefund(o: OrderSnapshot): { token: "base" | "quote"; amo
 
 /** `getOrder` returns an all-zero order for an unknown id; the front end treats `id == 0` as "not found". */
 export const orderExists = (o: Pick<OrderSnapshot, "id">): boolean => o.id !== 0n;
+
+/** The semantic colour family of a status badge. Every badge also carries its text and an icon, so colour is never the only cue. */
+export type StatusTone = "pending" | "resting" | "partial" | "filled" | "cancelled" | "unknown";
+
+const TONES: Record<OrderStatusName | "Unknown", StatusTone> = {
+  Open: "resting",
+  PartiallyFilled: "partial",
+  Filled: "filled",
+  Cancelled: "cancelled",
+  PendingTrigger: "pending",
+  Unknown: "unknown",
+};
+
+/** Pending Trigger amber, Resting azure, Partially Filled violet, Filled green, Cancelled grey. A failed transaction is red (see `OrderStatusBadge`). */
+export const statusTone = (status: number): StatusTone => TONES[statusName(status)];

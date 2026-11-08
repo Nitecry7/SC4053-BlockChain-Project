@@ -104,7 +104,7 @@ export function TxView() {
         </dl>
 
         <div>
-          <h2 className="mb-2 text-[0.9375rem] font-semibold tracking-[-0.02em]">Decoded events</h2>
+          <h2 className="mb-2 text-[0.9375rem] font-semibold tracking-[-0.02em]">Decoded Events</h2>
           {registriesFailed ? (
             <p className="text-[0.75rem] text-muted-foreground">The market and token registries could not be read, so this page cannot tell which events to trust and decodes none.</p>
           ) : !registriesReady ? (

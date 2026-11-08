@@ -88,7 +88,7 @@ async function usableAgain() {
 
 async function fillTicket() {
   const t = page.locator("#order");
-  await t.getByLabel("Limit price").fill("2");
+  await t.locator("#order-price").fill("2");
   await t.getByLabel("Amount", { exact: true }).fill("10");
 }
 

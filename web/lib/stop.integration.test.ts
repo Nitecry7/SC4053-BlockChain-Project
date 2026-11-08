@@ -23,6 +23,7 @@ import { matchDeps, runMatch, type MatchOutcome } from "./match-runner";
 import { flowReducer, initialFlowState, type FlowContext, type FlowEvent, type FlowState } from "./order-flow";
 import type { ValidOrder } from "./order-input";
 import { runApproval, viemDeps } from "./order-runner";
+import { classifyStop, readStopHistory, UNREAD_HISTORY } from "./stop-history";
 import { stopState, validateStopInput } from "./stop-orders";
 import { isStopOutcome, runStopOrder, type StopOutcome, type TicketOutcome } from "./stop-runner";
 import { runTrigger, triggerDeps, type TriggerOutcome } from "./trigger-runner";
@@ -399,7 +400,56 @@ describe.skipIf(!ENABLED)("stop-limit orders on a real scratch chain (Anvil, unl
     expect(after[ALICE]!.ntu - before[ALICE]!.ntu).toBe(dec("1")); // refunded in full
     expect(before[MARKET]!.ntu - after[MARKET]!.ntu).toBe(dec("1"));
     expect((await book(SELL)).length).toBe(101); // the stop never entered the book
+    // P2-8C: the history read tells an ENGINE cancel (same transaction as the trigger) from an owner cancel
+    const hist = await readStopHistory(pub, MARKET, [stop.decoded.orderId], BigInt(D.deployBlock));
+    expect(hist.status).toBe("ok");
+    const cls = classifyStop({ order: await getOrder(stop.decoded.orderId), snapshot: undefined, history: hist });
+    expect(cls.kind).toBe("engine-cancelled-at-activation");
+    expect(cls.text).not.toMatch(/you cancelled/i);
     await assertSolvent("after an auto-cancel");
+  });
+
+  it("stop history from the REAL chain (P2-8C): cancelled before activation, activated and filled, activated then cancelled by its owner; one bounded request; unreadable history is neutral", async () => {
+    await tradeAt("2");
+    const fromBlock = BigInt(D.deployBlock);
+    // 1. cancelled while pending: it never activated
+    const cancelled = await placeStopAs(ALICE, "sell", "1.8", "1.7", "1");
+    await cancelAs(ALICE, cancelled.decoded.orderId);
+    // 2. activated and filled against a resting bid, by a token-less keeper
+    const filled = await placeStopAs(ALICE, "sell", "2", "1.5", "1");
+    await place(BOB, BUY, "1.9", "1");
+    triggeredOf(await triggerAs(KEEPER));
+    expect((await getOrder(filled.decoded.orderId)).status).toBe(2);
+    // 3. activated but nobody bids at its limit: it rests, then its owner cancels it
+    const rested = await placeStopAs(ALICE, "sell", "2", "2.5", "1");
+    triggeredOf(await triggerAs(KEEPER));
+    expect((await getOrder(rested.decoded.orderId)).status).toBe(0);
+    await cancelAs(ALICE, rested.decoded.orderId);
+    const ids = [cancelled, filled, rested].map((o) => o.decoded.orderId);
+
+    let requests = 0;
+    const counting = { request: ((a: unknown) => (requests++, (pub.request as (x: unknown) => Promise<unknown>)(a))) as PublicClient["request"] };
+    const hist = await readStopHistory(counting, MARKET, ids, fromBlock);
+    expect(requests, "one eth_getLogs for all three orders").toBe(1);
+    expect(hist.status).toBe("ok");
+    const kind = async (id: bigint, h = hist) => classifyStop({ order: await getOrder(id), snapshot: undefined, history: h }).kind;
+    expect(await kind(cancelled.decoded.orderId)).toBe("cancelled-before-activation");
+    expect(await kind(filled.decoded.orderId)).toBe("activated-filled");
+    expect(await kind(rested.decoded.orderId)).toBe("activated-then-cancelled");
+    expect(Object.keys(hist.triggered).sort()).toEqual([filled, rested].map((o) => o.decoded.orderId.toString()).sort());
+    expect(hist.triggered[cancelled.decoded.orderId.toString()], "no StopOrderTriggered exists for the stop cancelled while pending").toBeUndefined();
+
+    // an RPC failure never becomes "never activated": the history is unavailable and the wording is neutral
+    const broken = await readStopHistory({ request: (async () => { throw new Error("rpc down"); }) as PublicClient["request"] }, MARKET, ids, fromBlock);
+    expect(broken).toEqual(UNREAD_HISTORY);
+    expect(await kind(cancelled.decoded.orderId, broken)).toBe("cancelled-unknown");
+    // a request bounded to the stops' own lifetime still finds them (fromBlock = the block they were placed in, not the chain's start)
+    const placedAt = (await pub.getContractEvents({ address: MARKET, abi: orderBookAbi, eventName: "StopOrderPlaced", args: { orderId: ids }, fromBlock }))
+      .map((l) => l.blockNumber as bigint)
+      .reduce((a, b) => (a < b ? a : b));
+    const narrow = await readStopHistory(pub, MARKET, ids, placedAt);
+    expect(narrow).toEqual(hist);
+    await assertSolvent("after the history scenarios");
   });
 
   it("activation hits the shared 10-fill budget and leaves a CROSSED book, which Bonus 2's matchOrders then clears", async () => {

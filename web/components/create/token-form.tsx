@@ -93,12 +93,12 @@ export function TokenForm() {
 
   return (
     <>
-      <PageHeader title="Create token" meta={registry.total !== undefined ? `${registry.total.toString()} issued so far` : undefined}>
+      <PageHeader title="Create Token" meta={registry.total !== undefined ? `${registry.total.toString()} issued so far` : undefined}>
         Issue a new ERC-20 with a fixed supply through the on-chain TokenFactory. The whole supply goes to your wallet, and nothing can ever change it.
       </PageHeader>
       <StatusBanners state={ctx} />
       <div>
-        <Panel id="create-token" title={done ? "Your new token" : "Token details"} className="min-w-0">
+        <Panel id="create-token" title={done ? "Your New Token" : "Token Details"} className="min-w-0">
           {done ? (
             <div className="space-y-3">
               <TokenResult outcome={state.result!} creator={flow.ctx.account} />
@@ -220,7 +220,7 @@ export function TokenForm() {
         </Panel>
 
         <FactoryFacts
-          title="What you are issuing"
+          title="What You Are Issuing"
           address={factory}
           facts={[
             { term: "Fixed supply", detail: "The whole supply is minted once, to your wallet. There is no owner, no minting, no burning and no fees." },

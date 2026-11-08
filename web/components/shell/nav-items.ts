@@ -8,8 +8,8 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Markets", href: "/markets", icon: BarChart3 },
   { label: "Tokens", href: "/tokens", icon: Layers },
   { label: "Trade", href: "/trade", icon: ArrowLeftRight },
-  { label: "Create token", href: "/create-token", icon: SquarePlus, sideOnly: true },
-  { label: "List market", href: "/list-market", icon: Store, sideOnly: true },
+  { label: "Create Token", href: "/create-token", icon: SquarePlus, sideOnly: true },
+  { label: "List Market", href: "/list-market", icon: Store, sideOnly: true },
 ];
 
 export const TOP_NAV = NAV_ITEMS.filter((i) => i.href && !i.sideOnly);

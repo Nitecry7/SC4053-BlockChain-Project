@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canCancel, collateralHeld, expectedRefund, isCancellableStatus, isOnLiveBook, orderExists, remainingBase, statusLabel, statusName, type OrderSnapshot } from "./order-status";
+import { statusTone, canCancel, collateralHeld, expectedRefund, isCancellableStatus, isOnLiveBook, orderExists, remainingBase, statusLabel, statusName, type OrderSnapshot } from "./order-status";
 
 const E18 = 10n ** 18n;
 const base: OrderSnapshot = {
@@ -20,8 +20,8 @@ describe("order status helpers", () => {
     expect([0, 1, 2, 3, 4].map(statusName)).toEqual(["Open", "PartiallyFilled", "Filled", "Cancelled", "PendingTrigger"]);
     expect(statusName(9)).toBe("Unknown");
     expect(statusLabel(0)).toBe("Resting");
-    expect(statusLabel(1)).toBe("Partly filled");
-    expect(statusLabel(4)).toBe("Pending trigger");
+    expect(statusLabel(1)).toBe("Partially Filled");
+    expect(statusLabel(4)).toBe("Pending Trigger");
   });
 
   it("only Open and PartiallyFilled orders are on the live book; a pending stop order is not", () => {
@@ -99,5 +99,15 @@ describe("cancellation helpers (P2-8B.2)", () => {
     expect(expectedRefund({ ...base, status: 2 })).toBeUndefined();
     expect(expectedRefund({ ...base, status: 3 })).toBeUndefined();
     expect(expectedRefund({ ...base, id: 0n })).toBeUndefined();
+  });
+});
+
+describe("status badge semantics (P2-8C)", () => {
+  it("every on-chain status has a Title Case label and a distinct tone: pending amber, resting, partial, filled, cancelled", () => {
+    expect([0, 1, 2, 3, 4].map(statusLabel)).toEqual(["Resting", "Partially Filled", "Filled", "Cancelled", "Pending Trigger"]);
+    const tones = [0, 1, 2, 3, 4].map(statusTone);
+    expect(tones).toEqual(["resting", "partial", "filled", "cancelled", "pending"]);
+    expect(new Set(tones).size).toBe(5);
+    expect(statusTone(9)).toBe("unknown");
   });
 });

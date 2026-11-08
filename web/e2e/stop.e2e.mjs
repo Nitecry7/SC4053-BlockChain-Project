@@ -229,13 +229,13 @@ async function main() {
   await test("the normal limit ticket is unchanged; Stop-limit mode adds a trigger field and the plain-language explanation, and switches back", async () => {
     await openTrade(pa);
     await pa.locator("#order-price").waitFor({ timeout: 30000 });
-    assert((await text(pa.locator("#order-title"))) === "Limit order", "the panel is titled Limit order");
+    assert((await text(pa.locator("#order-title"))) === "Limit Order", "the panel is titled Limit Order");
     assert((await pa.getByTestId("mode-limit").getAttribute("aria-checked")) === "true", "Limit is the default mode");
     assert((await pa.locator("#order-trigger").count()) === 0, "no trigger field in limit mode");
     assert((await pa.getByRole("radio", { name: "Stop-limit" }).count()) === 1, "the mode switch has an accessible name equal to its visible text");
     await pa.getByTestId("mode-stop").click();
     await pa.locator("#order-trigger").waitFor();
-    assert((await text(pa.locator("#order-title"))) === "Stop-limit order", "the panel is titled Stop-limit order");
+    assert((await text(pa.locator("#order-title"))) === "Stop-Limit Order", "the panel is titled Stop-Limit Order");
     const t = await text(pa.getByTestId("stop-explainer"));
     assert(/trigger price.*market condition.*eligible/.test(t) && /limit price.*boundary.*activated/.test(t), `the explainer separates the two prices (got: ${t})`);
     assert(/No trade yet/.test(await text(pa.getByTestId("last-trade-hint"))), "before any trade it says stops cannot trigger yet");
@@ -251,7 +251,7 @@ async function main() {
     const review = pa.getByTestId("review");
     await review.waitFor();
     const t = await text(review);
-    assert(/Trigger price/.test(t) && /Limit price/.test(t) && /1\.8/.test(t) && /1\.7/.test(t), "the review shows both prices");
+    assert(/Trigger Price/.test(t) && /Limit Price/.test(t) && /1\.8/.test(t) && /1\.7/.test(t), "the review shows both prices");
     assert(/stop-limit.*escrowed now, at the limit price.*pending.*not on the order book/i.test(await text(pa.getByTestId("stop-review-state"))), "the review says it is escrowed now and pending");
     assert(/no trade has happened/i.test(await text(pa.getByTestId("stop-review-state"))), "with no trade yet it says no stop can trigger");
     assert(/approve exactly\s*10(\.0+)? NTU/i.test(t), "step 1 is an exact approval of 10 NTU");
@@ -276,7 +276,7 @@ async function main() {
     const want = encodeFunctionData({ abi: orderBookAbi, functionName: "placeStopLimitOrder", args: [1, dec("1.8"), dec("1.7"), dec("10")] });
     assert(placed.to.toLowerCase() === MARKET.toLowerCase() && placed.input === want, "request 2 is placeStopLimitOrder(Sell, trigger 1.8, limit 1.7, 10)");
     const res = pa.getByTestId("stop-result");
-    assert(/placed and pending/.test(await text(res)) && (await text(pa.getByTestId("stop-result-status"))) === "Pending trigger", "the result says pending");
+    assert(/placed and pending/.test(await text(res)) && (await text(pa.getByTestId("stop-result-status"))) === "Pending Trigger", "the result says pending");
     assert(!/filled|activated/i.test(await text(res).then((t) => t.replace(/Nothing has been activated or filled/, ""))), "it never says filled or activated");
     assert(/no trade has happened/i.test(await text(pa.getByTestId("stop-result-state"))), "and says it waits for the first trade");
     const id = (await orderIds(ALICE)).at(-1);
@@ -287,9 +287,10 @@ async function main() {
     await pa.getByText("The book is empty").first().waitFor({ timeout: 20000 });
     assert((await pa.locator("#book").getByText(/Sell \(ask\)/).count()) === 0, "the pending stop is not in the Order book panel");
     await row(pa, id).waitFor({ timeout: 30000 });
-    assert((await text(row(pa, id).getByTestId("order-row-status"))) === "Pending trigger", "My orders lists it as Pending trigger");
-    const info = await text(pa.getByTestId(`stop-info-${id}`));
-    assert(/Stop-limit: trigger 1\.8.*limit 1\.7/.test(info) && /Waiting for price: no trade has happened/.test(info), `My orders shows trigger, limit and why it waits (got: ${info})`);
+    assert((await text(row(pa, id).getByTestId("order-row-status"))) === "Pending Trigger", "My orders lists it as Pending Trigger");
+    const prices = await text(pa.getByTestId(`order-prices-${id}`));
+    const why = await text(pa.getByTestId(`stop-state-${id}`));
+    assert(/Trigger Price 1\.8/.test(prices) && /Limit Price 1\.7/.test(prices) && /Waiting for price: no trade has happened/.test(why), `My orders shows trigger, limit and why it waits (got: ${prices} / ${why})`);
     await shot(pa, "stop-result-pending-desktop.png", { fullPage: true });
   });
 
@@ -361,7 +362,7 @@ async function main() {
     await openTriggerReview(pk);
     await pk.getByText(/about 1 stop/).waitFor({ timeout: 15000 });
     const t = await text(pk.getByTestId("trigger-confirm"));
-    assert(/triggerStopOrders\(10\)/.test(t) && /Activates at most\s*10 stops/.test(t) && /Gas estimate\s*\d+/.test(t) && /No token approval is needed/.test(t), `the review (got: ${t.slice(0, 260)})`);
+    assert(/triggerStopOrders\(10\)/.test(t) && /Activates at Most\s*10 stops/.test(t) && /Gas Estimate\s*\d+/.test(t) && /No token approval is needed/.test(t), `the review (got: ${t.slice(0, 260)})`);
     assert((await sentCount(pk)) === 0, "opening the review sent nothing to the wallet");
     await shot(pk, "stop-trigger-review-desktop.png", { fullPage: true });
     await mock(pk, (ms) => window.__mock.setDelay("tx", ms), 2000);

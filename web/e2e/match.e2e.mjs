@@ -256,9 +256,9 @@ async function main() {
     await page.getByTestId("match-confirm").waitFor({ timeout: 15000 });
     await page.getByText(/about 1 fill/).waitFor({ timeout: 15000 });
     const t = await text(page.getByTestId("match-confirm"));
-    assert(/matchOrders\(10\)/.test(t) && /Settles at most\s*10 fills/.test(t), "it states the call and the limit");
+    assert(/matchOrders\(10\)/.test(t) && /Settles at Most\s*10 fills/.test(t), "it states the call and the limit");
     assert(/Simulated now \(an estimate\)/.test(t) && /only an estimate/.test(t), "the simulation is labelled an estimate");
-    assert(/Gas estimate\s*\d+/.test(t), "a gas estimate is shown when the node gives one");
+    assert(/Gas Estimate\s*\d+/.test(t), "a gas estimate is shown when the node gives one");
     assert(/No token approval is needed/.test(t), "it says no approval is needed");
     assert((await sentCount()) === sentBefore, "opening the review sent nothing to the wallet");
     await shot("match-review-desktop.png", { fullPage: true });

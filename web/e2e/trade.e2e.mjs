@@ -85,7 +85,7 @@ const text = async (locator) =>
 async function placeOrderThroughUi({ side, price, amount, approveClicks = 1 }) {
   const t = ticket();
   await t.getByRole("radio", { name: side === "buy" ? /Buy NTU/ : /Sell NTU/ }).click();
-  await t.getByLabel("Limit price").fill(price);
+  await t.locator("#order-price").fill(price);
   await t.getByLabel("Amount", { exact: true }).fill(amount);
   await t.getByRole("button", { name: "Review order" }).click();
   const next = t.getByRole("button", { name: /^(Approve |Place (buy|sell) order)/ });
@@ -167,15 +167,15 @@ async function main() {
     const t = ticket();
     const sentBefore = await mock(() => window.__mock.sentCount());
     await t.getByRole("radio", { name: /Sell NTU/ }).click();
-    await t.getByLabel("Limit price").fill("abc");
+    await t.locator("#order-price").fill("abc");
     await t.getByLabel("Amount", { exact: true }).fill("1");
     await t.locator("#order-price-error").waitFor();
     assert((await text(t.locator("#order-price-error"))).includes("digits"), "malformed price is explained");
-    await t.getByLabel("Limit price").fill("0");
+    await t.locator("#order-price").fill("0");
     assert((await text(t.locator("#order-price-error"))).includes("greater than zero"), "zero price is refused");
-    await t.getByLabel("Limit price").fill("0.0000000001");
+    await t.locator("#order-price").fill("0.0000000001");
     assert((await text(t.locator("#order-price-error"))).includes("tick"), "non-tick price is refused");
-    await t.getByLabel("Limit price").fill("2");
+    await t.locator("#order-price").fill("2");
     await t.getByLabel("Amount", { exact: true }).fill("0.0000000001");
     assert((await text(t.locator("#order-amount-error"))).includes("lot"), "non-lot amount is refused");
     await t.getByLabel("Amount", { exact: true }).fill("1000000000");
@@ -183,7 +183,7 @@ async function main() {
     assert((await text(t.getByRole("alert"))).includes("wallet balance"), "insufficient balance is explained");
     assert(await t.getByRole("button", { name: "Fix the highlighted fields" }).isDisabled(), "the primary button is disabled");
     assert((await mock(() => window.__mock.sentCount())) === sentBefore, "no transaction was requested");
-    await t.getByLabel("Limit price").fill("");
+    await t.locator("#order-price").fill("");
     await t.getByLabel("Amount", { exact: true }).fill("");
   });
 
@@ -265,11 +265,11 @@ async function main() {
     await row.waitFor({ timeout: 20000 });
     // Alice's own cached rows may show for an instant while the next block's read lands; wait for the refresh.
     await page.waitForFunction(
-      () => document.querySelector('tr[data-order-id="1"] [data-testid="order-row-status"]')?.textContent === "Partly filled",
+      () => document.querySelector('tr[data-order-id="1"] [data-testid="order-row-status"]')?.textContent === "Partially Filled",
       null,
       { timeout: 20000 },
     );
-    assert((await text(row.getByTestId("order-row-status"))) === "Partly filled", "status Partly filled");
+    assert((await text(row.getByTestId("order-row-status"))) === "Partially Filled", "status Partially Filled");
     assert(/6\.0000\s*NTU/.test(await text(row)), "6 NTU locked collateral");
     await shot("my-orders-desktop.png");
   });

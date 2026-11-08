@@ -179,7 +179,7 @@ async function main() {
     }
     assert((await cancelButton(ids.filled).count()) === 0, "a filled order has no Cancel button");
     assert((await rowStatus(ids.filled)) === "Filled", "the filled order is listed as Filled (history)");
-    assert((await rowStatus(ids.stop)) === "Pending trigger", "the stop order is labelled Pending trigger");
+    assert((await rowStatus(ids.stop)) === "Pending Trigger", "the stop order is labelled Pending Trigger");
     const name = await cancelButton(ids.partial).getAttribute("aria-label");
     assert(/^Cancel order #\d+$/.test(name ?? "") && (await text(cancelButton(ids.partial))) === "Cancel", "the accessible name contains the visible text");
     await shot("cancel-my-orders-desktop.png", { fullPage: true });

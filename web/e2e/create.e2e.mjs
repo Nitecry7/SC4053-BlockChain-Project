@@ -102,7 +102,7 @@ async function main() {
 
   await test("create-token page: disconnected visitors are asked to connect, and nothing can be submitted", async () => {
     await page.goto(`${BASE}/create-token`);
-    await page.getByRole("heading", { name: "Create token", exact: true }).waitFor({ timeout: 20000 });
+    await page.getByRole("heading", { name: "Create Token", exact: true }).waitFor({ timeout: 20000 });
     await page.getByRole("button", { name: "Connect wallet" }).last().waitFor({ timeout: 15000 });
     assert(await page.getByRole("button", { name: "Connect wallet" }).last().isVisible(), "the form offers Connect wallet");
     assert((await sent()) === 0, "no wallet request");
@@ -171,7 +171,7 @@ async function main() {
 
   await test("list market from the result: the new token is pre-selected as base; choose SGDx as quote; review and orientation warning; ack gates the button", async () => {
     await page.goto(`${BASE}/list-market?base=${newToken}`);
-    await page.getByRole("heading", { name: "List market", exact: true }).waitFor({ timeout: 20000 });
+    await page.getByRole("heading", { name: "List Market", exact: true }).waitFor({ timeout: 20000 });
     await connect(); // a full page load resets the mock wallet, like a fresh wallet session
     await page.locator("#market-quote").selectOption(SGDX);
     const review = page.getByTestId("review");
@@ -222,7 +222,7 @@ async function main() {
     assert(!(await page.getByText("Cancel order").count()), "no cancel control");
     const ticket = page.locator("#order");
     await ticket.getByRole("radio", { name: /Sell FIZZ/ }).click();
-    await ticket.getByLabel("Limit price").fill("2");
+    await ticket.locator("#order-price").fill("2");
     await ticket.getByLabel("Amount", { exact: true }).fill("10");
     await ticket.getByRole("button", { name: "Review order" }).click();
     const next = ticket.getByRole("button", { name: /^(Approve |Place sell order)/ });

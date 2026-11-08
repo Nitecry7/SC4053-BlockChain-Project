@@ -1,0 +1,110 @@
+{
+  "results": [
+    {
+      "name": "Title Case: every page's headings and column headers follow the convention, and nothing relies on CSS capitalize",
+      "status": "pass",
+      "ms": 17800
+    },
+    {
+      "name": "information tips: hover opens and leaving closes; the popup is labelled and described, and shows the glossary wording",
+      "status": "pass",
+      "ms": 1574
+    },
+    {
+      "name": "information tips: keyboard focus opens, Escape closes, moving focus away closes",
+      "status": "pass",
+      "ms": 875
+    },
+    {
+      "name": "information tips: a click outside closes an open tip",
+      "status": "pass",
+      "ms": 844
+    },
+    {
+      "name": "information tips on a 375 px touch device: a tap opens, the popup stays inside the viewport, a tap outside closes; reduced motion removes the fade",
+      "status": "pass",
+      "ms": 1699
+    },
+    {
+      "name": "ticket: the mode switch and the field labels follow the convention, with tips on the concepts that need them",
+      "status": "pass",
+      "ms": 848
+    },
+    {
+      "name": "dashboard: Market Board, Market Depth and Order Book carry tips; the last trade price has one",
+      "status": "pass",
+      "ms": 391
+    },
+    {
+      "name": "My Orders: a pending stop shows Trigger Price and Limit Price and an amber Pending Trigger badge; a limit order shows only its limit price",
+      "status": "pass",
+      "ms": 937
+    },
+    {
+      "name": "semantic badges: Resting, Partially Filled, Filled and Cancelled differ by tone, icon and text, and all are readable (>= 4.5:1)",
+      "status": "pass",
+      "ms": 1421
+    },
+    {
+      "name": "Eligible Now is a separate chip: the order stays Pending Trigger, escrowed, and is never shown as another status",
+      "status": "pass",
+      "ms": 1201
+    },
+    {
+      "name": "REGRESSION (order #3 of the Bonus 3 MetaMask run): a stop cancelled in the UI before activation is never described as activated, and keeps its Trigger Price",
+      "status": "pass",
+      "ms": 1205
+    },
+    {
+      "name": "activated stops: a traded stop says Activated and keeps its Trigger Price; one that rests and is then cancelled by its owner is an owner cancellation",
+      "status": "pass",
+      "ms": 1004
+    },
+    {
+      "name": "history unreadable: a stop cancelled before activation gets neutral wording and the list still works; it recovers on the next mount",
+      "status": "pass",
+      "ms": 1513
+    },
+    {
+      "name": "history request economy: none for pending stops, one request for a stable set, nothing on later blocks, one more only when a status changes",
+      "status": "pass",
+      "ms": 13725
+    },
+    {
+      "name": "account switching: the account chip follows the connected account, My Orders shows only that account's orders, and a review states who sends",
+      "status": "pass",
+      "ms": 1011
+    },
+    {
+      "name": "the shared primary button (Approve) is readable: at least 4.5:1",
+      "status": "pass",
+      "ms": 1460
+    },
+    {
+      "name": "layout: no horizontal overflow on any page at 375, 768 and 1280 px",
+      "status": "pass",
+      "ms": 27464
+    },
+    {
+      "name": "accessibility: axe-core finds no violations in My Orders with stops, the stop ticket review, and the pages, at 1280 and 375 px",
+      "status": "pass",
+      "ms": 14418
+    },
+    {
+      "name": "no unexpected console errors",
+      "status": "pass",
+      "ms": 0
+    }
+  ],
+  "consoleErrors": [],
+  "measuredContrast": [
+    "Resting 5.63:1",
+    "Partially Filled 5.94:1",
+    "Filled 7.69:1",
+    "Cancelled 8.01:1",
+    "Pending Trigger 7.64:1",
+    "Eligible Now chip 7.49:1",
+    "Approve button 5.23:1",
+    "Approve button while hovered 4.80:1"
+  ]
+}

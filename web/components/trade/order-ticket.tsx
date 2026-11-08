@@ -1,5 +1,6 @@
 "use client";
 
+import { ActingAs } from "@/components/wallet/acting-as";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ArrowDownUp, CircleAlert, ShieldCheck } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
@@ -7,6 +8,8 @@ import { useSwitchChain } from "wagmi";
 import { AddressChip } from "@/components/data/address-chip";
 import { Amount } from "@/components/data/amount";
 import { TokenMark } from "@/components/data/token-mark";
+import { InfoTip } from "@/components/ui/info-tip";
+import type { GlossaryKey } from "@/lib/glossary";
 import { Panel } from "@/components/dashboard/panel";
 import type { DashboardState } from "@/components/dashboard/use-dashboard";
 import { WalletOutcome, WalletWaiting } from "@/components/wallet/wallet-pending-notice";
@@ -33,9 +36,12 @@ function Field({
   hint,
   error,
   disabled,
+  info,
 }: {
   id: string;
   label: string;
+  /** A glossary term: an information icon beside the label. */
+  info?: GlossaryKey;
   value: string;
   onChange: (v: string) => void;
   symbol: string;
@@ -45,9 +51,12 @@ function Field({
 }) {
   return (
     <div className={cn("glass-inset relative rounded-[0.875rem] px-3.5 py-3", error && "border-sell/50")}>
-      <label htmlFor={id} className="text-[0.6875rem] text-[#c3cce0]">
-        {label}
-      </label>
+      <div className="flex items-center gap-0.5">
+        <label htmlFor={id} className="text-[0.6875rem] text-[#c3cce0]">
+          {label}
+        </label>
+        {info && <InfoTip term={info} />}
+      </div>
       <div className="mt-1 flex items-center gap-2">
         <input
           id={id}
@@ -81,10 +90,13 @@ function Field({
   );
 }
 
-function Row({ label, children, strong }: { label: string; children: ReactNode; strong?: boolean }) {
+function Row({ label, children, strong, info }: { label: string; children: ReactNode; strong?: boolean; info?: GlossaryKey }) {
   return (
     <>
-      <dt className="text-muted-foreground">{label}</dt>
+      <dt className="flex items-center text-muted-foreground">
+        {label}
+        {info && <InfoTip term={info} />}
+      </dt>
       <dd className={cn("tabular text-right", strong && "font-semibold")}>{children}</dd>
     </>
   );
@@ -206,7 +218,7 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
   const bestBid = snap && snap.bestBid.id !== 0n ? snap.bestBid.price : undefined;
 
   return (
-    <Panel id="order" title={mode === "stop" ? "Stop-limit order" : "Limit order"} action={action}>
+    <Panel id="order" title={mode === "stop" ? "Stop-Limit Order" : "Limit Order"} info={mode === "stop" ? "stopLimitOrder" : "limitOrder"} action={action}>
       {done ? (
         <div className="space-y-3">
           {isStopOutcome(flow.state.result) ? <StopResult outcome={flow.state.result} state={state} /> : <OrderResult outcome={flow.state.result!} state={state} />}
@@ -241,7 +253,7 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
                   mode === m && "glass-active text-white",
                 )}
               >
-                {m === "limit" ? "Limit" : "Stop-limit"}
+                {m === "limit" ? "Limit" : "Stop-Limit"}
               </button>
             ))}
           </div>
@@ -270,7 +282,8 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
               <>
                 <Field
                   id="order-trigger"
-                  label="Trigger price"
+                  label="Trigger Price"
+                  info="triggerPrice"
                   value={triggerText}
                   onChange={(v) => edit(() => setTriggerText(v))}
                   symbol={quote.symbol}
@@ -300,7 +313,8 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
             )}
             <Field
               id="order-price"
-              label="Limit price"
+              label="Limit Price"
+              info="limitPrice"
               value={priceText}
               onChange={(v) => edit(() => setPriceText(v))}
               symbol={quote.symbol}
@@ -348,18 +362,18 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
           <dl className="mt-3 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-[0.6875rem]">
             <Row label={`Wallet ${base.symbol}`}>{wallet ? <Amount value={wallet.base} visible={4} showTail={false} /> : "—"}</Row>
             <Row label={`Wallet ${quote.symbol}`}>{wallet ? <Amount value={wallet.quote} visible={4} showTail={false} /> : "—"}</Row>
-            <Row label="Lot size">{snap ? <Amount value={snap.lotSize} visible={9} showTail={false} symbol={base.symbol} /> : "—"}</Row>
-            <Row label="Tick size">{snap ? <Amount value={snap.tickSize} visible={9} showTail={false} symbol={quote.symbol} /> : "—"}</Row>
+            <Row label="Lot Size">{snap ? <Amount value={snap.lotSize} visible={9} showTail={false} symbol={base.symbol} /> : "—"}</Row>
+            <Row label="Tick Size">{snap ? <Amount value={snap.tickSize} visible={9} showTail={false} symbol={quote.symbol} /> : "—"}</Row>
           </dl>
 
           {order && (
             <dl className="glass-inset mt-3 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 rounded-[0.875rem] px-3.5 py-3 text-[0.75rem]" aria-label="Order summary">
               {order.kind === "stop" && order.triggerPrice !== undefined && (
-                <Row label="Trigger price">
+                <Row label="Trigger Price">
                   <Amount value={order.triggerPrice} visible={4} showTail={false} symbol={quote.symbol} />
                 </Row>
               )}
-              <Row label={order.kind === "stop" ? `Escrowed now, at the limit price (${collateralToken.symbol})` : `Escrowed collateral (${collateralToken.symbol})`} strong>
+              <Row label={order.kind === "stop" ? `Escrowed now, at the limit price (${collateralToken.symbol})` : `Escrowed collateral (${collateralToken.symbol})`} strong info="escrow">
                 <Amount value={order.collateral} visible={4} showTail={false} symbol={collateralToken.symbol} />
               </Row>
               <Row label={order.side === "buy" ? "Most you can pay" : "You receive if filled at your limit"}>
@@ -370,13 +384,13 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
                   <Amount value={(order.collateralToken === "quote" ? wallet.quote : wallet.base) - order.collateral} visible={4} showTail={false} />
                 </Row>
               )}
-              <Row label="Order book allowance">
+              <Row label="Order Book Allowance">
                 {allowance.data !== undefined ? <Amount value={allowance.data} visible={4} showTail={false} symbol={collateralToken.symbol} /> : "—"}
               </Row>
               {estimate && (
                 <>
                   <dt className="col-span-2 mt-1 border-t border-white/[0.08] pt-2 text-[0.6875rem] font-medium text-[#c3cce0]">Estimate against the current book</dt>
-                  <Row label="Fills right away">
+                  <Row label="Fills Right Away">
                     {estimate.fills.length > 0 ? (
                       <>
                         <Amount value={estimate.filledBase} visible={4} showTail={false} symbol={base.symbol} /> in {estimate.fills.length}
@@ -428,25 +442,26 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
           {reviewing && order && (
             <div className="mt-3 space-y-2 rounded-[0.875rem] border border-lilac/30 bg-[#161d36]/70 px-3.5 py-3 text-[0.75rem]" role="group" aria-labelledby="order-review-title" data-testid="review">
               <p id="order-review-title" className="flex items-center gap-1.5 text-[0.8125rem] font-semibold">
-                <ShieldCheck className="size-4 text-lilac" aria-hidden /> Review before you sign
+                <ShieldCheck className="size-4 text-lilac" aria-hidden /> Review Before You Sign
               </p>
               <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1">
+                <ActingAs address={account.address} />
                 <Row label="Market">
                   {base.symbol} / {quote.symbol}
                 </Row>
                 <Row label="Side">{order.side === "buy" ? `Buy ${base.symbol}` : `Sell ${base.symbol}`}</Row>
                 {order.kind === "stop" && order.triggerPrice !== undefined && (
-                  <Row label="Trigger price">
+                  <Row label="Trigger Price">
                     <Amount value={order.triggerPrice} visible={4} showTail={false} symbol={quote.symbol} />
                   </Row>
                 )}
-                <Row label="Limit price">
+                <Row label="Limit Price">
                   <Amount value={order.price} visible={4} showTail={false} symbol={quote.symbol} />
                 </Row>
                 <Row label="Amount">
                   <Amount value={order.amount} visible={4} showTail={false} symbol={base.symbol} />
                 </Row>
-                <Row label="Market contract">
+                <Row label="Market Contract">
                   <AddressChip address={marketAddress} copy={false} className="text-[0.6875rem]" />
                 </Row>
                 <Row label={`${collateralToken.symbol} token contract`}>
@@ -463,7 +478,7 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
               <p className="text-[0.6875rem] text-subtle">Symbols are chosen by whoever issues a token. The contract address is what identifies it.</p>
               {step === "approval-required" ? (
                 <p className="text-[#c3cce0]">
-                  Step 1 of 2: approve exactly <strong>{formatExact(order.collateral)} {collateralToken.symbol}</strong> for the order book{" "}
+                  Step 1 of 2: approve<InfoTip term="allowance" /> exactly <strong>{formatExact(order.collateral)} {collateralToken.symbol}</strong> for the order book{" "}
                   <AddressChip address={marketAddress} copy={false} className="text-[0.6875rem]" />. It lets the order book move that amount into escrow when you
                   place this order, and nothing more. Step 2 is a separate wallet request to place the order.
                 </p>
@@ -535,7 +550,7 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
             type="button"
             disabled={cta.disabled}
             onClick={cta.onClick}
-            className="mt-3 h-11 w-full rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] text-[0.8125rem] font-semibold text-white shadow-[inset_0_1px_5px_rgb(255_255_255/0.2),0_10px_24px_-12px_rgb(124_92_242/0.8)] transition-[filter] hover:brightness-110 disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-[linear-gradient(100deg,rgb(101_86_204/0.4),rgb(162_139_248/0.4)_49%,rgb(120_98_220/0.4))] disabled:text-white/70 disabled:shadow-none disabled:hover:brightness-100"
+            className="mt-3 h-11 w-full rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] text-[0.8125rem] font-semibold text-white shadow-[inset_0_1px_5px_rgb(255_255_255/0.2),0_10px_24px_-12px_rgb(124_92_242/0.8)] transition-[filter] hover:brightness-105 disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-[linear-gradient(100deg,rgb(101_86_204/0.4),rgb(162_139_248/0.4)_49%,rgb(120_98_220/0.4))] disabled:text-white/70 disabled:shadow-none disabled:hover:brightness-100"
           >
             {cta.label}
           </button>

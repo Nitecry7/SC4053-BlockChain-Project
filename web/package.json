@@ -20,7 +20,8 @@
     "e2e:liveness": "node e2e/liveness.e2e.mjs",
     "e2e:cancel": "node e2e/cancel.e2e.mjs",
     "e2e:match": "node e2e/match.e2e.mjs",
-    "e2e:stop": "node e2e/stop.e2e.mjs"
+    "e2e:stop": "node e2e/stop.e2e.mjs",
+    "e2e:ux": "node e2e/ux.e2e.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

@@ -47,16 +47,16 @@ export function TokenResult({ outcome, creator }: { outcome: TokenOutcome; creat
       </div>
 
       <dl className="glass-inset grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-[0.875rem] px-3.5 py-3 text-[0.75rem]">
-        <Row label="Contract address">
+        <Row label="Contract Address">
           <span data-testid="token-address">
             <AddressChip address={outcome.token} />
           </span>
         </Row>
         <Row label="Decimals">{outcome.decimals}</Row>
-        <Row label="Total supply">
+        <Row label="Total Supply">
           <Amount value={outcome.totalSupply} visible={4} showTail={false} symbol={symbol} />
         </Row>
-        <Row label="Your balance">
+        <Row label="Your Balance">
           <Amount value={outcome.creatorBalanceNow} visible={4} showTail={false} symbol={symbol} />
         </Row>
         <Row label="Issued by TokenFactory">Yes (registry position {outcome.registryIndex.toString()} of {outcome.registryCount.toString()})</Row>
@@ -71,7 +71,7 @@ export function TokenResult({ outcome, creator }: { outcome: TokenOutcome; creat
       <div className="flex flex-wrap gap-2">
         <Link
           href={`/list-market?base=${outcome.token}`}
-          className="inline-flex h-10 items-center rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] px-4 text-[0.8125rem] font-semibold text-white hover:brightness-110"
+          className="inline-flex h-10 items-center rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] px-4 text-[0.8125rem] font-semibold text-white hover:brightness-105"
         >
           List a market for this token
         </Link>

@@ -401,11 +401,11 @@ Also check **which account** MetaMask has selected, **which account the website 
 | Frontend and MetaMask target different ports | Website reads one node, MetaMask sends to another | Website block number vs `cast block-number` on the RPC MetaMask uses | Pair them (Part D7) | Don't sign anything until they match |
 | Wallet imported but not connected to the DEX | Importing ≠ connecting | The site shows "Connect wallet" or another address | Press **Connect wallet**; approve the site permission (check the Extensions menu) | Don't re-import the account |
 | Switching MetaMask's account did not update the DEX | The site keeps the previously connected account until it receives the change | Compare the address on the site with MetaMask's selected one | Reload, or disconnect and reconnect that account | Don't assume a bug in the order list |
-| **My orders** seems to show another user's orders | The DEX is still connected to the previous account (confirmed in the Bonus 3 test: not an isolation bug) | The address shown on the site | Connect the intended account | Don't report a data leak without checking the connected address |
+| **My Orders** seems to show another user's orders | The DEX is still connected to the previous account (confirmed in the Bonus 3 test: not an isolation bug) | The address shown on the site | Connect the intended account | Don't report a data leak without checking the connected address |
 | Anvil has no contracts after restart | A restart wipes state | `cast code <market>` is `0x`; `check-local.sh` FAILs | Redeploy and re-export (Part C4) | Don't just restart the website |
 | Approved, but no order exists | **An ERC20 approval is not an order.** It only grants a spending permission | Check `allowance` and the order list | Press the **Place order** step after the approval | Don't approve again repeatedly |
 | "Insufficient allowance" | The allowance is smaller than the escrow needed | `cast call <token> "allowance(address,address)(uint256)" <you> <market>` | Send a separate approval transaction for the exact amount | Don't approve an unlimited amount |
-| A pending stop is eligible but has not activated | Eligibility is only tested **inside** a `triggerStopOrders` call; nobody has sent one | My orders reads "Eligible now…"; `triggerStopOrders(10)` simulation is above 0 | Anyone (a keeper, no tokens needed) sends **Trigger stops** | Don't wait for another trade; it is not needed |
+| A pending stop is eligible but has not activated | Eligibility is only tested **inside** a `triggerStopOrders` call; nobody has sent one | My Orders reads "Eligible now…"; `triggerStopOrders(10)` simulation is above 0 | Anyone (a keeper, no tokens needed) sends **Trigger Stops** | Don't wait for another trade; it is not needed |
 | An activated stop only partly filled | It trades as a taker against what rests; the rest becomes an ordinary order at its limit price | `getOrder` status PartiallyFilled, filled < amount | Nothing wrong: the remainder rests in the book | Don't call activation a fill |
 
 ## F3. Dropping a transaction or clearing activity, step by step (disposable chains only)
@@ -436,7 +436,7 @@ Alice sells 10 NTU at 2 SGDx. Because a sell escrows base tokens, she first **ap
 ## G4. The order book, bids, asks, spread and depth
 - **Bids** are buy orders (highest price first); **asks** are sell orders (lowest first).
 - **Spread** = best ask − best bid. A normal book has a positive spread; a crossed book (best bid ≥ best ask) means orders could trade but have not.
-- **Market depth** adds up the quantity at each price level.
+- **Market Depth** adds up the quantity at each price level.
 - Only **open** orders appear. A pending stop-limit order, a filled order and a cancelled order are not part of the live book.
 
 ## G5. Maker pricing and partial fills
@@ -445,7 +445,7 @@ A trade executes at the **maker's** price (the order that was resting first), no
 **A fill is not an order and not a transaction.** One transaction can create zero, one or many fills; each fill is one `Trade` event between a maker order and a taker order. An order can be filled in many fills across many transactions.
 
 ## G6. Bonus 1: cancellation and refunds
-The owner of an open, partly filled or pending-stop order can cancel it; the engine returns the **unfilled escrow** (sell: remaining base; buy: leftover quote; stop: the whole escrow). Real tested journey: Alice sold 5 NTU at 2, Bob filled 2, Alice cancelled the 3 NTU remainder, got 3 NTU back and escrow remaining was 0; the cancelled order stays in My orders as history. **Test:** TESTING.md Test 12.
+The owner of an open, partly filled or pending-stop order can cancel it; the engine returns the **unfilled escrow** (sell: remaining base; buy: leftover quote; stop: the whole escrow). Real tested journey: Alice sold 5 NTU at 2, Bob filled 2, Alice cancelled the 3 NTU remainder, got 3 NTU back and escrow remaining was 0; the cancelled order stays in My Orders as history. **Test:** TESTING.md Test 12.
 
 ## G7. Bonus 2: multi-party batch matching and crossed books
 **Why a book can be crossed:** one placement may fill at most **10** orders in a transaction (`MAX_MATCHES_PER_TX = 10`), to bound gas. The seed script builds: **22 sell orders** of 1 NTU at 2, then **two buy orders** of 11 NTU each (at 3 and at 2.5). Each buy fills 10 asks automatically (**20 automatic fills** in total) and stops at the cap, leaving 1 NTU still crossing. A **keeper** (any account) then sends one `matchOrders(10)` that settles **two more fills** (22 trades in total). No keeper is built in: matching the rest is an explicit, permissionless transaction. **Test:** TESTING.md Test 13; script `scripts/seed-crossed-book.sh`.
@@ -463,7 +463,7 @@ The owner of an open, partly filled or pending-stop order can cancel it; the eng
 | **Actual execution price** | The maker's price. Not the trigger, not your limit |
 
 **The lifecycle:**
-1. **Place** (`placeStopLimitOrder`): escrow is taken at once at the **limit** price; the order becomes **Pending trigger**, outside the order book.
+1. **Place** (`placeStopLimitOrder`): escrow is taken at once at the **limit** price; the order becomes **Pending Trigger**, outside the order book.
 2. **Waiting for price:** the rule is false at the current last trade price.
 3. **Eligible now:** the rule is true. The order is **still pending** and escrowed. **It does not need another trade.** It needs someone to send `triggerStopOrders`.
 4. **Activation:** a keeper (anyone, no tokens, no approval) sends `triggerStopOrders(10)`; the engine checks eligibility, emits `StopOrderTriggered`, and the stop becomes an ordinary order that trades as a **taker** in the same transaction, then rests or is refunded if it cannot enter a very deep book.
@@ -476,6 +476,8 @@ The owner of an open, partly filled or pending-stop order can cancel it; the eng
 **Why trigger = limit does not guarantee a fill:** the trigger only makes the order eligible. After activation there must still be a resting order at an acceptable price, and the price can move before the keeper's transaction.
 
 **A sudden move below the sell limit:** if the last trade jumps from 2.0 down to 1.5 (below a sell limit of 1.7), the stop becomes eligible and activates, but no bid at or above 1.7 may exist; it then **rests unfilled** at 1.7 and nothing is executed. A stop-limit protects your *minimum price*, not your *execution*.
+
+**What the app shows (P2-8C).** In **My Orders** a stop-limit order is tagged *Stop-Limit Order* and keeps both of its prices for its whole life: **Trigger Price** and **Limit Price**. Its status is a coloured oval: **Pending Trigger** (amber), **Resting** (blue, on the Order Book), **Partially Filled** (violet), **Filled** (green), **Cancelled** (grey). **Eligible Now** is a separate dashed chip next to *Pending Trigger*: the order is still pending on-chain. The line under the status says what happened, from the chain's records: *You cancelled it before it activated. It never triggered…*, *Activated, then filled*, *It activated, then you cancelled…*, or *the engine cancelled and refunded it at activation*; if those records cannot be read the app says so and makes no claim. Small **(i)** icons next to the headings and fields explain the terms (hover, keyboard focus or tap).
 
 **Price source caution:** because the engine's price is the market's own last trade, trading in that market moves it. Stop orders are not price protection against a thin or manipulated market. **Test:** TESTING.md Test 14; script `scripts/seed-stop-orders.sh`.
 
@@ -501,7 +503,7 @@ The **authoritative procedures** are in [TESTING.md](TESTING.md). This part tell
 |---|---|---|---|---|
 | **Main flow** (Tests 1 to 6) | Alice sells 10 NTU at 2, Bob buys 4 at 2.2 | Escrow, one trade at 2, balances | Alice partly filled with 6 NTU left; Bob 4 NTU richer | TESTING.md Tests 1 to 6 |
 | **Bonus 1: cancel** (Test 12) | Cancel Alice's remainder | Escrow refunded, status Cancelled | Refund shown equals the event and the token transfer; escrow remaining 0 | Test 12 |
-| **Bonus 2: match** (Test 13) | `seed-crossed-book.sh seed` on 8546, keeper account 4 presses **Match orders** | 20 automatic fills before, 2 keeper fills | "Matched: 2 fills settled"; `verify-after` every check PASS; book no longer crossed | Test 13 |
+| **Bonus 2: match** (Test 13) | `seed-crossed-book.sh seed` on 8546, keeper account 4 presses **Match Orders** | 20 automatic fills before, 2 keeper fills | "Matched: 2 fills settled"; `verify-after` every check PASS; book no longer crossed | Test 13 |
 | **Bonus 3: stop-limit** (Test 14) | `seed-stop-orders.sh prepare`, owner places stops, price moved with `move-price`, keeper triggers | Escrow at placement, activation + one fill | Order partly filled; owner NTU 100 → 90 and SGDx 100 → 107.6; keeper's balances unchanged; market 6 NTU and 0 SGDx; `verify-after` PASS | Test 14 |
 
 ## H3. A pass is more than "it looked right"
@@ -511,7 +513,7 @@ A step passes only when the **screen**, the **transaction** and the **chain** ag
 3. A read-only check agrees (`cast`, or `seed-*.sh verify-after` printing PASS on every line).
 
 ## H4. Collect evidence
-- **Screenshots:** the review card, the MetaMask request, the result card, My orders, and the transaction page. Name them as TESTING.md section D suggests. Never include a key or recovery phrase.
+- **Screenshots:** the review card, the MetaMask request, the result card, My Orders, and the transaction page. Name them as TESTING.md section D suggests. Never include a key or recovery phrase.
 - **Transaction hashes:** copy the full hash from the app's result or the receipt. You can list a block's transactions with `cast rpc eth_getBlockByNumber <hex block> false --rpc-url <RPC>`.
 - Write down the RPC URL, block numbers and date next to each result.
 

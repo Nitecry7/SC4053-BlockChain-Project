@@ -1,28 +1,34 @@
 "use client";
 
+import { ActingAs } from "@/components/wallet/acting-as";
 import { CircleCheck, Crosshair, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Amount } from "@/components/data/amount";
+import { InfoTip } from "@/components/ui/info-tip";
+import type { GlossaryKey } from "@/lib/glossary";
 import { shortAddress } from "@/components/data/address-chip";
 import { Panel } from "@/components/dashboard/panel";
 import type { DashboardState } from "@/components/dashboard/use-dashboard";
 import { WalletOutcome, WalletWaiting } from "@/components/wallet/wallet-pending-notice";
 import { useTriggerFlow, useTriggerPreview, useTriggerableStops } from "@/hooks/use-trigger-flow";
 import { isBusy } from "@/lib/order-flow";
-import { statusLabel } from "@/lib/order-status";
+import { OrderStatusBadge } from "@/components/data/order-status-badge";
 import type { TriggerOutcome, TriggeredStop } from "@/lib/trigger-runner";
 import { formatExact } from "@/lib/units";
 import { cn } from "@/lib/utils";
 import { TxStatus } from "./tx-status";
 
 const primary =
-  "h-10 rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] px-4 text-[0.8125rem] font-semibold text-white shadow-[inset_0_1px_5px_rgb(255_255_255/0.2),0_10px_24px_-12px_rgb(124_92_242/0.8)] transition-[filter] hover:brightness-110 disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-[linear-gradient(100deg,rgb(101_86_204/0.4),rgb(162_139_248/0.4)_49%,rgb(120_98_220/0.4))] disabled:text-white/70 disabled:shadow-none disabled:hover:brightness-100";
+  "h-10 rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] px-4 text-[0.8125rem] font-semibold text-white shadow-[inset_0_1px_5px_rgb(255_255_255/0.2),0_10px_24px_-12px_rgb(124_92_242/0.8)] transition-[filter] hover:brightness-105 disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-[linear-gradient(100deg,rgb(101_86_204/0.4),rgb(162_139_248/0.4)_49%,rgb(120_98_220/0.4))] disabled:text-white/70 disabled:shadow-none disabled:hover:brightness-100";
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+function Row({ label, children, info }: { label: string; children: React.ReactNode; info?: GlossaryKey }) {
   return (
     <>
-      <dt className="text-muted-foreground">{label}</dt>
+      <dt className="flex items-center text-muted-foreground">
+        {label}
+        {info && <InfoTip term={info} />}
+      </dt>
       <dd className="tabular text-right font-medium">{children}</dd>
     </>
   );
@@ -67,7 +73,7 @@ export function TriggerPanel({ state }: { state: DashboardState }) {
   };
 
   return (
-    <Panel id="trigger" title="Trigger stops" className="min-h-0" action={<Crosshair className="size-4 text-subtle" aria-hidden />}>
+    <Panel id="trigger" title="Trigger Stops" info="triggerStops" className="min-h-0" action={<Crosshair className="size-4 text-subtle" aria-hidden />}>
       <div className="space-y-2.5" data-testid="trigger-panel" aria-live="polite">
         {flow.state.abandoned && (
           <WalletOutcome
@@ -116,10 +122,11 @@ export function TriggerPanel({ state }: { state: DashboardState }) {
               Trigger eligible stop orders?
             </h3>
             <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-[0.75rem]">
-              <Row label="Will be sent">
+              <ActingAs address={state.account.address} />
+              <Row label="Will Be Sent">
                 <span className="font-mono">triggerStopOrders({limit?.toString()})</span>
               </Row>
-              <Row label="Activates at most">{limit?.toString()} stops</Row>
+              <Row label="Activates at Most">{limit?.toString()} stops</Row>
               <Row label="Last trade price now">{snap?.hasTradePrice ? <Amount value={snap.lastTradePrice} visible={4} showTail={false} symbol={quote.symbol} /> : "—"}</Row>
               <Row label="Simulated now (an estimate)">
                 <span data-testid="trigger-preview">
@@ -129,7 +136,7 @@ export function TriggerPanel({ state }: { state: DashboardState }) {
                   {preview.status === "idle" && "—"}
                 </span>
               </Row>
-              {preview.status === "ready" && preview.preview.gas !== undefined && <Row label="Gas estimate">{preview.preview.gas.toString()}</Row>}
+              {preview.status === "ready" && preview.preview.gas !== undefined && <Row label="Gas Estimate" info="gas">{preview.preview.gas.toString()}</Row>}
             </dl>
             {preview.status === "error" && (
               <p className="text-[0.75rem] text-warn" role="status">
@@ -247,7 +254,7 @@ function TriggerResult({ outcome, state, canSend, onClose, onAgain }: { outcome:
           {outcome.triggered.map((t) => (
             <li key={t.orderId.toString()} className="glass-inset rounded-[0.75rem] px-3 py-2" data-testid={`trigger-stop-${t.orderId.toString()}`} data-outcome={t.outcome}>
               <p className="font-medium">
-                Order #{t.orderId.toString()} <span className="text-muted-foreground">({shortAddress(t.after.trader, 4, 4)})</span>: {statusLabel(t.after.status)}
+                Order #{t.orderId.toString()} <span className="text-muted-foreground">({shortAddress(t.after.trader, 4, 4)})</span>: <OrderStatusBadge status={t.after.status} className="ml-1 align-middle" />
               </p>
               <p className="text-[#c3cce0]">{describe(t, state)}</p>
               <p className="text-[0.6875rem] text-muted-foreground">
@@ -260,7 +267,7 @@ function TriggerResult({ outcome, state, canSend, onClose, onAgain }: { outcome:
       )}
 
       <dl className="glass-inset grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 rounded-[0.75rem] px-3 py-2 text-[0.75rem]">
-        <Row label="Stop orders activated">
+        <Row label="Stop Orders Activated">
           <span data-testid="trigger-count">{n}</span>
         </Row>
         <Row label={`Total ${base.symbol} traded by them`}>

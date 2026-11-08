@@ -30,10 +30,10 @@ export function AllHoldings({ state }: { state: DashboardState }) {
   return (
     <Panel
       id="all-holdings"
-      title="All token holdings"
+      title="All Token Holdings"
       action={
         <Link href="/tokens" className="text-[0.75rem] font-medium text-lilac hover:text-white">
-          All tokens <span aria-hidden>→</span>
+          All Tokens <span aria-hidden>→</span>
         </Link>
       }
     >

@@ -1,9 +1,12 @@
 "use client";
 
+import { ActingAs } from "@/components/wallet/acting-as";
 import { CircleCheck, Layers, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Amount } from "@/components/data/amount";
+import { InfoTip } from "@/components/ui/info-tip";
+import type { GlossaryKey } from "@/lib/glossary";
 import { shortAddress } from "@/components/data/address-chip";
 import { Panel } from "@/components/dashboard/panel";
 import type { DashboardState } from "@/components/dashboard/use-dashboard";
@@ -12,17 +15,20 @@ import { useMatchFlow, useMatchPreview } from "@/hooks/use-match-flow";
 import { crossedBook } from "@/lib/crossed-book";
 import type { MatchOutcome } from "@/lib/match-runner";
 import { isBusy } from "@/lib/order-flow";
-import { statusLabel } from "@/lib/order-status";
+import { OrderStatusBadge } from "@/components/data/order-status-badge";
 import { cn } from "@/lib/utils";
 import { TxStatus } from "./tx-status";
 
 const primary =
-  "h-10 rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] px-4 text-[0.8125rem] font-semibold text-white shadow-[inset_0_1px_5px_rgb(255_255_255/0.2),0_10px_24px_-12px_rgb(124_92_242/0.8)] transition-[filter] hover:brightness-110 disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-[linear-gradient(100deg,rgb(101_86_204/0.4),rgb(162_139_248/0.4)_49%,rgb(120_98_220/0.4))] disabled:text-white/70 disabled:shadow-none disabled:hover:brightness-100";
+  "h-10 rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] px-4 text-[0.8125rem] font-semibold text-white shadow-[inset_0_1px_5px_rgb(255_255_255/0.2),0_10px_24px_-12px_rgb(124_92_242/0.8)] transition-[filter] hover:brightness-105 disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-[linear-gradient(100deg,rgb(101_86_204/0.4),rgb(162_139_248/0.4)_49%,rgb(120_98_220/0.4))] disabled:text-white/70 disabled:shadow-none disabled:hover:brightness-100";
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+function Row({ label, children, info }: { label: string; children: React.ReactNode; info?: GlossaryKey }) {
   return (
     <>
-      <dt className="text-muted-foreground">{label}</dt>
+      <dt className="flex items-center text-muted-foreground">
+        {label}
+        {info && <InfoTip term={info} />}
+      </dt>
       <dd className="tabular text-right font-medium">{children}</dd>
     </>
   );
@@ -64,7 +70,7 @@ export function MatchPanel({ state }: { state: DashboardState }) {
   };
 
   return (
-    <Panel id="match" title="Match orders" className="min-h-0" action={<Layers className="size-4 text-subtle" aria-hidden />}>
+    <Panel id="match" title="Match Orders" info="matchOrders" className="min-h-0" action={<Layers className="size-4 text-subtle" aria-hidden />}>
       <div className="space-y-2.5" data-testid="match-panel" aria-live="polite">
         {flow.state.abandoned && (
           <WalletOutcome
@@ -109,10 +115,11 @@ export function MatchPanel({ state }: { state: DashboardState }) {
               Match crossed orders?
             </h3>
             <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-[0.75rem]">
-              <Row label="Will be sent">
+              <ActingAs address={state.account.address} />
+              <Row label="Will Be Sent">
                 <span className="font-mono">matchOrders({limit?.toString()})</span>
               </Row>
-              <Row label="Settles at most">{limit?.toString()} fills</Row>
+              <Row label="Settles at Most">{limit?.toString()} fills</Row>
               <Row label="Simulated now (an estimate)">
                 <span data-testid="match-preview">
                   {preview.status === "loading" && "checking…"}
@@ -121,7 +128,7 @@ export function MatchPanel({ state }: { state: DashboardState }) {
                   {preview.status === "idle" && "—"}
                 </span>
               </Row>
-              {preview.status === "ready" && preview.preview.gas !== undefined && <Row label="Gas estimate">{preview.preview.gas.toString()}</Row>}
+              {preview.status === "ready" && preview.preview.gas !== undefined && <Row label="Gas Estimate" info="gas">{preview.preview.gas.toString()}</Row>}
             </dl>
             {preview.status === "error" && (
               <p className="text-[0.75rem] text-warn" role="status">
@@ -227,7 +234,7 @@ function MatchResult({ outcome, state, onClose, onAgain }: { outcome: MatchOutco
             <caption className="sr-only">Fills settled by this transaction</caption>
             <thead>
               <tr className="text-[0.6875rem] text-muted-foreground">
-                <th scope="col" className="pb-1.5 text-left font-medium">Maker → taker</th>
+                <th scope="col" className="pb-1.5 text-left font-medium">Maker → Taker</th>
                 <th scope="col" className="pb-1.5 text-right font-medium">Amount ({base.symbol})</th>
                 <th scope="col" className="pb-1.5 text-right font-medium">Price ({quote.symbol})</th>
                 <th scope="col" className="pb-1.5 text-right font-medium">Total ({quote.symbol})</th>
@@ -257,7 +264,7 @@ function MatchResult({ outcome, state, onClose, onAgain }: { outcome: MatchOutco
       )}
 
       <dl className="glass-inset grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 rounded-[0.75rem] px-3 py-2 text-[0.75rem]">
-        <Row label="Fills settled">
+        <Row label="Fills Settled">
           <span data-testid="match-count">{n}</span>
         </Row>
         <Row label={`Total ${base.symbol} settled`}>
@@ -273,7 +280,7 @@ function MatchResult({ outcome, state, onClose, onAgain }: { outcome: MatchOutco
         )}
         {outcome.effects.map((e) => (
           <Row key={e.orderId.toString()} label={`Order #${e.orderId.toString()} now`}>
-            {statusLabel(e.after.status)}
+            <OrderStatusBadge status={e.after.status} />
             {e.after.filled !== e.after.amount && (
               <>
                 {" "}
@@ -282,7 +289,7 @@ function MatchResult({ outcome, state, onClose, onAgain }: { outcome: MatchOutco
             )}
           </Row>
         ))}
-        <Row label="Still crossed afterwards">
+        <Row label="Still Crossed Afterwards">
           <span data-testid="match-still-crossed">{outcome.stillCrossed ? "Yes: another match is needed" : "No"}</span>
         </Row>
       </dl>

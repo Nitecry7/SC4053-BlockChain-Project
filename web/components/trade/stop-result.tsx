@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Amount } from "@/components/data/amount";
 import { shortAddress } from "@/components/data/address-chip";
 import type { DashboardState } from "@/components/dashboard/use-dashboard";
-import { statusLabel } from "@/lib/order-status";
+import { OrderStatusBadge } from "@/components/data/order-status-badge";
 import { stopState, stopStateText } from "@/lib/stop-orders";
 import type { StopOutcome } from "@/lib/stop-runner";
 import { formatExact } from "@/lib/units";
@@ -44,7 +44,7 @@ export function StopResult({ outcome, state }: { outcome: StopOutcome; state: Da
             Stop-limit order #{d.orderId.toString()} {bad ? "placed, but the checks disagree" : "placed and pending"}
           </p>
           <p className="text-[#c3cce0]">
-            Status on-chain now: <span data-testid="stop-result-status" className="font-medium text-foreground">{statusLabel(outcome.latest.status)}</span>
+            Status on-chain now: <OrderStatusBadge status={outcome.latest.status} data-testid="stop-result-status" className="ml-1 align-middle" />
           </p>
           <p className="text-[#c3cce0]">
             Confirmed in block {outcome.blockNumber.toString()}; read from the receipt&rsquo;s <span className="font-mono">StopOrderPlaced</span> event and from <span className="font-mono">getOrder</span>.
@@ -55,16 +55,16 @@ export function StopResult({ outcome, state }: { outcome: StopOutcome; state: Da
 
       <dl className="glass-inset grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 rounded-[0.75rem] px-3 py-2 text-[0.75rem]">
         <Row label="Side">{d.side === "buy" ? `Buy ${base.symbol}` : `Sell ${base.symbol}`}</Row>
-        <Row label="Trigger price">
+        <Row label="Trigger Price">
           <Amount value={d.triggerPrice} visible={4} showTail={false} symbol={quote.symbol} />
         </Row>
-        <Row label="Limit price">
+        <Row label="Limit Price">
           <Amount value={d.limitPrice} visible={4} showTail={false} symbol={quote.symbol} />
         </Row>
         <Row label="Amount">
           <Amount value={d.amount} visible={4} showTail={false} symbol={base.symbol} />
         </Row>
-        <Row label="Collateral escrowed now">
+        <Row label="Collateral Escrowed Now">
           <Amount value={held} visible={4} showTail={false} symbol={symbolCollateral} />
         </Row>
         <Row label="Moved to the order book in this transaction">

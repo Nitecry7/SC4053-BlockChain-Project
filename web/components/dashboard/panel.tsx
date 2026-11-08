@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
+import { InfoTip } from "@/components/ui/info-tip";
 import { useRpcHealth } from "@/hooks/use-rpc-health";
+import type { GlossaryKey } from "@/lib/glossary";
 import { dataReadsAllowed } from "@/lib/rpc-health";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +13,7 @@ export function Panel({
   className,
   id,
   as: Tag = "section",
+  info,
 }: {
   title?: ReactNode;
   action?: ReactNode;
@@ -18,6 +21,8 @@ export function Panel({
   className?: string;
   id?: string;
   as?: "section" | "div" | "aside";
+  /** A glossary term: an information icon is shown beside the heading (not inside it, so the heading's name stays clean). */
+  info?: GlossaryKey;
 }) {
   const headingId = id ? `${id}-title` : undefined;
   const health = useRpcHealth();
@@ -32,9 +37,12 @@ export function Panel({
       {(title || action) && (
         <div className="mb-3 flex items-center justify-between gap-3">
           {title && (
-            <h2 id={headingId} className="text-[0.9375rem] font-semibold tracking-[-0.02em]">
-              {title}
-            </h2>
+            <div className="flex min-w-0 items-center gap-0.5">
+              <h2 id={headingId} className="text-[0.9375rem] font-semibold tracking-[-0.02em]">
+                {title}
+              </h2>
+              {info && <InfoTip term={info} />}
+            </div>
           )}
           {action}
         </div>
