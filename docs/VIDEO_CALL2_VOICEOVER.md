@@ -12,7 +12,7 @@ If you slip, carry on.
 **P2:** "Hello, I'm [Person 2's name]. Most exchanges are custodial: they hold your keys, so one hack can take your funds. We built a decentralized exchange where your tokens stay in your own wallet until you place an order."
 
 ▶ **Right after**
-**P1:** "I'm [Person 1's name]. I wrote the on-chain trading engine. We'll run every core feature and all three bonuses live, then show how we tested it and how AI helped."
+**P1:** "I'm [Person 1's name]. I wrote the on-chain trading engine. We'll run every core feature and all three bonuses live."
 
 ## 2 · Architecture
 
@@ -81,31 +81,12 @@ If you slip, carry on.
 ▶ **"Triggered: 1 stop order activated"**
 **P1:** "The stop activated and filled four NTU at one point nine, the resting bid's price, not the trigger and not the limit. Six NTU rest at the limit, and Alice received seven point six SGDx."
 
-## 7 · Security evidence
-
-▶ **The evidence map (Figure 10)**
-**P1:** "Now the evidence behind the engine. We ran three hundred thirty-five Foundry tests, with full line and branch coverage of the order book. A stateful invariant suite replayed one hundred twenty-eight thousand random calls against an independent reference ledger, with no violations."
-
-▶ **The security summary table**
-**P1:** "Slither reported twenty-seven results, none real. Of sixty-seven deliberate mutants, sixty-five were caught, and the other two are documented as equivalent. A final AI audit found no critical or high issue. The one accepted medium issue, a dust sandwich through the fill cap, is documented and pinned by a test. It was an AI audit, not a human one."
-
-## 8 · AI methodology
-
-▶ **CLAUDE.md**
-**P1:** "We set the rules in specification files; the AI coded inside them. A fresh AI reviewer checked each phase, and we decided every fix."
-
-▶ **Issue 006**
-**P1:** "It found issue six: about one hundred two wei could block every trigger, and we chose auto-cancel. We logged twenty-four issues, each with its evidence."
-
-▶ **Issue p2-017**
-**P2:** "On the front end, mock-wallet tests passed while real MetaMask exposed a stale-nonce problem and a misleading label on a cancelled stop. Different kinds of evidence prove different things, so we kept them apart."
-
-## 9 · Ending
+## 7 · Ending
 
 ▶ **The Overview page again**
 **P2:** "In summary, ERC20 issuance, listing, limit orders, partial fills and all three bonuses work end to end."
 
 ▶ **Right after**
-**P1:** "The limits: a local chain only, an AI audit only, and we did not run the MetaMask failure cases. Thank you."
+**P1:** "Our tests, security checks and AI audit are documented in the AI Audit Report. The limits: a local chain only, an AI audit only, and we did not run the MetaMask failure cases. Thank you."
 
 ⏹ **Stop recording when the video ends.**

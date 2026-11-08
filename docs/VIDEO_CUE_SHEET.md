@@ -6,13 +6,13 @@ We make the video in two calls:
 
 | Call | Who does what | Output |
 |---|---|---|
-| **Call 1: silent screen capture** | Person 2 shares the screen and does every click in **Part A**. Nobody speaks; both microphones stay muted. Person 1 watches and keeps the stopwatch. | A silent recording of the demo, about **9:00**, and **9:30 at most** |
+| **Call 1: silent screen capture** | Person 2 shares the screen and does every click in **Part A**. Nobody speaks; both microphones stay muted. Person 1 watches and keeps the stopwatch. | A silent recording of the demo, about **7:30** (slower is fine, up to 9:00; never past 9:30) |
 | **Between the calls** | Both watch the silent recording once and write the time of each cue into **Part B** | Part B with its "At" column filled in |
 | **Call 2: voice-over** | One of us shares and plays the silent recording; both read their lines from **Part B** as the cues appear; Zoom records the call | The final video, saved as **`GroupName.mp4`** |
 
 The words are the same as in [`VIDEO_SCRIPT.md`](VIDEO_SCRIPT.md) (if the two ever differ, the script wins). Setup, Zoom settings, fallbacks and the reset are in [`VIDEO_PLAN.md`](VIDEO_PLAN.md).
 
-**Requirements (NTULearn):** at most **10 minutes** and **300 MB**, file named **`GroupName.mp4`**, starting with the architecture and showing a hands-on demo of the locally deployed system. The silent recording aims at **9:00** and must not pass **9:30**, which keeps at least 30 seconds of safety under the 10-minute limit.
+**Requirements (NTULearn):** at most **10 minutes** and **300 MB**, file named **`GroupName.mp4`**, starting with the architecture and showing a hands-on demo of the locally deployed system. The silent recording aims at about **7:30**. Going slower is fine up to **9:00**, and it must never pass **9:30**, which keeps at least 30 seconds of safety under the 10-minute limit. The video shows the features only; our testing and AI audit are in the report, and the closing line says so.
 
 **What the video must show (the brief's DEX requirements):**
 
@@ -39,7 +39,7 @@ None of these may be cut to save time.
 **Before you press Record:**
 - Steps 0 to 6 of `VIDEO_PLAN.md` are done on a fresh chain (8549, with the app on 3103).
 - Alice is the active MetaMask account and is connected.
-- The evidence files are open (plan, section 8).
+- The Figure 3 tab is open (plan, section 8).
 - Terminal B is cleared with `PS1='$ '`.
 - The browser zoom is 125% and the terminal font is 18 points or larger. The video is encoded twice, so text must be big.
 - Both microphones are muted.
@@ -64,15 +64,13 @@ None of these may be cut to save time.
 
 | Segment ends | Target | Latest |
 |---|---|---|
-| 1. Introduction | 0:35 | 0:40 |
-| 2. Architecture | 1:20 | 1:28 |
-| 3. Issuance and listing | 2:26 | 2:42 |
-| 4. Orders, partial fill, cancel | 4:20 | 4:44 |
-| 5. Bonus 2 | 5:29 | 5:58 |
-| 6. Bonus 3 | 6:59 | 7:31 |
-| 7. Security evidence | 7:51 | 8:23 |
-| 8. AI methodology | 8:37 | 9:09 |
-| 9. Conclusion (stop recording) | **8:58** | **9:30** |
+| 1. Introduction | 0:35 | 0:42 |
+| 2. Architecture | 1:20 | 1:37 |
+| 3. Issuance and listing | 2:26 | 2:57 |
+| 4. Orders, partial fill, cancel | 4:20 | 5:15 |
+| 5. Bonus 2 | 5:29 | 6:39 |
+| 6. Bonus 3 | 6:59 | 8:27 |
+| 7. Conclusion (stop recording) | **7:27** | **9:00** |
 
 ### Segment 1. Introduction: the app's Overview page
 
@@ -126,36 +124,21 @@ None of these may be cut to save time.
 | A6.4 | In Terminal B, run `scripts/seed-stop-orders.sh move-price 1.8 --rpc-url http://127.0.0.1:8549`. It prints "last trade price is now 1.8" and "would now activate: 1 stop". Then run `scripts/seed-stop-orders.sh add-bid 1.9 4 --rpc-url http://127.0.0.1:8549`, which rests a buy of 4 NTU at 1.9. Back in the browser, point at the **Eligible Now** chip. | **8 s** on the Eligible Now chip |
 | A6.5 | Switch MetaMask to **Keeper** (check the header). **Review trigger**, **Confirm trigger**, Confirm in MetaMask. Wait for "Triggered: 1 stop order activated", #27 Partially Filled, 4 NTU and 7.6 SGDx, last trade 1.9. | **19 s**: point at the 4 NTU, the 1.9 and the 7.6 SGDx |
 
-### Segment 7. Security, testing and audit evidence
+### Segment 7. Limitations and conclusion
 
 | # | Do | Hold |
 |---|---|---|
-| A7.1 | Switch to VS Code and open Figure 10 (`docs/report/diagrams/10-evidence-map.png`). | **22 s** |
-| A7.2 | Switch to `docs/ai-audit/ENGINE_SECURITY_SUMMARY.md`, "Verification evidence" table. Scroll slowly through the Slither row, the mutation row and the "Final independent audit" part, about 10 s each. | **30 s** in total |
-
-### Segment 8. AI-assisted methodology and lessons
-
-| # | Do | Hold |
-|---|---|---|
-| A8.1 | Open `CLAUDE.md` (top). | **13 s** |
-| A8.2 | Open `docs/ai-audit/issues/006-stop-activation-booktoodeep-blocks-all-triggers.md`, section 4. After 7 s, show the `docs/ai-audit/issues/` folder listing. | **14 s** in total |
-| A8.3 | Open `docs/ai-audit/issues/p2-017-cancelled-stop-labelled-activated.md` (title and section 1). | **19 s** |
-
-### Segment 9. Limitations and conclusion
-
-| # | Do | Hold |
-|---|---|---|
-| A9.1 | Switch back to the app's Overview page. | **21 s**, then **Stop recording** |
+| A7.1 | Switch back to the app's Overview page. | **28 s**, then **Stop recording** |
 
 **After Call 1:** Zoom converts the recording when the meeting ends (`VIDEO_PLAN.md`, section 5). Play it once from start to finish and check:
-- The length is about 9:00 and no more than 9:30.
+- The length is about 7:30, and no more than 9:00 (9:30 at the very most).
 - There is no sound, or only silence.
 - Every MetaMask popup and result is readable.
 - No key or recovery phrase is visible.
 
 Keep this silent file; Call 2 plays it.
 
-**If the take runs long** (past "latest" at a checkpoint, or over 9:30 at the end), take it again after the reset in `VIDEO_PLAN.md`, section 6. This time, pause the recording while a MetaMask popup is loading, a block is mining or the MetaMask account menu is open, and resume when the next screen is ready. Never pause while a result is on screen.
+**If the take runs long** (past "latest" at a checkpoint, or over 9:00 at the end), take it again after the reset in `VIDEO_PLAN.md`, section 6. This time, pause the recording while a MetaMask popup is loading, a block is mining or the MetaMask account menu is open, and resume when the next screen is ready. Never pause while a result is on screen.
 
 Never shorten a **Hold**, and never cut a feature in the requirements table above: a shorter hold means the voice-over cannot fit, and a cut feature is a missing requirement.
 
@@ -167,7 +150,7 @@ Never shorten a **Hold**, and never cut a feature in the requirements table abov
 
 **How to use this part**
 - Read your lines word for word, starting when the cue in **Start when you see** appears. The **At** time is a backup.
-- Speak calmly, at about two words per second: slower than conversation, with a short pause at each full stop. The holds in Part A were sized for that pace. A small slip is fine: carry on. For a bad mistake, stop and redo the whole voice-over (`VIDEO_PLAN.md`, section 5). A redo costs only about 9 minutes.
+- Speak calmly, at about two words per second: slower than conversation, with a short pause at each full stop. The holds in Part A were sized for that pace. A small slip is fine: carry on. For a bad mistake, stop and redo the whole voice-over (`VIDEO_PLAN.md`, section 5). A redo costs only about 8 minutes.
 - If the screen is still waiting (a spinner or a MetaMask popup) and you have finished your line, stay silent or use a bridge line (`VIDEO_SCRIPT.md`, section 5).
 - `[Person 1's name]` and `[Person 2's name]`: say your own name.
 
@@ -176,7 +159,7 @@ Never shorten a **Hold**, and never cut a feature in the requirements table abov
 | # | At | Who | Start when you see | Say |
 |---|---|---|---|---|
 | 1.1 | 0:00 | P2 | The video starts (the Overview page) | "Hello, I'm [Person 2's name]. Most exchanges are custodial: they hold your keys, so one hack can take your funds. We built a decentralized exchange where your tokens stay in your own wallet until you place an order." |
-| 1.2 | | P1 | Right after 1.1 | "I'm [Person 1's name]. I wrote the on-chain trading engine. We'll run every core feature and all three bonuses live, then show how we tested it and how AI helped." |
+| 1.2 | | P1 | Right after 1.1 | "I'm [Person 1's name]. I wrote the on-chain trading engine. We'll run every core feature and all three bonuses live." |
 
 ## 2. Architecture
 
@@ -224,27 +207,12 @@ Never shorten a **Hold**, and never cut a feature in the requirements table abov
 | 6.3 | | P2 | Terminal B (the move-price command) | "Now two other traders trade at one point eight, and a bid for four NTU at one point nine rests. The stop shows Eligible Now. The keeper reviews and triggers." |
 | 6.4 | | P1 | "Triggered: 1 stop order activated" | "The stop activated and filled four NTU at one point nine, the resting bid's price, not the trigger and not the limit. Six NTU rest at the limit, and Alice received seven point six SGDx." |
 
-## 7. Security, testing and audit evidence
+## 7. Limitations and conclusion
 
 | # | At | Who | Start when you see | Say |
 |---|---|---|---|---|
-| 7.1 | | P1 | Figure 10 (the evidence map) | "Now the evidence behind the engine. We ran three hundred thirty-five Foundry tests, with full line and branch coverage of the order book. A stateful invariant suite replayed one hundred twenty-eight thousand random calls against an independent reference ledger, with no violations." |
-| 7.2 | | P1 | The security summary table | "Slither reported twenty-seven results, none real. Of sixty-seven deliberate mutants, sixty-five were caught, and the other two are documented as equivalent. A final AI audit found no critical or high issue. The one accepted medium issue, a dust sandwich through the fill cap, is documented and pinned by a test. It was an AI audit, not a human one." |
-
-## 8. AI-assisted methodology and lessons
-
-| # | At | Who | Start when you see | Say |
-|---|---|---|---|---|
-| 8.1 | | P1 | `CLAUDE.md` | "We set the rules in specification files; the AI coded inside them. A fresh AI reviewer checked each phase, and we decided every fix." |
-| 8.2 | | P1 | Issue 006 | "It found issue six: about one hundred two wei could block every trigger, and we chose auto-cancel. We logged twenty-four issues, each with its evidence." |
-| 8.3 | | P2 | Issue P2-017 | "On the front end, mock-wallet tests passed while real MetaMask exposed a stale-nonce problem and a misleading label on a cancelled stop. Different kinds of evidence prove different things, so we kept them apart." |
-
-## 9. Limitations and conclusion
-
-| # | At | Who | Start when you see | Say |
-|---|---|---|---|---|
-| 9.1 | | P2 | The Overview page again | "In summary, ERC20 issuance, listing, limit orders, partial fills and all three bonuses work end to end." |
-| 9.2 | | P1 | Right after 9.1 | "The limits: a local chain only, an AI audit only, and we did not run the MetaMask failure cases. Thank you." |
+| 7.1 | | P2 | The Overview page again | "In summary, ERC20 issuance, listing, limit orders, partial fills and all three bonuses work end to end." |
+| 7.2 | | P1 | Right after 7.1 | "Our tests, security checks and AI audit are documented in the AI Audit Report. The limits: a local chain only, an AI audit only, and we did not run the MetaMask failure cases. Thank you." |
 
 The host stops the recording when the silent video ends.
 
