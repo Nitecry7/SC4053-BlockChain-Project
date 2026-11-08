@@ -52,7 +52,7 @@ SC4053 DEX is a small exchange for the SC4053 course. It is an **order book, not
 
 Everything runs on a **local Anvil chain** (chain ID `31337`). Nothing is deployed to a public network, and this repository makes no claim about one.
 
-> **Scope.** The official assignment brief (kept locally in `docs/Development_Project.pdf`, git-ignored) is the authority for requirements. The shared engine implements cancelling orders, batch matching and stop-limit orders; the app has a **Cancel** action (P2-8B.2) and a **Match Orders** panel (P2-8B.3) and, since P2-8B.4, a **Stop-limit** mode in the order ticket with a **Trigger Stops** panel (see [Implemented and pending](#implemented-and-pending)).
+> **Scope.** The official assignment brief (`docs/Development_Project.pdf`) is the authority for requirements. The shared engine implements cancelling orders, batch matching and stop-limit orders; the app has a **Cancel** action (P2-8B.2) and a **Match Orders** panel (P2-8B.3) and, since P2-8B.4, a **Stop-limit** mode in the order ticket with a **Trigger Stops** panel (see [Implemented and pending](#implemented-and-pending)).
 
 ---
 
@@ -421,7 +421,7 @@ More detail, with diagnosis steps, is in [docs/TESTING.md](docs/TESTING.md#e-tro
 - **multi-party batch matching** (Bonus 2), `matchOrders`
 - **stop-limit orders** (Bonus 3), `placeStopLimitOrder` and `triggerStopOrders`
 
-The "Not implemented" rows elsewhere in this README describe the **app**, which still needs a redeploy and the bonus UI. See the engine handoff below. `web/lib/contracts/abis.ts` is already regenerated for the current engine.
+The app now has a front end for all three bonuses (cancel, batch matching and stop-limit orders; see the feature overview above), and `web/lib/contracts/abis.ts` is regenerated for the current engine. A local chain that was deployed before the engine finished needs a fresh Anvil, deploy and export (see the engine handoff below).
 
 | Read | For |
 |---|---|

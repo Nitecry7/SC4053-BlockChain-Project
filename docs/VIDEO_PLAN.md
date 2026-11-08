@@ -1,6 +1,6 @@
-# Video plan: SC4053 DEX demo (6 to 8 minutes)
+# Video plan: SC4053 DEX demo (planned 6 to 8 minutes)
 
-**Target length:** 7:30. **Speakers:** P1 = Person 1 (engine), P2 = Person 2 (factories, front end). Check NTULearn for the required length and format before recording.
+**Target length:** 7:30. **Speakers:** P1 = Person 1 (engine), P2 = Person 2 (factories, front end). The length is the team's own plan: the assignment brief does not mention a video, so check NTULearn for whether one is required and for its length and format before recording.
 
 **Recording setup:**
 - **Screen:** 1920×1080; browser zoom 110% so numbers are readable.
@@ -13,7 +13,7 @@
 | Base trading UI (place order, partial fill, order history) | Segment 3 | Built (Person 2) |
 | **Cancel button and Match Orders panel** | Segments 3c and 4a in the UI | **Built** (P2-8B.2 and P2-8B.3; Cancel's happy path run with MetaMask by the owner, Match orders: happy path confirmed with MetaMask by the owner on a scratch chain, 2026-11-08, but not yet rehearsed on the recording chain). Rehearse them on the recording chain; the **terminal path** in each segment remains the fallback |
 | **Stop-limit form and Trigger Stops panel** | Segment 4b in the UI | **Built** (P2-8B.4; verified with a mock wallet and a scratch chain, and the **happy path was run with MetaMask by the owner on 2026-11-08**; rehearse on the recording chain; the "Activated" wording that wrongly appeared on a stop cancelled before activation was fixed in P2-8C). The **terminal path** remains the fallback |
-| Your local chain runs the current engine | Every UI segment | **Redeploy needed**: a fresh Anvil, then deploy and export (below) |
+| The recording chain runs the current engine | Every UI segment | Start the recording from a fresh Anvil, deploy and export (below). The owner's main chain (8545) was already found running the current engine on 8 Nov (P2-8B.1) |
 
 ## Setup (do this before recording)
 All commands are from the repo root unless the step says otherwise. The README Quickstart is the reference: Person 2 uses WSL. On Windows with Git Bash, run `export PATH="$HOME/.foundry/bin:$PATH"` first.
@@ -56,7 +56,7 @@ cd web && npm run dev     # open http://localhost:3000
 3. **Import tokens** for Alice and Bob: NTU and SGDx, using the addresses from `deployments.ts` or the app's Tokens page.
 4. **After any Anvil restart,** use MetaMask's *Clear activity tab data* for the network.
 
-> [P2 to confirm] `docs/TESTING.md` uses account 0 as Alice and account 1 as Bob. This plan uses accounts 1 and 2, which start with exactly 10,000 of each token, so the on-screen numbers are round. It also matches `contracts/script/demo-journey.sh`.
+> **Account convention.** `docs/TESTING.md` uses account 0 as Alice and account 1 as Bob. This plan uses accounts 1 and 2, which start with exactly 10,000 of each token, so the on-screen numbers are round; it also matches `contracts/script/demo-journey.sh`. Follow this plan's accounts for the recording and TESTING.md's for the manual tests.
 
 **Rehearse once,** then restart Anvil and redeploy, so the recording starts from block 0.
 
