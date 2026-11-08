@@ -248,6 +248,15 @@ cd contracts && forge build && cd ..  # run in contracts/
 cd web && npm ci && cd ..             # run in web/ (exact versions from package-lock.json)
 ```
 
+**Downloaded as a ZIP instead of cloned?** A ZIP has no git history, so the submodule step above cannot fetch the two Solidity libraries and `contracts/lib/` is empty. Install the same pinned versions instead (needs `git` on the PATH, which Foundry uses to fetch them), then build as above:
+```bash
+cd contracts
+rm -rf lib/forge-std lib/openzeppelin-contracts      # the empty placeholder folders from the ZIP
+forge install --no-git foundry-rs/forge-std@v1.17.0 OpenZeppelin/openzeppelin-contracts@v5.7.0
+forge build && cd ..
+```
+These tags are the exact commits the repository pins (`f3dae6e` and `cab1993`). `web/` needs only `npm ci`.
+
 **3. Add the local network to MetaMask (once).** See [MetaMask and local accounts](#metamask-and-local-accounts) for the fields and for importing accounts.
 
 ### Every working session

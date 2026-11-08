@@ -1080,3 +1080,34 @@ Each must be checked against the source before drawing. Use one colour-blind-saf
 **What the AI got wrong:** the first rehearsal run aborted in the seed scripts because `node` was not on the shell's PATH. It restarted the scratch chain and ran again.
 
 **What the human did:** supplied the requirements and asked for the verification.
+
+## 2026-11-08: Final submission check
+**Phase:** wrap-up. **Branch:** `docs/video-ready` (PR #6).
+
+**Prompt (summary):** a final check for wrong statements, errors and unnecessary AI artefacts; make the extensive human effort (planning, detailed prompts over many sessions) clear in the report; make sure the repository can be downloaded as a ZIP and submitted.
+
+**What the AI did:**
+- **Artefacts:**
+  - no AI mention or signature in any code file (`contracts/`, `web/`, `scripts/`)
+  - the plan's title no longer says "built with Claude Code", and report 1.6 no longer quotes it
+  - one `FRONTEND.md` row said "not run by Claude"; it now says what the owner ran and what was not run
+  - AI tools stay named where the brief requires them: report Section 2, `CLAUDE.md`, `.claude/commands`, and the vendored skill cited in Section 2.2
+- **Report:** Section 2.6 became "Human effort and judgement", with its sources:
+  - the about 5,000-word plan that existed before Claude Code's first session
+  - Person 2's Prompt 00
+  - 31 and 23 logged sessions, each scoped by a teammate
+  - 35 recorded Person 1 decisions
+  - the human checks
+  - the executive summary points to it
+- **Accuracy:**
+  - report link check: 0 findings
+  - stale counts in current documents: only labelled historical baselines remain
+  - `ENGINE_SECURITY_SUMMARY.md` mutation row now gives the full-set result the video reads aloud
+- **ZIP:**
+  - **Problem:** a `git archive` ZIP of HEAD has empty `contracts/lib/` (submodules).
+  - **Fix:** README "Downloaded as a ZIP" step, `forge install --no-git` at the pinned tags; their commits were checked with `git ls-remote` to equal the pinned submodules.
+  - **Tested from an extracted ZIP:** `forge build`; 334 of 334 Foundry tests (the slow fuzz test left out for time); `npm ci`; `npm test` 604 passed, 76 skipped.
+
+**What the AI got wrong:** a first draft of Section 2.6 said every Person 1 log entry records what the human did. Not every entry has that line, so it was narrowed before committing.
+
+**What the human did:** asked for the final check and set its criteria.
