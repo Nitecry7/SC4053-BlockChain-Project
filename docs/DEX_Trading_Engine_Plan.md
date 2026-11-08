@@ -1,4 +1,4 @@
-# DEX Project: Trading Engine Plan (Person 1, built with Claude Code)
+# DEX Project: Trading Engine Plan (Person 1)
 
 > **Who this is for:** Person 1, who owns the trading engine: `OrderBook.sol`, matching, escrow, settlement, cancellation, batch matching, stop-limit orders, engine security and contract tests.
 > **Person 2** owns TokenFactory and demo tokens, deployment scripts, the Next.js frontend, wallet integration, frontend and end-to-end tests, README and docs.

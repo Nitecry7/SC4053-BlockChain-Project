@@ -1051,3 +1051,63 @@ Each must be checked against the source before drawing. Use one colour-blind-saf
 **What the AI got wrong:** the first draft gave reasons for the 006 and 007 decisions that the log does not record, and attributed F5 and F6 to the human. It removed all three before committing. It also placed Section 2.6 before 2.5 at first and moved it.
 
 **What the human did:** asked for the verification, the wording change and the PR.
+
+## 2026-11-08: Video requirements check and chain rehearsal of the demo
+**Phase:** wrap-up. **Branch:** `docs/video-ready`.
+
+**Prompt (summary):** the NTULearn video requirements were given (at most 10 minutes and 300 MB, `GroupName.mp4`, an architecture introduction first, a detailed hands-on demo of the local deployment, a README that lets markers reproduce it). Verify that the script meets them and can be read word for word while recording.
+
+**What the AI did:**
+- **UI labels:** every button and label the script names exists in `web/`. One differs only in case ("Still Crossed Afterwards" after P2-8C); the script was fixed.
+- **Chain rehearsal:** Segments 3 to 6 were replayed with `cast` and the two helper scripts on a fresh scratch Anvil (port 8546, deployed as in `VIDEO_PLAN.md` Step 2), then the chain was stopped and the helper's 8546 record deleted. Every expected value matched:
+  - FIZZ (supply 1,000,000, 18 decimals) and a second market
+  - Alice 9,900 then 10,080 SGDx; Bob 10,040 NTU and 9,920 SGDx; order #1 PartiallyFilled, then Cancelled, with Alice at 9,960 NTU and escrow 0
+  - the seed: CROSSED, a match would settle 2 fills; the keeper's `matchOrders(10)` filled #23 to #26, the keeper still holds 0 and 0, Alice 9,949 / 10,102, and `verify-after` passed
+  - stop #27 PendingTrigger (Alice 9,939 NTU); `move-price 1.8` makes 1 stop eligible; the trigger filled 4 NTU at 1.9; Alice +7.6 SGDx; 6 NTU rest at 1.7; last trade 1.9
+- **Fixes:**
+  - **Script:** one P1 line said 7.6 SGDx "came back", but it is Alice's sale proceeds. It now says "Alice received", with the same word count.
+  - **Script fallbacks:** the `<market>` placeholder is replaced by the deterministic address.
+  - **Seed line:** the expected final line is quoted exactly.
+  - **Plan, script and checklist:** the requirements are now stated, and the "provisional" notes are replaced.
+- **New `docs/VIDEO_CUE_SHEET.md`:** the script's words interleaved step by step with the actions, for reading along.
+- **README (Person 2's file, at the human's request, to meet the README requirement):**
+  - a new "Reproduce the demo" section
+  - the final report and the video documents in the documentation table
+  - stale rows fixed: the `BONUS_INTEGRATION` description "Nothing bonus is active" and the superseded draft
+  - a cross-mark icon on a built feature
+  - an anchor for the engine section
+
+**What the AI got wrong:** the first rehearsal run aborted in the seed scripts because `node` was not on the shell's PATH. It restarted the scratch chain and ran again.
+
+**What the human did:** supplied the requirements and asked for the verification.
+
+## 2026-11-08: Final submission check
+**Phase:** wrap-up. **Branch:** `docs/video-ready` (PR #6).
+
+**Prompt (summary):** a final check for wrong statements, errors and unnecessary AI artefacts; make the extensive human effort (planning, detailed prompts over many sessions) clear in the report; make sure the repository can be downloaded as a ZIP and submitted.
+
+**What the AI did:**
+- **Artefacts:**
+  - no AI mention or signature in any code file (`contracts/`, `web/`, `scripts/`)
+  - the plan's title no longer says "built with Claude Code", and report 1.6 no longer quotes it
+  - one `FRONTEND.md` row said "not run by Claude"; it now says what the owner ran and what was not run
+  - AI tools stay named where the brief requires them: report Section 2, `CLAUDE.md`, `.claude/commands`, and the vendored skill cited in Section 2.2
+- **Report:** Section 2.6 became "Human effort and judgement", with its sources:
+  - the about 5,000-word plan that existed before Claude Code's first session
+  - Person 2's Prompt 00
+  - 31 and 23 logged sessions, each scoped by a teammate
+  - 35 recorded Person 1 decisions
+  - the human checks
+  - the executive summary points to it
+- **Accuracy:**
+  - report link check: 0 findings
+  - stale counts in current documents: only labelled historical baselines remain
+  - `ENGINE_SECURITY_SUMMARY.md` mutation row now gives the full-set result the video reads aloud
+- **ZIP:**
+  - **Problem:** a `git archive` ZIP of HEAD has empty `contracts/lib/` (submodules).
+  - **Fix:** README "Downloaded as a ZIP" step, `forge install --no-git` at the pinned tags; their commits were checked with `git ls-remote` to equal the pinned submodules.
+  - **Tested from an extracted ZIP:** `forge build`; 334 of 334 Foundry tests (the slow fuzz test left out for time); `npm ci`; `npm test` 604 passed, 76 skipped.
+
+**What the AI got wrong:** a first draft of Section 2.6 said every Person 1 log entry records what the human did. Not every entry has that line, so it was narrowed before committing.
+
+**What the human did:** asked for the final check and set its criteria.

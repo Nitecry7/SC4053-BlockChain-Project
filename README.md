@@ -71,7 +71,7 @@ Everything runs on a **local Anvil chain** (chain ID `31337`). Nothing is deploy
 | 🧾 **Refunds and order history**: refunds, fills and remaining escrow, plus a transaction page | ✅ Built | **My Orders**, `/tx/<hash>` |
 | 📊 **Multi-market dashboard and token holdings**: choose any listed market; balances per token, never added together | ✅ Built (P2-6.1) | **Dashboard** |
 | 🔁 **Transaction replacement tracking and local chain-reset detection**: a sped-up, cancelled or replaced transaction is followed to what was mined; a restarted chain is reported with its evidence | ✅ Built (P2-7). Mock-wallet and real-chain tests pass; the wallet's own speed-up and cancel buttons are not yet tested by hand | Result cards, chain-reset notice |
-| ❌ **Cancel an order** (Bonus 1) | ✅ Built (P2-8B.2). A **Cancel** action on your own open, partly filled and pending orders states the refund first, needs no approval, and reports success only from the confirmed receipt. Verified with a mock wallet and on a scratch chain; **MetaMask not tested** | **My Orders** |
+| 🛑 **Cancel an order** (Bonus 1) | ✅ Built (P2-8B.2). A **Cancel** action on your own open, partly filled and pending orders states the refund first, needs no approval, and reports success only from the confirmed receipt. Verified with a mock wallet and on a scratch chain; **MetaMask not tested** | **My Orders** |
 | 🧮 **Match crossed orders** (Bonus 2) | ✅ Built (P2-8B.3). When the market reports a crossed book (a placement stopped at the engine's 10-fill cap), a **Match Orders** panel under the order book lets any connected wallet send `matchOrders`: it is reviewed and simulated first, needs no approval, and the result is shown only from the confirmed receipt's `Trade` events. Each transaction settles at most 10 fills and is one deliberate click. Verified with a mock wallet and a real scratch chain; **the happy path was also confirmed with MetaMask by the owner on a scratch chain (2026-11-08)**; the MetaMask rejection and account-switch cases are not yet run | **Trade** |
 | 🎯 **Stop-limit orders** (Bonus 3) | ✅ Built (P2-8B.4). A **Stop-limit** mode in the ticket takes a trigger and a limit price, escrows at the **limit** price with an exact approval, and shows the order as **pending** (never filled) until a **Trigger stops** transaction, which anyone can send, activates it. My Orders tells *waiting for price* apart from *eligible now: needs a Trigger stops transaction*; the Trigger Stops panel reports what each activated stop actually did (rests, fills, or is refunded by the engine) only from the confirmed receipt. Verified with a mock wallet and a real scratch chain; **the happy path was run with MetaMask by the owner on 2026-11-08** (see `docs/TESTING.md`, Test 14); a cancelled stop's history line currently reads "Activated", a known wording defect | **Trade** |
 
@@ -248,6 +248,15 @@ cd contracts && forge build && cd ..  # run in contracts/
 cd web && npm ci && cd ..             # run in web/ (exact versions from package-lock.json)
 ```
 
+**Downloaded as a ZIP instead of cloned?** A ZIP has no git history, so the submodule step above cannot fetch the two Solidity libraries and `contracts/lib/` is empty. Install the same pinned versions instead (needs `git` on the PATH, which Foundry uses to fetch them), then build as above:
+```bash
+cd contracts
+rm -rf lib/forge-std lib/openzeppelin-contracts      # the empty placeholder folders from the ZIP
+forge install --no-git foundry-rs/forge-std@v1.17.0 OpenZeppelin/openzeppelin-contracts@v5.7.0
+forge build && cd ..
+```
+These tags are the exact commits the repository pins (`f3dae6e` and `cab1993`). `web/` needs only `npm ci`.
+
 **3. Add the local network to MetaMask (once).** See [MetaMask and local accounts](#metamask-and-local-accounts) for the fields and for importing accounts.
 
 ### Every working session
@@ -307,6 +316,17 @@ The deploy script refuses any chain that is not 31337 and uses no private key: A
 | You only restarted `npm run dev` | No |
 | The app shows a stale deployment after you redeployed | Export again (do not deploy again) |
 | You changed contract code (engine or factory) | Yes, on a scratch chain first; see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+
+---
+
+## 🎬 Reproduce the demo
+
+The demo video shows, on a fresh local chain: issuing a token and listing a market, a limit order with a partial fill at the maker's price, a cancel (Bonus 1), a keeper settling a crossed book in one transaction (Bonus 2), and a stop-limit order that a keeper triggers (Bonus 3). To reproduce it:
+
+1. **Set up** as in [Quickstart](#quickstart) (tools, `git submodule update --init --recursive`, `forge build`, `npm ci`).
+2. **Build the demo environment** with [docs/VIDEO_PLAN.md](docs/VIDEO_PLAN.md), Steps 0 to 6: a fresh Anvil, `Deploy.s.sol`, the app built for that chain, and MetaMask with Alice (Anvil account 1), Bob (account 2) and a Keeper (account 4, no trading tokens). It uses its own ports (8549 and 3103) so it never touches another chain.
+3. **Follow the steps** in [docs/VIDEO_CUE_SHEET.md](docs/VIDEO_CUE_SHEET.md) (each action, in order) or [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md) (each action with the values the screen should show). Two helper scripts prepare the bonus scenes from the terminal: `scripts/seed-crossed-book.sh` (24 orders that leave the book crossed) and `scripts/seed-stop-orders.sh` (`move-price`, `add-bid`).
+4. **Without MetaMask:** `bash contracts/script/demo-journey.sh` replays the partial fill, cancel, batch match and stop trigger on its own private chain with balance checks, and ends with `DEMO COMPLETE: every check passed` (see [Trading engine](#trading-engine-orderbook)).
 
 ---
 
@@ -411,6 +431,8 @@ More detail, with diagnosis steps, is in [docs/TESTING.md](docs/TESTING.md#e-tro
 
 ---
 
+<a id="trading-engine-orderbook"></a>
+
 ## ⚙️ Trading engine (OrderBook)
 
 *Section added by Person 1.*
@@ -428,7 +450,7 @@ The app now has a front end for all three bonuses (cancel, batch matching and st
 | [SPEC.md](SPEC.md) | Behaviour: accounting rules, lifecycle, every function, who triggers execution (section 6), known limitations (section 8) |
 | [docs/ENGINE_HANDOFF.md](docs/ENGINE_HANDOFF.md) | For the front end: signatures, events, errors, call flows, UI suggestions for each bonus, and what to re-run |
 | [docs/ENGINE_PHASES.md](docs/ENGINE_PHASES.md) | How the engine was built, phase by phase, with the exact prompts |
-| [docs/report/](docs/report/) | The engine's AI Audit Report section drafts |
+| [docs/report/AI_AUDIT_REPORT.md](docs/report/AI_AUDIT_REPORT.md) | The final AI Audit Report (both teammates), with its figures in `docs/report/diagrams/` |
 | [docs/ai-audit/test-evidence/](docs/ai-audit/test-evidence/) | Test, invariant and mutation evidence. [DEBUGGING.md](docs/ai-audit/test-evidence/DEBUGGING.md) explains how to replay failures |
 
 **Run the engine tests** (from `contracts/`). The first run compiles everything, which takes about 1 minute:
@@ -461,13 +483,15 @@ bash contracts/script/demo-journey.sh
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | The deploy script, the exporter and its safety checks, what each kind of change does to chain state, and size and gas after engine changes |
 | [docs/FRONTEND.md](docs/FRONTEND.md) | The front end's architecture, the trading, creation and dashboard flows, transaction hardening, the test suites and known limits |
 | [docs/MARKET_FACTORY.md](docs/MARKET_FACTORY.md) | The accepted MarketFactory architecture, its workflow diagram, the comparison with manual deployment, and tradeoffs |
-| [docs/BONUS_INTEGRATION.md](docs/BONUS_INTEGRATION.md) | What the front end needs before the bonus engine functions can be shown. Nothing bonus is active |
+| [docs/report/AI_AUDIT_REPORT.md](docs/report/AI_AUDIT_REPORT.md) | **The final AI Audit Report**, in the brief's eight sections |
+| [docs/VIDEO_PLAN.md](docs/VIDEO_PLAN.md), [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md), [docs/VIDEO_CUE_SHEET.md](docs/VIDEO_CUE_SHEET.md) | How to build the demo environment, the demo script, and a step-by-step read-along version |
+| [docs/BONUS_INTEGRATION.md](docs/BONUS_INTEGRATION.md) | How the three bonus features were integrated into the front end |
 | [PRODUCT.md](PRODUCT.md) | Product purpose, users, what is implemented today, and the verification status |
 | [DESIGN.md](DESIGN.md) | The approved visual system for the web app |
 | [CONTRACT_INTERFACE.md](CONTRACT_INTERFACE.md) | The frozen contract interface shared between the engine and the front end |
 | [docs/ai-audit/](docs/ai-audit/) | The AI audit report: prompt logs, issue reports and test evidence |
 | [docs/ai-audit/tooling-and-methodology.md](docs/ai-audit/tooling-and-methodology.md) | How AI tools, models and reviews were used, with each tool's recorded status |
-| [docs/ai-audit/ai-audit-report-draft.md](docs/ai-audit/ai-audit-report-draft.md) | Preliminary AI Audit Report, in the brief's eight sections, with its evidence gaps |
+| [docs/ai-audit/ai-audit-report-draft.md](docs/ai-audit/ai-audit-report-draft.md) | Person 2's earlier working draft of the report, superseded by `docs/report/AI_AUDIT_REPORT.md` |
 | [docs/ai-audit/test-evidence/person2/p2-8a-audit.md](docs/ai-audit/test-evidence/person2/p2-8a-audit.md) | The pre-integration audit: requirements coverage, test baseline, React and accessibility review |
 
 ---

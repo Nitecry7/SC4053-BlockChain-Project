@@ -35,19 +35,19 @@ Test numbers below are recorded results from earlier runs, not new executions.
 | Prompt logs | Person 1 and Person 2, separate files | `docs/ai-audit/prompt-log.md`, `prompt-log-person2.md` |
 | Tools and models per phase | Written | `docs/ai-audit/tooling-and-methodology.md` |
 | User and test documentation | README Quick Start, Beginner's Guide, deployment, testing and front-end guides | `README.md`, `docs/BEGINNERS_GUIDE.md`, `DEPLOYMENT.md`, `TESTING.md`, `FRONTEND.md` |
-| Demo video package | Runbook and word-for-word script written (provisional 7:30); **video not recorded, setup not yet built or rehearsed** | `docs/VIDEO_PLAN.md`, `docs/VIDEO_SCRIPT.md` |
+| Demo video package | Runbook, word-for-word script (7:30, under the 10-minute limit) and a read-along cue sheet; the on-chain sequence of Segments 3 to 6 was rehearsed with `cast` on a fresh scratch chain (8 Nov) and every expected value matched; README section "Reproduce the demo". **Video not recorded; the MetaMask rehearsal is not done** | `docs/VIDEO_PLAN.md`, `docs/VIDEO_SCRIPT.md`, `docs/VIDEO_CUE_SHEET.md` |
 
 ## 3. Remaining human activities
 
 - [ ] **Read the final report as a team.** Both teammates should read `docs/report/AI_AUDIT_REPORT.md` once, in particular the sections they did not write, and confirm that it says what happened. Three facts only a person can confirm: whether Person 2 used a chat assistant (none is recorded), whether Person 2 approved Person 1 regenerating `web/lib/contracts/abis.ts` (`e375ff6`; the approval is not recorded), and that Person 1's account of the claude.ai chat (not in the repository) is accurate.
 - [ ] **Peer evaluation** (mandatory and confidential; brief sections 4 and 7). Each student submits their own, separately.
-- [ ] **Record the demo video**, if one is to be submitted. The runbook is `docs/VIDEO_PLAN.md` and the spoken text is `docs/VIDEO_SCRIPT.md`. The 7:30 target (inside a 6 to 8 minute window) is the team's own plan, not a requirement of the brief. Recording deliverables, none of them done yet:
+- [ ] **Record the demo video** (required: at most 10 minutes and 300 MB, `GroupName.mp4`, architecture first, then a hands-on demo of the local deployment). The runbook is `docs/VIDEO_PLAN.md`, the spoken text is `docs/VIDEO_SCRIPT.md`, and `docs/VIDEO_CUE_SHEET.md` interleaves the lines with the actions for reading along. Recording deliverables, none of them done yet:
   - [ ] the dedicated recording environment built on 8549 / 3103 (`VIDEO_PLAN.md`, section 2), without touching 8545 to 8548 or 3000 to 3102
   - [ ] one timed rehearsal, including a 2-minute Zoom test recording played back
   - [ ] the clean browser profile with a throwaway MetaMask (Alice, Bob, Keeper) set up
   - [ ] the backup clip: `DEMO_PORT=8550 bash contracts/script/demo-journey.sh` recorded once (`VIDEO_PLAN.md`, section 9)
   - [ ] the final Zoom recording made, played back and checked (voices, readable text, no key or phrase, length near 7:30)
-  - [ ] the file named and stored as NTULearn requires, and the recording environment stopped and `/tmp/sc4053-demo` removed
+  - [ ] the file saved as `GroupName.mp4`, at most 10 minutes and 300 MB, and the recording environment stopped and `/tmp/sc4053-demo` removed
 - [ ] **Agree the shared-file wording**: `CLAUDE.md` still names the brief `docs/project.pdf`, while the file in the repository is `docs/Development_Project.pdf`. `CLAUDE.md` is shared, so neither teammate has edited it.
 - [ ] **Decide whether the brief PDF should stay in the public repository** (see section 6).
 - [ ] **Submit** (section 7).
@@ -65,7 +65,6 @@ The cases below were not performed with MetaMask. They are optional unless the t
 
 - The submission deadline.
 - The submission format: PDF or Markdown report, how the code is handed in, and whether a repository link or a zip is expected.
-- Whether a demo video is required, and its length, format and file name (the 7:30 target in `docs/VIDEO_SCRIPT.md` is provisional).
 - How peer evaluation is submitted.
 
 ## 6. Known limitations
@@ -81,6 +80,6 @@ The cases below were not performed with MetaMask. They are optional unless the t
 2. **Check the report.** `grep -n "to confirm" docs/report/AI_AUDIT_REPORT.md` prints nothing; the Contents, list of figures and links resolve.
 3. **Export the report to PDF.** Render `docs/report/AI_AUDIT_REPORT.md` with a Markdown viewer that supports Mermaid (GitHub, or VS Code with a Mermaid preview), print to PDF, and check that the figures and tables appear. Links to repository files work only if the graders get the repository.
 4. **Tag the submission:** `git tag submission && git push origin submission`, so the graded state is fixed.
-5. **Code hand-over.** The repository is public, so a link may be enough; confirm the expected format on NTULearn. For a zip: `git archive -o sc4053-dex.zip submission` (it excludes `node_modules` and the submodule contents; if graders must build from the zip, include the submodules or describe `git submodule update --init`).
+5. **Code hand-over.** The repository is public, so a link may be enough. For a ZIP: GitHub's **Code, Download ZIP** on `main`, or `git archive --format=zip -o sc4053-dex.zip main`. Neither contains `node_modules` or the two Solidity libraries (git submodules); the README's "Downloaded as a ZIP" step installs the same pinned versions. That path was tested on 8 Nov from a `git archive` ZIP: dependencies installed, `forge build`, then 334 of 334 Foundry tests passed (the one slow fuzz test, `testFuzz_coarsePlacementsKeepSolvencyAndBookOrder`, was left out for time; it passed in the full 335-test run the same day), and `npm ci` then `npm test` gave 604 passed, 76 gated skipped.
 6. **Upload** the report, the video (if required) and the code on NTULearn, in the required format, before the deadline.
 7. **Peer evaluation:** each teammate submits separately.

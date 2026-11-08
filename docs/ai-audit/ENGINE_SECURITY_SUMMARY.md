@@ -38,7 +38,7 @@ The trading engine's security case in one place: what it protects, how, what is 
 | Invariants, deep profile (1,000 × 128 = 128,000 calls) | All held, 0 reverts, about 2 h; fuzz 19 tests at 10,000 runs plus 1 at its 200-run setting | [phase7/forge-test-deep.txt](test-evidence/phase7/forge-test-deep.txt) |
 | Coverage, `OrderBook.sol` | 100% lines (182/182), statements (246/246), branches (59/59) and functions (25/25) | [phase8/coverage-summary.txt](test-evidence/phase8/coverage-summary.txt) |
 | Slither 0.11.6 | 27 results, 0 real (13 false positives, 14 accepted) | [phase8/slither-triage.md](test-evidence/phase8/slither-triage.md) |
-| Mutation testing | Every phase's mutants caught except 2 provably equivalent ones; the invariant suite alone caught 15 of 17 | [MUTANTS.md](test-evidence/MUTANTS.md) |
+| Mutation testing | The full set of 67 hand-written mutants, run once on 8 Nov: 65 caught, the 2 survivors (R4, P5q) documented as equivalent; every phase's own set was caught; the invariant suite alone caught 15 of 17 | [MUTANTS.md](test-evidence/MUTANTS.md); [full-set run](test-evidence/wrapup/verification/mutants-full-set.txt) |
 | Independent AI reviews | One per phase, plus a final end-to-end audit | Prompt log; final audit below |
 | Real chain | Person 2's deploy script on a scratch Anvil, plus cast journeys for cancel, batch and stop-limit; all balance checks passed | Prompt log (7 Nov); [ENGINE_HANDOFF.md](../ENGINE_HANDOFF.md) |
 | Issues found | 7: six fixed, each with failing-then-passing evidence, and one accepted and pinned (007) | [issues/](issues/) |
