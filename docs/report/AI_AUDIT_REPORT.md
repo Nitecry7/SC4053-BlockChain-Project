@@ -1,10 +1,6 @@
 # SC4053 DEX: AI Audit Report
 
-**Version:** 8 Nov 2026. It describes `main` after Person 2's `faheem` branch (the front end through P2-8C, commit `30daadd`) was merged in (PR #4).
-
-**Code basis:**
-- the trading engine, factories and deploy tooling: `main` at the `engine-final` tag (commit `fd8869a`) and the documentation wrap-up that followed
-- the front end, including the three bonus interfaces and the P2-8C polish: `faheem` at commit `30daadd`, merged into `main` by PR #4
+**Date:** 8 November 2026. The report describes the submitted codebase: the trading engine, factories and deployment tooling in `contracts/`, and the Next.js front end with all three bonus features in `web/`.
 
 **Team:**
 - **Person 1:** trading engine (`OrderBook.sol`, its interface, specification and tests).
