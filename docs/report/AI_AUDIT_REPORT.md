@@ -10,7 +10,7 @@
 - **Person 1:** trading engine (`OrderBook.sol`, its interface, specification and tests).
 - **Person 2:** `TokenFactory`, `DemoToken`, `MarketFactory`, deployment script and exporter, Next.js front end, README.
 
-**Brief:** `docs/Development_Project.pdf`. This report follows the brief's eight required sections (section 2.1) and the four-part breakdown for major issues (section 2.2).
+**Brief:** the SC4053 Development Project brief (AY2026-2027 Semester 1, Option 1: DEX). This report follows the brief's eight required sections (section 2.1) and the four-part breakdown for major issues (section 2.2).
 
 **How to read this report:**
 - **Sources only.** Every statement is taken from a committed record and cited by file path or commit hash. Nothing is invented.
@@ -769,8 +769,5 @@ These lessons come from the front-end, deployment and tooling work (issues P2-00
 | Demo replay script | [`contracts/script/demo-journey.sh`](../../contracts/script/demo-journey.sh) |
 | Person 2's audit and evidence | [`test-evidence/person2/`](../ai-audit/test-evidence/person2/): P2-1 to P2-7, the P2-8A audit and fixes (`p2-8a-audit.md`, `p2-8a1-fixes.md`, `p2-8a2-liveness.md`), the bonus phases (`p2-8b2-cancellation.md`, `p2-8b3-batch-matching.md`, `p2-8b4-stop-limit.md`) and P2-8C (`p2-8c-ux-polish.md`, `p2-8c-screens/`) |
 | Original engine plan (pre-implementation scope) | [`docs/DEX_Trading_Engine_Plan.md`](../DEX_Trading_Engine_Plan.md) |
-| Person 2's earlier working draft of the report (superseded by this file) | [`docs/ai-audit/ai-audit-report-draft.md`](../ai-audit/ai-audit-report-draft.md) |
 | Beginner's guide to running and testing the exchange | [`docs/BEGINNERS_GUIDE.md`](../BEGINNERS_GUIDE.md) |
-| Submission checklist | [`docs/SUBMISSION_CHECKLIST.md`](../SUBMISSION_CHECKLIST.md) |
 | Manual testing guide | [`docs/TESTING.md`](../TESTING.md) |
-| Engine section drafts (Person 1; superseded by this file, kept for the record) | [`docs/report/2-…` to `8-…`](README.md) |

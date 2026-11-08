@@ -327,7 +327,7 @@ Tools: Claude Code. Model: Opus 5.5 for planning (Prompt 00), Sonnet 5.5 for P2-
 
 **Skills and MCPs actually invoked:** `react-best-practices` (discoverable; invoked once, bundle, re-render and client-fetch rules applied); `solidity-security` (invoked once; grounded the bonus checklist; produced no finding of its own; not a review of `OrderBook.sol`); Slither 0.11.6 re-run on `DemoToken.sol`, `TokenFactory.sol`, `MarketFactory.sol` and `Deploy.s.sol` (not on `OrderBook.sol`); `forge lint` (first use, 7 warnings); `impeccable detect` (0 findings, regex only); axe-core 4.14.0 (temporary, pinned); the Playwright library, not the MCP; Foundry. Not used: Context7, shadcn and Awwwards MCPs, the Playwright MCP, the design skills.
 
-**Evidence:** [`test-evidence/person2/p2-8a-audit.md`](test-evidence/person2/p2-8a-audit.md); the draft [`ai-audit-report-draft.md`](ai-audit-report-draft.md); the checklist in [`../BONUS_INTEGRATION.md`](../BONUS_INTEGRATION.md). Baseline re-run: `forge test` 185, exporter 21, unit 368 and 48 gated skipped, typecheck and lint clean, real chain 48, browser 13, 14, 13 and 9. All of the owner's processes were checked unchanged at the end.
+**Evidence:** [`test-evidence/person2/p2-8a-audit.md`](test-evidence/person2/p2-8a-audit.md); the draft `ai-audit-report-draft.md` (later superseded by `docs/report/AI_AUDIT_REPORT.md` and removed from the submission); the checklist in [`../BONUS_INTEGRATION.md`](../BONUS_INTEGRATION.md). Baseline re-run: `forge test` 185, exporter 21, unit 368 and 48 gated skipped, typecheck and lint clean, real chain 48, browser 13, 14, 13 and 9. All of the owner's processes were checked unchanged at the end.
 
 ## 2026-11-06: P2-8A.1, accessibility, RPC cost and audit-evidence fixes
 

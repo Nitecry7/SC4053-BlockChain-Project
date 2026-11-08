@@ -2,10 +2,7 @@
 
 Owner: Person 1. Derived from docs/DEX_Trading_Engine_Plan.md sections 4 and 6, with the
 28 Oct planning decisions applied (see docs/ai-audit/prompt-log.md). The interface is in
-CONTRACT_INTERFACE.md. The brief (`docs/Development_Project.pdf`, Section 5.1) overrides this file.
-
-> The brief is tracked as `docs/Development_Project.pdf` (the repository is private). A local copy named
-> `docs/project.pdf` stays gitignored. Both are the same course brief. (Person 2's audit, finding I-1.)
+CONTRACT_INTERFACE.md. The brief (the SC4053 Development Project brief (AY2026-2027 Semester 1, Option 1: DEX), Section 5.1) overrides this file.
 
 ## 1. Scope
 One `OrderBook` contract per trading pair. `baseToken` and `quoteToken` are set in the constructor and are immutable.

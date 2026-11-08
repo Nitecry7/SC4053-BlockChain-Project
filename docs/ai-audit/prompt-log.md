@@ -1186,3 +1186,32 @@ Each must be checked against the source before drawing. Use one colour-blind-saf
 - **Checked by script** that the three sheets' lines are identical and that the holds still fit.
 
 **What the human did:** spotted that the two segments were not required by the video brief, and asked for the feature coverage to be confirmed.
+
+## 2026-11-08: Submission branch
+**Phase:** submission. **Branch:** `submission`.
+
+**Prompt (summary):** make a submission branch that keeps only what is needed to deploy the solution and support the report. The brief asks for the entire codebase in `GroupName.zip`, a README for deploying it, and the AI audit report as a PDF. The video files are not needed.
+
+**What the AI did:**
+- **Removed:**
+  - the five video files
+  - `SUBMISSION_CHECKLIST.md`
+  - the brief PDF
+  - Person 2's superseded report draft
+  - Person 1's superseded engine section drafts (`docs/report/2-…` to `8-…`, and their README)
+- **Kept:** all code, tests, deploy docs and every file the report cites as evidence: prompt logs, issues, test evidence, specs, `CLAUDE.md`, `.claude/`.
+- **Added `AI_Audit_Report.pdf`** at the root (42 pages):
+  - rendered from `docs/report/AI_AUDIT_REPORT.md` with `marked` and Chrome's print to PDF
+  - figures embedded; repository links shown as text, so no local path is in the PDF (checked)
+- **README:**
+  - a submission note at the top
+  - a self-contained "Reproduce the demo" section with its own chain (8549) and app (3103) commands, and the journey table
+  - the ZIP step made conditional (the submitted ZIP already contains `contracts/lib/`)
+  - the project tree updated
+- **Links:**
+  - fixed the links to removed files (report, `SPEC.md`, two Person 2 evidence files, one log line)
+  - fixed one link in `p2-8b3-batch-matching.md` that was already broken
+  - 114 Markdown files checked: 0 broken links
+- **Checks:** `forge build` clean; `npm test` 604 passed, 76 skipped.
+
+**What the human did:** set the scope (deploy essentials, no video files) and supplied the submission instructions.
