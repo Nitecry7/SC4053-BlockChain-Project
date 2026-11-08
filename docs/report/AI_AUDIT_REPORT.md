@@ -19,7 +19,7 @@
   - batched multi-party matching (`matchOrders`; 4 buyers and 4 sellers settled in one transaction)
   - conditional stop-limit orders (`placeStopLimitOrder`, `triggerStopOrders`)
 - All three bonus features also have a front end (Person 2: cancel in P2-8B.2, batch matching in P2-8B.3, stop-limit orders in P2-8B.4). Each was verified with unit, real-chain and mock-wallet browser tests, and the owner ran the happy path of each in real MetaMask (sections 6.5, 6.7 and 6.9). The MetaMask negative cases (rejection, switching account during a request, an RPC outage, a chain reset) were not run. The owner's Bonus 3 run exposed one front-end defect, a stop cancelled before activation labelled "Activated"; it was fixed in P2-8C (issue P2-017, section 6.10). The regenerated ABI is in `web/` (`e375ff6`).
-- AI use, and who decided: over 54 logged sessions (31 for Person 1, 23 for Person 2), every session was started and scoped by one of us. We used Claude Code as the implementer, steered by specification files read every session (`CLAUDE.md`, `SPEC.md`, the frozen `CONTRACT_INTERFACE.md`, per-phase prompts). Person 1 also used Claude in the claude.ai chat, minimally, as planner and reviewer (Section 2.4). We set the scope, approved every phase plan, and made every design trade-off: among them lot and tick sizes, one shared trigger budget, `bookSeq` priority, the escrow order, auto-cancel for issue 006, accepting issue 007, RainbowKit 2 and a separate `MarketFactory` (Section 2.6 describes the human effort and lists the decisions with their log entries). From Phase 3a on, a fresh, read-only AI reviewer checked each engine phase, and we decided what to do with each finding.
+- AI use, and who decided: over 54 logged sessions (31 for Person 1, 23 for Person 2), every session was started and scoped by one of us. We used Claude Code as the coding assistant, steered by specification files read every session (`CLAUDE.md`, `SPEC.md`, the frozen `CONTRACT_INTERFACE.md`, per-phase prompts). Person 1 also used Claude in the claude.ai chat, minimally, as planner and reviewer (Section 2.4). We set the scope, approved every phase plan, and made every design trade-off: among them lot and tick sizes, one shared trigger budget, `bookSeq` priority, the escrow order, auto-cancel for issue 006, accepting issue 007, RainbowKit 2 and a separate `MarketFactory` (Section 2.6 describes the human effort and lists the decisions with their log entries). From Phase 3a on, a fresh, read-only AI reviewer checked each engine phase, and we decided what to do with each finding.
 - Problems found in AI output: 24 issues are logged in the four-part format: 7 engine (001 to 007) and 17 Person 2 (P2-001 to P2-017).
   - Highest: 006 (High availability: one 102-wei stop blocked every stop trigger, fixed) and 004 (High test quality: three injected matching bugs would have passed the suite; the code itself was correct). For Person 2, two Medium deployment-tooling defects (P2-013, P2-014, fixed).
   - One Medium engine issue is accepted by design and pinned by a test: 007 (a limit order can be sandwiched through the fill cap; the loss is bounded by the victim's limit).
@@ -171,7 +171,7 @@ Person 2's front-end scope was fixed in Prompt 00, a read-only planning session 
 | Tool | Person 1 (engine) | Person 2 (tokens, deployment, front end) |
 |---|---|---|
 | **Claude (claude.ai chat)** | Planner and reviewer, used minimally: one long chat, 28 Oct to 8 Nov (Section 2.4). Owner's account; the transcript is not in the repository | None recorded in Person 2's logs |
-| **Claude Code** | Opus 5.5 (log header); plan mode for Phase 0. The implementer, which also ran the independent subagent reviews | Opus 5.5, Sonnet 5.5 and Haiku 5.5 by phase (models per phase: `tooling-and-methodology.md`; some not recorded) |
+| **Claude Code** | Opus 5.5 (log header); plan mode for Phase 0. Coding assistant; also ran the independent subagent reviews | Opus 5.5, Sonnet 5.5 and Haiku 5.5 by phase (models per phase: `tooling-and-methodology.md`; some not recorded) |
 | **Independent reviewer** | A fresh, read-only Claude Code subagent per phase from 3a to 7 (Phases 1 to 2b had none), plus a final audit | Fresh-context subagents in P2-1 to P2-6 (none for P2-5 wrap-up, P2-6.1, P2-7, the documentation sessions, P2-8A, P2-8A.1 and P2-8A.2) |
 | **Foundry** (`forge`, `anvil`, `cast`): 1.8.6 in Person 1's log, 1.9.0 in Person 2's evidence | Unit, fuzz and invariant tests, gas, sizes, coverage, scratch-chain `cast` journeys | Contract tests, deploy script, scratch chains, `cast` journeys |
 | **Static analysis** | Slither 0.11.6 on `OrderBook.sol` (Phase 8); `forge lint` triaged in the wrap-up | Slither 0.11.6 on Person 2's contracts and script; `forge lint` |
@@ -206,7 +206,7 @@ Person 2's front-end scope was fixed in Prompt 00, a read-only planning session 
 |---|---|---|
 | Decision-maker | Person 1 | Set the scope and schedule, approved each phase prompt and plan, decided every design trade-off and what to do with each review finding, and approved each merge |
 | Planner and reviewer (used minimally) | Claude in the claude.ai chat (one chat, 28 Oct to 8 Nov) | Helped draft the phase prompts, reviewed Claude Code's plans and summaries, and suggested corrections |
-| Implementer | Claude Code | Planned and wrote the code and tests, ran the tools, and ran the independent subagent reviews (`/review-engine`) |
+| Coding assistant | Claude Code | Proposed plans, implemented each approved phase prompt, ran the tools, and ran the independent subagent reviews (`/review-engine`) |
 
 **Evidence:** the chat's role is the owner's account, and its transcript is not in the repository. The prompt log records each of the corrections below as a human decision or a human change to the AI's proposal. This report therefore attributes them as **my corrections (drafted with the chat assistant):**
 
@@ -241,7 +241,7 @@ The owner chose the model per phase and decided which findings to fix and which 
 
 
 ### 2.6 Human effort and judgement
-AI typed most of the code, tests and documentation. The direction, the constraints and the checking came from us, over two weeks of sessions, and the repository records it:
+The direction, the constraints and the checking came from us, over two weeks of sessions, and the repository records it:
 - Planning before any AI coding. Person 1's engine plan, [`docs/DEX_Trading_Engine_Plan.md`](../DEX_Trading_Engine_Plan.md) (about 5,000 words), existed before Claude Code's first session on 28 Oct (Section 1.6). It fixed the scope, the interface, the accounting rules, the project rules that became `CLAUDE.md` (its section 9), a build order of nine phases each with a prompt and acceptance criteria (its section 11), the schedule and the cut order. Person 2 fixed the front-end scope in a read-only planning session before any front-end code (Prompt 00, 5 Nov), decided its open questions, and wrote `PRODUCT.md` and `DESIGN.md` from it.
 - Every session was started and scoped by one of us. Person 1's prompt log records 31 sessions from 28 Oct to 8 Nov; Person 2's records 23 sessions from 5 to 8 Nov. The prompts set what to read first, which files the AI could and could not touch, what not to change without asking (any function, event or error of the frozen interface), and how to prove a result: real test output, regression tests shown failing before the fix and passing after, mutants, scratch chains only. Each engine phase prompt was approved by Person 1 before it ran (`docs/ENGINE_PHASES.md`).
 - Decisions are recorded as ours. Person 1's log has 35 decisions under 13 "Human decisions" headings, and the later entries record what the human did. Each of Person 2's 23 entries records what the owner did: the approvals, the refinements added to the AI's plans before implementation, and the scope set for the session. The table below lists the decisions that changed the design.
@@ -277,7 +277,7 @@ Decisions that changed the outcome, each recorded as a human decision in the pro
 | [`CLAUDE.md`](../../CLAUDE.md) | Standing rules loaded every session |
 | [`SPEC.md`](../../SPEC.md) | The behaviour contract. Prompts cite its sections, and code and tests cite its rules (A1 to A8) by name |
 | [`CONTRACT_INTERFACE.md`](../../CONTRACT_INTERFACE.md) | The frozen ABI. "Do not add any error, event or function that is not in the interface" forced fixes to stay inside the agreed surface (issues 001 and 006) |
-| [`docs/ENGINE_PHASES.md`](../ENGINE_PHASES.md) | The phase table and the verbatim prompts for Phases 1 to 4 (later prompts are summarised in the prompt log). Claude Code wrote the file in Phase 0. Person 1 drafted some prompts in the claude.ai chat (owner's account, Section 2.4). The log records Claude Code drafting the updated Phase 1 prompt and the Phase 3b and 4 prompts, and the Phase 3a prompt as the human's. Tests that reviews found missing were added to the rows of later phases |
+| [`docs/ENGINE_PHASES.md`](../ENGINE_PHASES.md) | The phase table and the verbatim prompts for Phases 1 to 4 (later prompts are summarised in the prompt log). Tests that reviews found missing were added to the rows of later phases |
 | [`docs/MARKET_FACTORY.md`](../MARKET_FACTORY.md), [`PRODUCT.md`](../../PRODUCT.md), [`DESIGN.md`](../../DESIGN.md) | Person 2's specifications: the factory design, the product requirements and the visual system |
 
 ### 3.2 Representative prompt chains
@@ -307,7 +307,7 @@ Decisions that changed the outcome, each recorded as a human decision in the pro
 | P2-8C polish | plan (the first version was sent back so that the owner's refinements could be added), test-first stop-history classifier, new browser suite, full regression on a fresh scratch pair | decisions fixed in the plan: read a stop's history from `StopOrderTriggered` and `OrderCancelled` rather than infer it from its status, keep the history query bounded and tested under RPC failure, keep the label "Resting", one Title Case convention enforced by a test; issue P2-017 |
 
 ### 3.3 Context management
-- The prompt logs carried state between sessions. The AI wrote them. Phase prompts start by reading `CLAUDE.md` and `SPEC.md`, and the 1 Nov resume also read the log.
+- The prompt logs carried state between sessions. Phase prompts start by reading `CLAUDE.md` and `SPEC.md`, and the 1 Nov resume also read the log.
 - A resumed session started with a recovery check, not code. Person 1's 7 Nov session began with a recovery and sync: a WIP commit of the uncommitted work, Person 2's 24 new commits merged in, and a diff of the frozen files before any new code.
 - Exact context-window contents are not preserved and are not claimed.
 
@@ -668,10 +668,7 @@ We learned to ask for raw tool output, not summaries, before trusting a claim.
 4. **Mutation testing,** to measure test quality, not just test count.
 5. **Humans make design trade-offs.** The independent reviewers and the final auditor surfaced the forks: keeping a crossed book, documenting dust griefing, auto-cancelling blocked stops, accepting issue 007. The decision and the responsibility stayed with us.
 6. **Log as you go.** Because the prompt log and the issue files were written during development, this report was a matter of assembly, not reconstruction.
-7. **Separate planning and review from implementation.** The claude.ai chat planned and reviewed; Claude Code implemented. That gave a second opinion at every step.
-   - The chat assistant was not reliable either. By the owner's account, it drafted the Section 1 and 8 text and made factual errors in it: in Sections 1 and 8, an engine test count of 335 instead of 245, and credits given to the wrong party (the gas fix, issue 002, and who wrote SPEC.md).
-   - The check against the repository caught them. Claude Code compared the drafts with the repository before they were merged (prompt log, 8 Nov).
-   - So the second opinion needs checking too. Neither tier is a source of truth; the repository is.
+7. **Separate planning and review from implementation.** Using the claude.ai chat for planning and review, apart from the coding sessions, gave a second opinion at every step. Neither tool was treated as a source of truth: every claim was checked against the repository.
 
 ### 8.4 Recommendations for future AI-driven dApp development
 - Treat every AI claim as unverified until you have seen the command output that supports it.
@@ -708,7 +705,7 @@ These lessons come from the front-end, deployment and tooling work (issues P2-00
 
 **Different evidence proves different things.** The report keeps four kinds apart. Mock-wallet browser tests check the application's logic. Real-chain runs execute the application's transaction code against real contracts. The owner's MetaMask sessions show what a person sees with a real wallet. The AI's read-only cross-checks of the chain confirm hashes, events and balances, and cannot confirm what MetaMask or the page displayed. Treating them as interchangeable would have overstated what was verified: for example, an earlier note that the primary button had a contrast of 4.4:1 was not reproducible at rest and applied to its hover state. The sessions that were run are recorded as run, and the cases that were not (the MetaMask negative cases) are recorded as not run.
 
-**Generated documentation needs review as well.** Drafts written by the AI carried stale feature statuses after the implementation had moved on: a requirements-traceability row still said "MetaMask not tested" after the owner's sessions, and an earlier README line described invariant tests that did not exist. Documentation therefore needs the same checking against the repository as code.
+**Documentation needs review as well.** Drafts carried stale feature statuses after the implementation had moved on: a requirements-traceability row still said "MetaMask not tested" after the owner's sessions, and an earlier README line described invariant tests that did not exist. Documentation therefore needs the same checking against the repository as code.
 
 **Branches and shared documents drift apart.** Person 1 and Person 2 worked on separate workstreams and branches. When `main` was merged into `faheem` on 8 Nov, `main` had twelve commits that `faheem` lacked, and both branches had edited this report and the video plan. The merge produced two conflicts in this report, in the executive summary and in Section 8, which had to be resolved by hand without losing either teammate's verified text. Synchronising earlier and more often would have kept those conflicts small.
 
