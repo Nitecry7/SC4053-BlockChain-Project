@@ -1,0 +1,109 @@
+# forge build --sizes 2026-11-07T20:05:00Z
+Compiling 64 files with Solc 0.8.24
+Solc 0.8.24 finished in 41.99s
+Compiler run successful with warnings:
+Warning (2018): Function state mutability can be restricted to view
+   --> test/invariant/Handler.sol:330:5:
+    |
+330 |     function _abort() private {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+
+╭-------------------------+------------------+-------------------+--------------------+---------------------╮
+| Contract                | Runtime Size (B) | Initcode Size (B) | Runtime Margin (B) | Initcode Margin (B) |
++===========================================================================================================+
+| DemoToken               | 1,786            | 2,996             | 22,790             | 46,156              |
+|-------------------------+------------------+-------------------+--------------------+---------------------|
+| MarketFactory           | 10,508           | 10,537            | 14,068             | 38,615              |
+|-------------------------+------------------+-------------------+--------------------+---------------------|
+| MockERC20               | 1,918            | 2,705             | 22,658             | 46,447              |
+|-------------------------+------------------+-------------------+--------------------+---------------------|
+| NoDecimalsStub          | 62               | 88                | 24,514             | 49,064              |
+|-------------------------+------------------+-------------------+--------------------+---------------------|
+| NoDecimalsToken         | 62               | 88                | 24,514             | 49,064              |
+|-------------------------+------------------+-------------------+--------------------+---------------------|
+| OrderBook               | 8,461            | 9,124             | 16,115             | 40,028              |
+|-------------------------+------------------+-------------------+--------------------+---------------------|
+| OrderBookHarness        | 9,447            | 10,115            | 15,129             | 39,037              |
+|-------------------------+------------------+-------------------+--------------------+---------------------|
+| ReenteringDecimalsToken | 412              | 591               | 24,164             | 48,561              |
+|-------------------------+------------------+-------------------+--------------------+---------------------|
+| ReentrantERC20          | 3,707            | 4,475             | 20,869             | 44,677              |
+|-------------------------+------------------+-------------------+--------------------+---------------------|
+| RevertingDecimalsToken  | 158              | 185               | 24,418             | 48,967              |
+|-------------------------+------------------+-------------------+--------------------+---------------------|
+| TokenFactory            | 4,654            | 4,683             | 19,922             | 44,469              |
+|-------------------------+------------------+-------------------+--------------------+---------------------|
+| ViewSpyERC20            | 3,872            | 4,640             | 20,704             | 44,512              |
+╰-------------------------+------------------+-------------------+--------------------+---------------------╯
+
+warning[reentrancy-events]: event emitted after an external call; reentrancy can reorder or fabricate logs that off-chain consumers rely on
+   ╭▸ src/MarketFactory.sol:37:9
+   │
+37 │         emit MarketCreated(market, base, quote, msg.sender);
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/reentrancy-events
+
+warning[reentrancy-events]: event emitted after an external call; reentrancy can reorder or fabricate logs that off-chain consumers rely on
+   ╭▸ src/OrderBook.sol:65:9
+   │
+65 │         emit OrderPlaced(orderId, msg.sender, side, price, amount);
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/reentrancy-events
+
+warning[reentrancy-events]: event emitted after an external call; reentrancy can reorder or fabricate logs that off-chain consumers rely on
+    ╭▸ src/OrderBook.sol:294:9
+    │
+294 │         emit Trade(makerId, takerId, maker.trader, taker.trader, price, qty, cost);
+    │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    │
+    ╰ help: https://getfoundry.sh/forge/linting/reentrancy-events
+
+warning[reentrancy-events]: event emitted after an external call; reentrancy can reorder or fabricate logs that off-chain consumers rely on
+   ╭▸ src/OrderBook.sol:84:9
+   │
+84 │         emit StopOrderPlaced(orderId, msg.sender, side, triggerPrice, limitPrice, amount);
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/reentrancy-events
+
+warning[require-revert-in-loop]: `require` or `revert` inside a loop
+    ╭▸ src/OrderBook.sol:354:50
+    │
+354 │         if (prev == 0 && heads[side] != orderId) revert OrderNotActive();
+    │                                                  ━━━━━━━━━━━━━━━━━━━━━━━━
+    │
+    ╰ help: https://getfoundry.sh/forge/linting/require-revert-in-loop
+
+warning[reentrancy-events]: event emitted after an external call; reentrancy can reorder or fabricate logs that off-chain consumers rely on
+    ╭▸ src/OrderBook.sol:235:9
+    │
+235 │         emit OrderCancelled(orderId, trader, refundBase, refundQuote);
+    │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    │
+    ╰ help: https://getfoundry.sh/forge/linting/reentrancy-events
+
+warning[unsafe-typecast]: typecast can truncate values
+    ╭▸ src/OrderBook.sol:207:24
+    │
+207 │             createdAt: uint64(block.timestamp),
+    │                        ━━━━━━━━━━━━━━━━━━━━━━━
+    │
+    ├ note: consider disabling this lint if you're certain the cast is safe
+    │       
+    │       // casting to 'uint64' is safe because [explain why]
+    │       // forge-lint: disable-next-line(unsafe-typecast)
+    │       
+    │       
+    ╰ help: https://getfoundry.sh/forge/linting/unsafe-typecast
+
+warning[reentrancy-events]: event emitted after an external call; reentrancy can reorder or fabricate logs that off-chain consumers rely on
+   ╭▸ src/TokenFactory.sol:38:9
+   │
+38 │         emit TokenCreated(token, msg.sender, name, symbol, initialSupply);
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/reentrancy-events
+

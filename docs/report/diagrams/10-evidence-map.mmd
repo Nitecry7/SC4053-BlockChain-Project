@@ -1,0 +1,37 @@
+flowchart TB
+  classDef test fill:#E6F0F8,stroke:#0072B2,stroke-width:2px,color:#1A1A1A
+  classDef static fill:#F5E1EE,stroke:#CC79A7,stroke-width:2px,color:#1A1A1A
+  classDef chain fill:#E3F4EE,stroke:#009E73,stroke-width:2px,color:#1A1A1A
+  classDef review fill:#FFF1D6,stroke:#E69F00,stroke-width:2px,color:#1A1A1A
+
+  subgraph DYN["Dynamic testing"]
+    U["Unit + integration<br/>335 tests pass<br/>(245 engine)"]:::test
+    F["Fuzz: 20 tests<br/>1,000 runs (10,000 deep)<br/>one slow test: 25 (200)"]:::test
+    IV["Invariants<br/>1,000 runs x depth 128<br/>128,000 calls, 0 reverts"]:::test
+    MU["Mutation: full set of 67<br/>65 caught; the 2 survivors<br/>are equivalent"]:::test
+    U ~~~ IV
+    F ~~~ MU
+  end
+
+  subgraph STA["Static analysis"]
+    direction LR
+    SL["Slither<br/>27 results, 0 real"]:::static
+    CV["Coverage<br/>100% lines, branches,<br/>functions"]:::static
+    SL ~~~ CV
+  end
+
+  subgraph RC["Real chain"]
+    direction LR
+    CA["cast journeys<br/>+ demo script<br/>all balance checks pass"]:::chain
+    FC["Fresh clone<br/>README end to end"]:::chain
+    CA ~~~ FC
+  end
+
+  subgraph RV["Review"]
+    direction LR
+    PR["Per-phase AI reviews<br/>found 002 to 006<br/>(5 of the 7 issues)"]:::review
+    FA["Final audit<br/>0 Critical / High<br/>1 Medium accepted (007)"]:::review
+    PR ~~~ FA
+  end
+
+  DYN ~~~ STA ~~~ RC ~~~ RV

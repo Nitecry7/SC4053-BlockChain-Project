@@ -1,5 +1,7 @@
 # AI Audit Report: engine (Person 1) section drafts
 
+> **Superseded.** The assembled report, [`AI_AUDIT_REPORT.md`](AI_AUDIT_REPORT.md), replaces the section drafts below. The verification pass of 8 Nov corrected errors in the assembled report only; the drafts keep their original wording, including those errors (see [`report-verification.md`](../ai-audit/test-evidence/wrapup/report-verification.md)). Cite the assembled report, not the drafts.
+
 These drafts give the trading-engine side of the AI Audit Report that the brief requires (section 2.1, eight sections). Person 2's draft, [`docs/ai-audit/ai-audit-report-draft.md`](../ai-audit/ai-audit-report-draft.md), covers their side, and it marks every engine part "Needs Person 1". Each file here is written to slot into the matching section of that draft. Person 2's file was not edited.
 
 **Rules.** Every statement comes from a committed record:
@@ -10,6 +12,8 @@ These drafts give the trading-engine side of the AI Audit Report that the brief 
 - git history
 
 Commit hashes are on `main`. Nothing is invented. Where evidence is still being produced (Phase 8: Slither, coverage, the final audit), the text says so.
+
+**Figures.** The assembled report [`AI_AUDIT_REPORT.md`](AI_AUDIT_REPORT.md) embeds ten figures from [`diagrams/`](diagrams/). Each one has a Mermaid source (`NN-name.mmd`) rendered to SVG and a 2x PNG with the shared theme. To regenerate them, run `bash docs/report/diagrams/render.sh` from the repo root (it needs Node; see the script header for the browser setting).
 
 | Brief section | File | Status |
 |---|---|---|

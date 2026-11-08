@@ -1,0 +1,32 @@
+---
+config:
+  sequence:
+    wrap: false
+    width: 120
+    actorMargin: 30
+    noteMargin: 12
+---
+sequenceDiagram
+  autonumber
+  participant Bob as Bob (buyer)
+  participant Q as SGDx token
+  participant OB as OrderBook
+  participant N as NTU token
+  participant Alice as Alice<br/>(resting ask)
+
+  Note over OB,Alice: Book: Alice's ask<br/>4 NTU @ 2.0 (order 1)
+  Bob->>Q: approve(OrderBook, 22)
+  Note right of Bob: 22 =<br/>requiredQuote(10, 2.2)
+  Bob->>OB: placeLimitOrder(Buy, 2.2, 10)
+  activate OB
+  Note over Q,N: _validate, _record (lockedQuote 22),<br/>stamp bookSeq
+  OB->>Q: escrow pull: transferFrom<br/>(Bob, OrderBook, 22)
+  Note over Q,N: emit OrderPlaced(2, Bob, Buy, 2.2, 10)
+  loop _matchTaker: up to 10 fills
+    Note over Q,N: _settleFill(maker 1, taker 2, qty 4)<br/>at the maker price 2.0. State first:<br/>lockedQuote = ceil(6 x 2.2) = 13.2,<br/>ask 1 Filled and unlinked,<br/>lastTradePrice = 2.0<br/>emit Trade(1, 2, Alice, Bob, 2.0, 4, 8)
+    OB->>N: 4 NTU to Bob
+    OB->>Q: 8 SGDx to Alice
+    OB->>Q: refund 0.8 SGDx to Bob<br/>(22 - 8 - 13.2)
+  end
+  Note over Q,N: no ask left: loop ends<br/>remainder rests: _insert(order 2),<br/>6 NTU @ 2.2, PartiallyFilled,<br/>lockedQuote 13.2
+  deactivate OB

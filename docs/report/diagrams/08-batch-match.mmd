@@ -1,0 +1,24 @@
+---
+config:
+  sequence:
+    wrap: false
+    width: 150
+    actorMargin: 40
+    noteMargin: 10
+---
+sequenceDiagram
+  autonumber
+  participant K as Keeper (any caller)
+  participant OB as OrderBook
+  participant T as Traders<br/>B1-B4, S1-S4
+  Note over K,T: Before: each buyer's order hit the 10-fill cap<br/>and rested 1 NTU, crossed against older asks<br/>Bids: B1 @3.0, B2 @2.9, B3 @2.8, B4 @2.7<br/>Asks: S1 to S4, 1 NTU each @2.0<br/>(older bookSeq, so the asks are makers)
+  K->>OB: matchOrders(10)
+  activate OB
+  OB->>T: Fill 1 at 2.0: 1 NTU to B1,<br/>2.0 SGDx to S1, refund 1.0 to B1
+  OB->>T: Fill 2 at 2.0: 1 NTU to B2,<br/>2.0 SGDx to S2, refund 0.9 to B2
+  OB->>T: Fill 3 at 2.0: 1 NTU to B3,<br/>2.0 SGDx to S3, refund 0.8 to B3
+  OB->>T: Fill 4 at 2.0: 1 NTU to B4,<br/>2.0 SGDx to S4, refund 0.7 to B4
+  Note over OB,T: both sides of the book empty:<br/>not crossed, loop ends
+  OB-->>K: returns 4 (4 Trade events)
+  deactivate OB
+  Note over K,T: 8 traders settled in ONE transaction.<br/>The keeper sends and receives no tokens.

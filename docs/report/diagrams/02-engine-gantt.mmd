@@ -1,0 +1,28 @@
+---
+config:
+  themeCSS: ".grid .tick line { stroke: #E2E2E2 !important; } .taskTextOutsideRight, .taskTextOutsideLeft, .taskText { paint-order: stroke; stroke: #FFFFFF; stroke-width: 5px; stroke-linejoin: round; } .milestoneText { paint-order: stroke; stroke: #FFFFFF; stroke-width: 5px; }"
+---
+gantt
+  title Engine phases by day (commit and prompt-log dates; merge hash in label)
+  dateFormat YYYY-MM-DD
+  axisFormat %d %b
+  tickInterval 1day
+  todayMarker off
+
+  section Engine (Person 1)
+  Phase 0 setup, spec, interface (cd35f8b)   :done, p0, 2026-10-28, 1d
+  Phases 1, 2a, 2b (d00af3d, dfe7318, 7f234b8) :done, p1, 2026-11-01, 1d
+  Phases 3a, 3b (6d1d14c, 4c3dd9d)            :done, p3, 2026-11-02, 1d
+  Phase 4 written, uncommitted                :active, p4a, 2026-11-02, 1d
+  Phase 4 cancel merged (dab79f8)             :done, p4, 2026-11-07, 1d
+  Phase 5 batch, Stage 3 (d2b2ba3, aaf6385)   :done, p5, 2026-11-07, 1d
+  Phase 6 stop-limit (1adcc59)                :done, p6, 2026-11-07, 1d
+  Phase 7 invariants, deep run (5f2e860)      :done, p7, 2026-11-07, 2d
+  Phase 8 audit, engine-final (fd8869a)       :done, p8, 2026-11-08, 1d
+
+  section Person 2
+  P2-1 to P2-8A (factories, deploy, frontend) :p2, 2026-11-05, 3d
+
+  section Milestones
+  Interface frozen (63aee60)                  :milestone, m1, 2026-11-01, 0d
+  engine-final tag                            :milestone, m2, 2026-11-08, 0d

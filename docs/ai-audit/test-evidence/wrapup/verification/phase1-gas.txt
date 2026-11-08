@@ -1,0 +1,793 @@
+# forge test --gas-report (no invariant, no fuzz) 2026-11-07T20:06:37Z
+No files changed, compilation skipped
+
+Ran 10 tests for test/DemoToken.t.sol:DemoTokenTest
+[PASS] test_approveAndTransferFrom() (gas: 149608)
+[PASS] test_constructor_emitsMintTransfer() (gas: 9527)
+[PASS] test_constructor_mintsWholeSupplyToHolder() (gas: 17268)
+[PASS] test_constructor_revertsWhenHolderIsZeroAddress() (gas: 5682)
+[PASS] test_hasNoOwner() (gas: 26720)
+[PASS] test_metadata() (gas: 29735)
+[PASS] test_noMintOrBurnEntryPoint() (gas: 54511)
+[PASS] test_transferFrom_revertsWithoutAllowance() (gas: 40561)
+[PASS] test_transfer_movesBalance() (gas: 84278)
+[PASS] test_transfer_revertsOnInsufficientBalance() (gas: 38051)
+Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 13.68ms (11.00ms CPU time)
+
+Ran 2 tests for test/OrderBook.Match.t.sol:OrderBookPayoutViewsTest
+[PASS] test_payout_tradeEmittedBeforeTransfers() (gas: 864210)
+[PASS] test_payout_viewsShowFillSettledAndRemainderNotYetRested() (gas: 4792428)
+Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 18.33ms (7.49ms CPU time)
+
+Ran 8 tests for test/OrderBookBase.t.sol:OrderBookConstructorTest
+[PASS] test_constructor_emptyRevertWhenTokenHasNoDecimals() (gas: 105322)
+[PASS] test_constructor_revertsWhenBaseIsZeroAddress() (gas: 6178)
+[PASS] test_constructor_revertsWhenBaseNot18Decimals() (gas: 565475)
+[PASS] test_constructor_revertsWhenQuoteIsZeroAddress() (gas: 6252)
+[PASS] test_constructor_revertsWhenQuoteNot18Decimals() (gas: 565479)
+[PASS] test_constructor_revertsWhenSameToken() (gas: 6209)
+[PASS] test_setUp_fundsAndApprovesTraders() (gas: 113063)
+[PASS] test_setUp_storesTokensAndConstants() (gas: 41721)
+Suite result: ok. 8 passed; 0 failed; 0 skipped; finished in 17.62ms (9.12ms CPU time)
+
+Ran 2 tests for test/OrderBook.Cancel.t.sol:OrderBookCancelRefundViewsTest
+[PASS] test_cancelRefund_viewsFinalOnBuy() (gas: 4533725)
+[PASS] test_cancelRefund_viewsFinalOnSell() (gas: 4495035)
+Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 20.26ms (11.01ms CPU time)
+
+Ran 4 tests for test/OrderBook.Match.t.sol:OrderBookReentrancyTest
+[PASS] test_reentrancy_duringBasePayout() (gas: 5604807)
+[PASS] test_reentrancy_duringEscrowPullOfBase() (gas: 4823117)
+[PASS] test_reentrancy_duringEscrowPullOfQuote() (gas: 4864131)
+[PASS] test_reentrancy_duringQuotePayout() (gas: 5610730)
+Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 30.86ms (22.43ms CPU time)
+
+Ran 17 tests for test/TokenFactory.t.sol:TokenFactoryTest
+[PASS] test_createToken_acceptsExactlyMaxSupplyAndOneWei() (gas: 1169453)
+[PASS] test_createToken_emitsTokenCreated() (gas: 592931)
+[PASS] test_createToken_mintsWholeSupplyToCaller() (gas: 629251)
+[PASS] test_createToken_revertsEmptyName() (gas: 34212)
+[PASS] test_createToken_revertsEmptySymbol() (gas: 34281)
+[PASS] test_createToken_revertsSupplyTooLarge() (gas: 39919)
+[PASS] test_createToken_revertsZeroSupply() (gas: 34503)
+[PASS] test_createToken_sameNameAndSymbolGiveDistinctTokens() (gas: 1154777)
+[PASS] test_createToken_validationOrder() (gas: 59698)
+[PASS] test_getTokens_limitLargerThanRemainingIsTruncated() (gas: 1718771)
+[PASS] test_getTokens_limitZeroReturnsEmpty() (gas: 1723921)
+[PASS] test_getTokens_maxLimitDoesNotOverflow() (gas: 1721780)
+[PASS] test_getTokens_middlePage() (gas: 2848337)
+[PASS] test_getTokens_offsetAtOrPastEndReturnsEmpty() (gas: 1731635)
+[PASS] test_isFactoryToken_trueOnlyForFactoryTokens() (gas: 618682)
+[PASS] test_registry_recordsTokensOldestFirst() (gas: 1733354)
+[PASS] test_registry_startsEmpty() (gas: 23308)
+Suite result: ok. 17 passed; 0 failed; 0 skipped; finished in 18.53ms (14.01ms CPU time)
+
+Ran 3 tests for test/OrderBook.Stop.t.sol:OrderBookStopReentrancyTest
+[PASS] test_reentrancy_duringStopEscrowPullReverts() (gas: 5814558)
+[PASS] test_reentrancy_duringTriggeredFillRevertsAndChangesNothing() (gas: 9443631)
+[PASS] test_swallow_duringTriggeredFillActivatesOnce() (gas: 5765873)
+Suite result: ok. 3 passed; 0 failed; 0 skipped; finished in 40.45ms (31.60ms CPU time)
+
+Ran 16 tests for test/Deploy.t.sol:DeployTest
+[PASS] test_defaultWallets_areAnvilAccountsOneToThree() (gas: 9578)
+[PASS] test_deploy_addressesAreNonZeroAndDistinct() (gas: 27991)
+[PASS] test_deploy_balancesAreHolderRemainderAndDemoAmounts() (gas: 132816)
+[PASS] test_deploy_contractSizesAreWithinEvmLimits() (gas: 68719)
+[PASS] test_deploy_customWalletListIsFunded() (gas: 6242108)
+[PASS] test_deploy_emptyWalletListKeepsEverythingWithTheHolder() (gas: 6113473)
+[PASS] test_deploy_marketIsRegisteredInBothOrientations() (gas: 49324)
+[PASS] test_deploy_marketReferencesIntendedTokensAndSpecConstants() (gas: 22577)
+[PASS] test_deploy_rejectsZeroWalletHolderAsWalletAndDuplicateWallets() (gas: 92944)
+[PASS] test_deploy_tokensAreInTheTokenFactoryRegistry() (gas: 39147)
+[PASS] test_deploy_tokensHaveExpectedMetadataAndSupply() (gas: 61455)
+[PASS] test_deploy_tradeOnTheDeployedMarket() (gas: 847056)
+[PASS] test_deploy_wrongHolderFailsAPostCheck() (gas: 6272951)
+[PASS] test_run_broadcastsFromTheDeployerAndFundsDefaultWallets() (gas: 11245323)
+Logs:
+  deployer        0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+  TokenFactory    0x5FbDB2315678afecb367f032d93F642f64180aa3
+  MarketFactory   0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+  NTU (base)      0xa16E02E87b7454126E5E10d957A927A7F5B5d2be
+  SGDx (quote)    0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968
+  NTU/SGDx market 0xCafac3dD18aC6c6e92c921884f9E4176737C052c
+
+[PASS] test_run_revertsOffTheLocalChain() (gas: 56890)
+[PASS] test_run_revertsWhenTheNodeReportsAnotherChainEvenIfBlockChainidSaysLocal() (gas: 4982025)
+Suite result: ok. 16 passed; 0 failed; 0 skipped; finished in 43.78ms (36.29ms CPU time)
+
+Ran 24 tests for test/MarketFactory.t.sol:MarketFactoryTest
+[PASS] test_control_reenteringTokenSucceedsOutsideStaticContext() (gas: 994253772)
+[PASS] test_createMarket_customRevertDataFromTokenPassesThroughUnchanged() (gas: 260577)
+[PASS] test_createMarket_deploysOrderBookForThePair() (gas: 1916705)
+[PASS] test_createMarket_distinctPairsCoexist() (gas: 5706205)
+[PASS] test_createMarket_emitsMarketCreated() (gas: 1911967)
+[PASS] test_createMarket_emptyRevertWhenTokenHasNoDecimals() (gas: 239292)
+[PASS] test_createMarket_factoryHoldsNoTokensAndIsNotTrader() (gas: 1929400)
+[PASS] test_createMarket_failedAttemptsLeaveNoOrphanMarket() (gas: 2591323)
+[PASS] test_createMarket_firstCreatorFixesOrientation() (gas: 1916497)
+[PASS] test_createMarket_isPermissionlessAndRecordsNoOwner() (gas: 3827268)
+[PASS] test_createMarket_revertsInvalidTokens() (gas: 336718)
+[PASS] test_createMarket_revertsMarketExistsForExactPair() (gas: 1941119)
+[PASS] test_createMarket_revertsMarketExistsForReversedPair() (gas: 1941130)
+[PASS] test_createMarket_revertsUnsupportedDecimals() (gas: 815036)
+[PASS] test_createMarket_tokenCannotReenterFromDecimals() (gas: 1010010038)
+[PASS] test_getMarket_isOrderInsensitive() (gas: 1937103)
+[PASS] test_getMarkets_limitLargerThanRemainingIsTruncated() (gas: 9021034)
+[PASS] test_getMarkets_limitZeroReturnsEmpty() (gas: 9026206)
+[PASS] test_getMarkets_maxLimitDoesNotOverflow() (gas: 9023956)
+[PASS] test_getMarkets_middlePage() (gas: 15018475)
+[PASS] test_getMarkets_offsetAtOrPastEndReturnsEmpty() (gas: 9033983)
+[PASS] test_getMarkets_recordsOldestFirst() (gas: 9027143)
+[PASS] test_isMarket_trueOnlyForFactoryMarkets() (gas: 1939683)
+[PASS] test_registry_startsEmpty() (gas: 35869)
+Suite result: ok. 24 passed; 0 failed; 0 skipped; finished in 46.18ms (39.46ms CPU time)
+
+Ran 4 tests for test/TokenOrderBookIntegration.t.sol:TokenOrderBookIntegrationTest
+[PASS] test_factoryTokensAreAcceptedByTheOrderBook() (gas: 41271)
+[PASS] test_noAllowance_leavesFactoryTokenBalancesUntouched() (gas: 329646)
+[PASS] test_specWorkedExample_withFactoryTokens() (gas: 942184)
+[PASS] test_tradeEventCarriesFactoryTokenAmounts() (gas: 732851)
+Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 8.66ms (5.25ms CPU time)
+
+Ran 1 test for test/OrderBook.Regression.t.sol:BriefJourneyRegressionTest
+[PASS] test_briefJourney_issueListTradePartialCancelBatchStop() (gas: 16093779)
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 35.61ms (32.91ms CPU time)
+
+Ran 1 test for test/OrderBook.Regression.t.sol:DustSandwichLimitationTest
+[PASS] test_issue007_dustSandwichMakesAHonestBuyPayItsLimit() (gas: 6238758)
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 16.47ms (12.87ms CPU time)
+
+Ran 13 tests for test/OrderBook.Cancel.t.sol:OrderBookCancelReentrancyTest
+[PASS] test_reentrancy_cancelOtherOrderDuringRefundOfBuy() (gas: 4902617)
+[PASS] test_reentrancy_cancelOtherOrderDuringRefundOfSell() (gas: 4863131)
+[PASS] test_reentrancy_cancelSameOrderDuringPriceImprovementRefund() (gas: 4854151)
+[PASS] test_reentrancy_duringCancelRefundOfBuy() (gas: 7698672)
+[PASS] test_reentrancy_duringCancelRefundOfSell() (gas: 7665847)
+[PASS] test_reentrancy_ownerCancelDuringBuyerPayout() (gas: 4878264)
+[PASS] test_reentrancy_ownerCancelDuringEscrowPullOfBase() (gas: 4193161)
+[PASS] test_reentrancy_ownerCancelDuringEscrowPullOfQuote() (gas: 4213632)
+[PASS] test_reentrancy_ownerCancelDuringSellerPayout() (gas: 4891548)
+[PASS] test_reentrancy_placeDuringPriceImprovementRefund() (gas: 4903618)
+[PASS] test_swallow_cancelRefundOfBuyPaidOnce() (gas: 4873414)
+[PASS] test_swallow_cancelRefundOfSellPaidOnce() (gas: 4838707)
+[PASS] test_swallow_priceImprovementRefundPaidOnce() (gas: 4977180)
+Suite result: ok. 13 passed; 0 failed; 0 skipped; finished in 79.80ms (70.99ms CPU time)
+
+Ran 14 tests for test/MarketFactoryIntegration.t.sol:MarketFactoryIntegrationTest
+[PASS] test_market_constantsAndImmutablesMatchADirectDeployment() (gas: 77531)
+[PASS] test_market_everyWriteBehavesLikeADirectDeployment() (gas: 1543789)
+[PASS] test_market_factoryIsNeverTraderOrHolder() (gas: 779735)
+[PASS] test_market_orientationFixesTheSmallestTradablePrice() (gas: 74070)
+[PASS] test_market_runtimeBytecodeIdenticalToADirectDeployment() (gas: 20643)
+[PASS] test_market_tradeSequenceMatchesADirectDeployment() (gas: 1881529)
+[PASS] test_trade_aSecondTraderCanUseAMarketSomeoneElseCreated() (gas: 1172166)
+[PASS] test_trade_capLeavesFundedCrossedRemainder() (gas: 4754063)
+[PASS] test_trade_fifoAtEqualPrice() (gas: 1166153)
+[PASS] test_trade_marketsAreIndependent() (gas: 3441377)
+[PASS] test_trade_partialFillExecutesAtMakerPriceWithRefund() (gas: 864857)
+[PASS] test_trade_pricePriorityAcrossLevels() (gas: 1649934)
+[PASS] test_trade_specWorkedExample() (gas: 882065)
+[PASS] test_trade_takerPartiallyFilledRestsRemainderFunded() (gas: 865853)
+Suite result: ok. 14 passed; 0 failed; 0 skipped; finished in 36.07ms (30.78ms CPU time)
+
+Ran 6 tests for test/OrderBook.Batch.t.sol:OrderBookBatchReentrancyTest
+[PASS] test_reentrancy_duringMatchBasePayout() (gas: 14220710)
+[PASS] test_reentrancy_duringMatchPriceImprovementRefund() (gas: 14472778)
+[PASS] test_reentrancy_duringMatchQuotePayout() (gas: 14278246)
+[PASS] test_reentrancy_matchOrdersDuringPlacementPriceImprovementRefund() (gas: 4829154)
+[PASS] test_swallow_matchOrdersDuringPlacementRefundPaidOnce() (gas: 4971609)
+[PASS] test_swallow_matchPriceImprovementRefundPaidOnce() (gas: 9276086)
+Suite result: ok. 6 passed; 0 failed; 0 skipped; finished in 85.58ms (116.81ms CPU time)
+
+Ran 21 tests for test/OrderBook.Place.t.sol:OrderBookPlaceTest
+[PASS] test_getOrder_unknownIdReturnsZeroOrder() (gas: 114457)
+[PASS] test_getUserOrderIds_perTrader() (gas: 1304898)
+[PASS] test_place_bookTooDeepRevertRollsBackEscrowPull() (gas: 41250344)
+[PASS] test_place_buyPullsExactQuote() (gas: 556576)
+[PASS] test_place_crossingOrderTradesInsteadOfResting() (gas: 932174)
+[PASS] test_place_emitsOrderPlaced() (gas: 877420)
+[PASS] test_place_escrowAccumulatesAcrossOrders() (gas: 1724409)
+[PASS] test_place_failedAttemptDoesNotConsumeId() (gas: 517148)
+[PASS] test_place_idsIncreaseFromOne() (gas: 1268352)
+[PASS] test_place_ordersRestInPriorityOrder() (gas: 3609873)
+[PASS] test_place_revertsBadLot() (gas: 398230)
+[PASS] test_place_revertsBadTick() (gas: 398451)
+[PASS] test_place_revertsInsufficientBalance() (gas: 860918)
+[PASS] test_place_revertsNoAllowance() (gas: 966140)
+[PASS] test_place_revertsZeroAmount() (gas: 397817)
+[PASS] test_place_revertsZeroPrice() (gas: 397942)
+[PASS] test_place_sellPullsExactBase() (gas: 529976)
+[PASS] test_place_smallestAlignedOrderEscrowsExactly() (gas: 521200)
+[PASS] test_place_storesOrderFields() (gas: 928062)
+[PASS] test_place_validationOrder() (gas: 597202)
+[PASS] test_requiredQuote_roundsUpForUnalignedInputs() (gas: 30715)
+Suite result: ok. 21 passed; 0 failed; 0 skipped; finished in 96.31ms (134.84ms CPU time)
+
+Ran 1 test for test/OrderBook.Batch.t.sol:OrderBookBatchPayoutViewsTest
+[PASS] test_matchPayout_viewsShowBothFilledOrdersAlreadyUnlinked() (gas: 9087794)
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 13.25ms (9.27ms CPU time)
+
+Ran 36 tests for test/OrderBook.Cancel.t.sol:OrderBookCancelTest
+[PASS] test_cancel_bothSidesOfCrossedBook() (gas: 6003627)
+[PASS] test_cancel_briefJourneyAliceSells100BobBuys40AliceGets60Back() (gas: 1422374)
+[PASS] test_cancel_buyEmitsBeforeRefundAndTouchesOnlyQuote() (gas: 513556)
+[PASS] test_cancel_buyTakerRemainderWithPriceImprovementRefundsLockedQuote() (gas: 1004579)
+[PASS] test_cancel_emitsOrderCancelledForBuy() (gas: 934199)
+[PASS] test_cancel_emitsOrderCancelledForSell() (gas: 912271)
+[PASS] test_cancel_filledOrderRevertsOrderNotActive() (gas: 1322312)
+[PASS] test_cancel_head() (gas: 1346431)
+[PASS] test_cancel_keepsTimePriorityAtEqualPrice() (gas: 1713840)
+[PASS] test_cancel_laterMatchingSkipsCancelledAsk_head() (gas: 1790113)
+[PASS] test_cancel_laterMatchingSkipsCancelledAsk_middle() (gas: 1792675)
+[PASS] test_cancel_laterMatchingSkipsCancelledAsk_tail() (gas: 1784801)
+[PASS] test_cancel_laterMatchingSkipsCancelledBid_head() (gas: 1839227)
+[PASS] test_cancel_laterMatchingSkipsCancelledBid_middle() (gas: 1841359)
+[PASS] test_cancel_laterMatchingSkipsCancelledBid_tail() (gas: 1834995)
+[PASS] test_cancel_laterMatchingSkipsCancelledOrder() (gas: 1720965)
+[PASS] test_cancel_middle() (gas: 1348745)
+[PASS] test_cancel_minimumSizeBuyRefundsOneWei() (gas: 561525)
+[PASS] test_cancel_minimumSizeSellRefundsOneLot() (gas: 512516)
+[PASS] test_cancel_nonOwnerOnFilledOrderRevertsNotOrderOwner() (gas: 1002535)
+[PASS] test_cancel_nonOwnerRevertsNotOrderOwner() (gas: 651884)
+[PASS] test_cancel_onlyAffectsThatOrdersEscrow() (gas: 1802141)
+[PASS] test_cancel_onlyElement() (gas: 520413)
+[PASS] test_cancel_onlyOrderThenTakerRests() (gas: 943054)
+[PASS] test_cancel_openBuyRefundsQuoteOnly() (gas: 607661)
+[PASS] test_cancel_openSellRefundsBaseOnly() (gas: 546620)
+[PASS] test_cancel_partlyFilledBuyRefundsRemainderOnly() (gas: 1060451)
+[PASS] test_cancel_partlyFilledSellRefundsRemainderOnly() (gas: 985458)
+[PASS] test_cancel_sellEmitsBeforeRefundAndTouchesOnlyBase() (gas: 495771)
+[PASS] test_cancel_sellTakerRemainderRefundsUnfilledBase() (gas: 1062273)
+[PASS] test_cancel_statusCheckRejectsLinkedTerminalOrder() (gas: 1004325)
+[PASS] test_cancel_staysInUserOrdersAndLeavesBook() (gas: 529300)
+[PASS] test_cancel_tail() (gas: 1325796)
+[PASS] test_cancel_twiceRevertsOrderNotActive() (gas: 1027035)
+[PASS] test_cancel_unknownIdRevertsNotOrderOwner() (gas: 925448)
+[PASS] test_cancel_zeroAddressCallerOnUnknownIdRevertsNotOrderOwner() (gas: 153269)
+Suite result: ok. 36 passed; 0 failed; 0 skipped; finished in 105.21ms (88.70ms CPU time)
+
+Ran 6 tests for test/OrderBook.Regression.t.sol:OrderBookRegressionTest
+[PASS] test_issue001_unlinkOfOrderNotInBookRevertsAndKeepsTheSide() (gas: 1832549)
+[PASS] test_issue002_viewsDuringAPayoutMatchTheDocumentedDeviation() (gas: 4792842)
+[PASS] test_issue003_fillWhoseQtyTimesPriceExceedsUint256Settles() (gas: 1027941)
+[PASS] test_issue004_makerFilledTwiceTakerStopsAndTradeFieldsForBuyMaker() (gas: 3279076)
+[PASS] test_issue005_zeroAddressCannotCancelUnknownOrIdZero() (gas: 153112)
+[PASS] test_issue006_unplaceableStopNoLongerBlocksTriggers() (gas: 83701899)
+Suite result: ok. 6 passed; 0 failed; 0 skipped; finished in 207.55ms (198.26ms CPU time)
+
+Ran 23 tests for test/OrderBook.Book.t.sol:OrderBookBookTest
+[PASS] test_getBestBidAndAsk_returnHeads() (gas: 1351525)
+[PASS] test_getBook_respectsMaxOrdersInPriorityOrder() (gas: 1262582)
+[PASS] test_insert_asksAscendingAcrossPrices() (gas: 1118264)
+[PASS] test_insert_bidsDescendingAcrossPrices() (gas: 1118182)
+[PASS] test_insert_deepBookStillAcceptsNewBest() (gas: 34825530)
+[PASS] test_insert_fifoAtEqualPrice() (gas: 2242320)
+[PASS] test_insert_higherIdWithLowerBookSeqRanksFirst() (gas: 1444479)
+[PASS] test_insert_lowerBookSeqRanksFirstWhicheverIsInsertedFirst() (gas: 748192)
+[PASS] test_insert_priceBeatsBookSeq() (gas: 758998)
+[PASS] test_insert_revertsBookTooDeepPastMaxScan() (gas: 75226861)
+[PASS] test_insert_sidesAreIndependent() (gas: 714066)
+[PASS] test_insert_succeedsWithExactlyMaxScanOrdersAhead() (gas: 74735189)
+[PASS] test_stampBookSeq_increasesAndIsNotTheOrderId() (gas: 479890)
+[PASS] test_unlink_head() (gas: 1107889)
+[PASS] test_unlink_leavesOtherSideAlone() (gas: 659202)
+[PASS] test_unlink_middle() (gas: 1109928)
+[PASS] test_unlink_onlyElement() (gas: 389524)
+[PASS] test_unlink_orderNotInBookDoesNotEmptySide() (gas: 940245)
+[PASS] test_unlink_revertsWhenAlreadyUnlinked() (gas: 737411)
+[PASS] test_unlink_revertsWhenOrderNotInBook() (gas: 545049)
+[PASS] test_unlink_tail() (gas: 1103613)
+[PASS] test_unlink_thenInsertAgain() (gas: 875148)
+[PASS] test_views_emptyBookReturnsZero() (gas: 76207)
+Suite result: ok. 23 passed; 0 failed; 0 skipped; finished in 256.45ms (436.15ms CPU time)
+
+Ran 38 tests for test/OrderBook.Stop.t.sol:OrderBookStopTest
+[PASS] test_cancel_activatedStopCancelsLikeALimitOrder() (gas: 1422286)
+[PASS] test_cancel_cancelledStopIsNeverTriggered() (gas: 1326628)
+[PASS] test_cancel_pendingBuyStopRefundsFullEscrow() (gas: 562628)
+[PASS] test_cancel_pendingSellStopRefundsFullEscrow() (gas: 496262)
+[PASS] test_cancel_pendingStopByNonOwnerReverts() (gas: 496842)
+[PASS] test_cancel_pendingStopHeadMiddleTailKeepLinks() (gas: 1753995)
+[PASS] test_gas_triggerTenActivationsDeepInserts() (gas: 75003814)
+Logs:
+  triggerStopOrders(10) gas, 10 activations behind 90 bids: 1999225
+
+[PASS] test_gas_triggerTenActivationsTenFillsWithRefunds() (gas: 9293188)
+Logs:
+  triggerStopOrders(10) gas, 10 activations, 10 fills with refunds: 1483255
+
+[PASS] test_place_buyStopEscrowsQuoteAtLimitAndEmits() (gas: 515942)
+[PASS] test_place_pendingStopDoesNotMatchAndIsNotMatched() (gas: 1338649)
+[PASS] test_place_pendingStopIsNotInTheBookButIsListedForTheTrader() (gas: 1304470)
+[PASS] test_place_sellStopEscrowsBaseAndEmits() (gas: 519457)
+[PASS] test_place_stopListInsertBoundedByMaxInsertScan() (gas: 67383147)
+[PASS] test_place_stopListsSortedByTriggerWithTiesInPlacementOrder() (gas: 2490530)
+[PASS] test_place_validationOrderAndTriggerChecks() (gas: 259943)
+[PASS] test_solvency_contractHoldsEscrowOfPendingStops() (gas: 1234073)
+[PASS] test_trigger_activatedBuyStopFillsWithPriceImprovementRefund() (gas: 1842216)
+[PASS] test_trigger_activatedBuyStopPartFillKeepsExactRemainderEscrow() (gas: 1902792)
+[PASS] test_trigger_activatedSellStopFillsAgainstABid() (gas: 1800981)
+[PASS] test_trigger_activatedStopQueuesBehindEarlierOrdersAtItsPrice() (gas: 2172120)
+[PASS] test_trigger_activatedStopWithNoLiquidityRestsAsLimitOrder() (gas: 1812733)
+[PASS] test_trigger_buySideFirstWhenBothEligible() (gas: 1898756)
+[PASS] test_trigger_cannotTriggerTheSameStopTwice() (gas: 1399376)
+[PASS] test_trigger_cascadeStillBoundedByMaxCount() (gas: 2264753)
+[PASS] test_trigger_cascadeWithinOneCall() (gas: 2553597)
+[PASS] test_trigger_eventCarriesLastTradePriceNotTriggerPrice() (gas: 1359717)
+[PASS] test_trigger_exactTriggerPriceTriggersBothSides() (gas: 1849515)
+[PASS] test_trigger_honestStopBehindTooDeepBookIsRefundedExactly() (gas: 84616177)
+[PASS] test_trigger_ineligibleBuyHeadDoesNotHideEligibleSellStop() (gas: 1764118)
+[PASS] test_trigger_maxCountRespected() (gas: 2915849)
+[PASS] test_trigger_nothingBeforeTheFirstTrade() (gas: 902134)
+[PASS] test_trigger_partialFillRestsTheRemainder() (gas: 1849573)
+[PASS] test_trigger_revertsInvalidMaxCount() (gas: 126297)
+[PASS] test_trigger_sharedFillBudgetAcrossTheWholeCall() (gas: 13432518)
+[PASS] test_trigger_thirdPartyCallerGainsAndLosesNothing() (gas: 1745297)
+[PASS] test_trigger_unplaceableSellStopRefundsBase() (gas: 80197574)
+[PASS] test_trigger_unplaceableStopIsCancelledAndDoesNotBlockOthers() (gas: 83014005)
+[PASS] test_trigger_wrongSideOfThePriceDoesNotTrigger() (gas: 1694280)
+Suite result: ok. 38 passed; 0 failed; 0 skipped; finished in 230.84ms (906.31ms CPU time)
+
+Ran 6 tests for test/Integration.Factory.t.sol:IntegrationFactoryTest
+[PASS] test_batch_fourBuyersFourSellersSettledInOneMatchOrders() (gas: 29764257)
+[PASS] test_journey_cancelByAnotherTraderOrTwiceIsRefused() (gas: 589292)
+[PASS] test_journey_sell100Buy40CancelReturnsExactly60() (gas: 1443925)
+[PASS] test_listing_samePairAndReversedPairAreRefused() (gas: 71248)
+[PASS] test_stack_marketIsTheFactoryListingOfFactoryTokens() (gas: 74475)
+[PASS] test_stop_tradeMovesPriceKeeperTriggersSellStopAndItFills() (gas: 2960177)
+Suite result: ok. 6 passed; 0 failed; 0 skipped; finished in 277.84ms (89.39ms CPU time)
+
+Ran 35 tests for test/OrderBook.Match.t.sol:OrderBookMatchTest
+[PASS] test_cap_exactlyMaxFillsFillsTakerWithNoRemainder() (gas: 4636938)
+[PASS] test_cap_oneMoreMakerLeavesFundedCrossedTakerThatLaterOrdersDoNotClear() (gas: 6911961)
+[PASS] test_cap_remainderHittingBookTooDeepRevertsFillsToo() (gas: 61263922)
+[PASS] test_fifo_askMakersFillInEntryOrder() (gas: 3404460)
+[PASS] test_fifo_bidMakersFillInEntryOrder() (gas: 3473332)
+[PASS] test_gas_fullCapSweepWithRefunds() (gas: 4617999)
+[PASS] test_gas_insertAtMaxScanDepth() (gas: 45335309)
+[PASS] test_gas_worstCasePlacement() (gas: 134939681)
+[PASS] test_match_buyMakerPartlyFilledKeepsLockedQuoteFunded() (gas: 1033916)
+[PASS] test_match_buyerRefundedPriceImprovementWhenFilled() (gas: 922803)
+[PASS] test_match_buyerRefundedPriceImprovementWithRemainderResting() (gas: 1013122)
+[PASS] test_match_capLeavesRemainderRestingCrossed() (gas: 5222746)
+[PASS] test_match_crossedBookNewTakerFillsOppositeHeadAheadOfOlderOrder() (gas: 5646031)
+[PASS] test_match_emitsOrderPlacedBeforeTrade() (gas: 861427)
+[PASS] test_match_emitsTradeWithBuyMakerAndSellTaker() (gas: 873354)
+[PASS] test_match_emitsTradeWithMakerFields() (gas: 898655)
+[PASS] test_match_exactMatchBuyTaker() (gas: 1041462)
+[PASS] test_match_exactMatchSellTakerExecutesAtMakerPrice() (gas: 961164)
+[PASS] test_match_makerPartlyFilled() (gas: 989290)
+[PASS] test_match_noRefundTransferWhenNoPriceImprovement() (gas: 863031)
+[PASS] test_match_nonCrossingOrdersRest() (gas: 950230)
+[PASS] test_match_oneTickBelowDoesNotCross() (gas: 903164)
+[PASS] test_match_partlyFilledMakerFilledAgain() (gas: 1505017)
+[PASS] test_match_sellOneTickAboveBidDoesNotCross() (gas: 927445)
+[PASS] test_match_sellTakerPartlyFilledRestsRemainder() (gas: 1033800)
+[PASS] test_match_settlesWhenQtyTimesPriceExceedsUint256() (gas: 1028066)
+[PASS] test_match_specWorkedExample() (gas: 1100800)
+[PASS] test_match_stopsWhenTakerExactlyFilled() (gas: 1344360)
+[PASS] test_match_sweepsLevelsBestFirstAtEachMakerPrice() (gas: 1403828)
+[PASS] test_match_takerPartlyFilledRestsRemainder() (gas: 1070409)
+[PASS] test_match_updatesLastTradePrice() (gas: 1625450)
+[PASS] test_selfTrade_fullFillReturnsEverything() (gas: 912591)
+[PASS] test_selfTrade_partialFillNetsCorrectly() (gas: 961460)
+[PASS] test_sweep_buyTakerAcrossLevelsPartlyFillsLastMaker() (gas: 1908398)
+[PASS] test_sweep_sellTakerAcrossLevelsPartlyFillsLastMaker() (gas: 1987053)
+Suite result: ok. 35 passed; 0 failed; 0 skipped; finished in 339.12ms (557.28ms CPU time)
+
+Ran 22 tests for test/OrderBook.Batch.t.sol:OrderBookBatchTest
+[PASS] test_batch_acceptsMaxCountAtCapAndAtOne() (gas: 75353)
+[PASS] test_batch_bothFilledAreBothUnlinked() (gas: 5302312)
+[PASS] test_batch_capRespectedExactly() (gas: 21681678)
+[PASS] test_batch_clearsBookLeftCrossedByCapOverSeveralCalls() (gas: 18896213)
+[PASS] test_batch_filledTakerInBookIsUnlinked() (gas: 5360065)
+[PASS] test_batch_invalidMaxCountCheckedBeforeMatching() (gas: 5225680)
+[PASS] test_batch_makerFollowsBookSeqNotOrderId() (gas: 5354740)
+[PASS] test_batch_multiPartySettlesFourBuyersAndFourSellersInOneCall() (gas: 31113848)
+[PASS] test_batch_noOpOnEmptyBookReturnsZero() (gas: 107469)
+[PASS] test_batch_noOpWhenNotCrossedChangesNothing() (gas: 972291)
+[PASS] test_batch_noOpWhenOnlyAsks() (gas: 498429)
+[PASS] test_batch_noOpWhenOnlyBids() (gas: 558611)
+[PASS] test_batch_olderAskIsMakerAndSetsPrice() (gas: 5346173)
+[PASS] test_batch_olderBidIsMakerAndSetsPrice() (gas: 5477351)
+[PASS] test_batch_revertsInvalidMaxCountAboveCap() (gas: 42600)
+[PASS] test_batch_revertsInvalidMaxCountAtZero() (gas: 37292)
+[PASS] test_batch_selfTradeAcrossTheCrossingNetsToZero() (gas: 5269009)
+[PASS] test_batch_stopsWhenAsksRunOutWithBidsLeft() (gas: 6625335)
+[PASS] test_batch_stopsWhenBookNoLongerCrossed() (gas: 5798569)
+[PASS] test_batch_thirdPartyCallerGainsAndLosesNothing() (gas: 7258090)
+[PASS] test_batch_unfundedCallerCanClearTheBook() (gas: 5740724)
+[PASS] test_gas_matchOrdersFullCapWithRefunds() (gas: 9707613)
+Logs:
+  matchOrders(10) gas, 10 fills with refunds: 768891
+
+Suite result: ok. 22 passed; 0 failed; 0 skipped; finished in 336.51ms (300.41ms CPU time)
+
+╭-------------------------------------+-----------------+---------+---------+---------+---------╮
+| script/Deploy.s.sol:Deploy Contract |                 |         |         |         |         |
++===============================================================================================+
+| Deployment Cost                     | Deployment Size |         |         |         |         |
+|-------------------------------------+-----------------+---------+---------+---------+---------|
+|                             4921885 |           22486 |         |         |         |         |
+|-------------------------------------+-----------------+---------+---------+---------+---------|
+|                                     |                 |         |         |         |         |
+|-------------------------------------+-----------------+---------+---------+---------+---------|
+| Function Name                       | Min             | Avg     | Median  | Max     | # Calls |
+|-------------------------------------+-----------------+---------+---------+---------+---------|
+| defaultWallets                      |            1107 |    1107 |    1107 |    1107 |      16 |
+|-------------------------------------+-----------------+---------+---------+---------+---------|
+| deploy                              |           23124 | 5406007 | 6268193 | 6268193 |      22 |
+|-------------------------------------+-----------------+---------+---------+---------+---------|
+| run                                 |           21424 |   21424 |   21424 |   21424 |       2 |
+╰-------------------------------------+-----------------+---------+---------+---------+---------╯
+
+╭--------------------------------------+-----------------+-------+--------+-------+---------╮
+| src/DemoToken.sol:DemoToken Contract |                 |       |        |       |         |
++===========================================================================================+
+| Deployment Cost                      | Deployment Size |       |        |       |         |
+|--------------------------------------+-----------------+-------+--------+-------+---------|
+|                                    0 |            3252 |       |        |       |         |
+|--------------------------------------+-----------------+-------+--------+-------+---------|
+|                                      |                 |       |        |       |         |
+|--------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                        | Min             | Avg   | Median | Max   | # Calls |
+|--------------------------------------+-----------------+-------+--------+-------+---------|
+| allowance                            |            2811 |  2811 |   2811 |  2811 |       3 |
+|--------------------------------------+-----------------+-------+--------+-------+---------|
+| approve                              |           46367 | 46433 |  46367 | 46679 |      76 |
+|--------------------------------------+-----------------+-------+--------+-------+---------|
+| balanceOf                            |             559 |  1488 |    559 |  2559 |     269 |
+|--------------------------------------+-----------------+-------+--------+-------+---------|
+| burn                                 |           21415 | 21415 |  21415 | 21415 |       1 |
+|--------------------------------------+-----------------+-------+--------+-------+---------|
+| decimals                             |             176 |   176 |    176 |   176 |     105 |
+|--------------------------------------+-----------------+-------+--------+-------+---------|
+| mint                                 |           21783 | 21783 |  21783 | 21783 |       1 |
+|--------------------------------------+-----------------+-------+--------+-------+---------|
+| name                                 |            3174 |  3174 |   3174 |  3174 |       4 |
+|--------------------------------------+-----------------+-------+--------+-------+---------|
+| owner                                |           21275 | 21275 |  21275 | 21275 |       1 |
+|--------------------------------------+-----------------+-------+--------+-------+---------|
+| symbol                               |            1217 |  1403 |   1217 |  3217 |      43 |
+|--------------------------------------+-----------------+-------+--------+-------+---------|
+| totalSupply                          |             325 |   665 |    325 |  2325 |      47 |
+|--------------------------------------+-----------------+-------+--------+-------+---------|
+| transfer                             |           24465 | 51102 |  51638 | 51638 |      51 |
+|--------------------------------------+-----------------+-------+--------+-------+---------|
+| transferFrom                         |           24896 | 41275 |  41275 | 57654 |       2 |
+╰--------------------------------------+-----------------+-------+--------+-------+---------╯
+
+╭----------------------------------------------+-----------------+----------+---------+------------+---------╮
+| src/MarketFactory.sol:MarketFactory Contract |                 |          |         |            |         |
++============================================================================================================+
+| Deployment Cost                              | Deployment Size |          |         |            |         |
+|----------------------------------------------+-----------------+----------+---------+------------+---------|
+|                                            0 |           10537 |          |         |            |         |
+|----------------------------------------------+-----------------+----------+---------+------------+---------|
+|                                              |                 |          |         |            |         |
+|----------------------------------------------+-----------------+----------+---------+------------+---------|
+| Function Name                                | Min             | Avg      | Median  | Max        | # Calls |
+|----------------------------------------------+-----------------+----------+---------+------------+---------|
+| createMarket                                 |           24772 | 15950045 | 1893308 | 1009801714 |      70 |
+|----------------------------------------------+-----------------+----------+---------+------------+---------|
+| getMarket                                    |            1017 |     1613 |    1027 |       3027 |      54 |
+|----------------------------------------------+-----------------+----------+---------+------------+---------|
+| getMarkets                                   |            2664 |     4730 |    2870 |      10845 |      15 |
+|----------------------------------------------+-----------------+----------+---------+------------+---------|
+| isMarket                                     |             546 |     1188 |     546 |       2546 |      28 |
+|----------------------------------------------+-----------------+----------+---------+------------+---------|
+| marketCount                                  |             344 |     1156 |     344 |       2344 |      32 |
+|----------------------------------------------+-----------------+----------+---------+------------+---------|
+| owner                                        |           21254 |    21254 |   21254 |      21254 |       1 |
+╰----------------------------------------------+-----------------+----------+---------+------------+---------╯
+
+╭--------------------------------------+-----------------+--------+--------+---------+---------╮
+| src/OrderBook.sol:OrderBook Contract |                 |        |        |         |         |
++==============================================================================================+
+| Deployment Cost                      | Deployment Size |        |        |         |         |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+|                                    0 |            9188 |        |        |         |         |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+|                                      |                 |        |        |         |         |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| Function Name                        | Min             | Avg    | Median | Max     | # Calls |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| LOT_SIZE                             |             250 |    250 |    250 |     250 |       4 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| MAX_INSERT_SCAN                      |             207 |    207 |    207 |     207 |       2 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| MAX_MATCHES_PER_TX                   |             228 |    228 |    228 |     228 |       4 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| PRICE_SCALE                          |             250 |    250 |    250 |     250 |       4 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| TICK_SIZE                            |             206 |    206 |    206 |     206 |       3 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| baseToken                            |             304 |    304 |    304 |     304 |      28 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| cancelOrder                          |           28949 |  46897 |  31647 |   69941 |       7 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| getBestAsk                           |            4737 |   4737 |   4737 |    4737 |       5 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| getBestBid                           |            4705 |   4705 |   4705 |    4705 |       3 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| getBook                              |            3214 |  13624 |   3214 |   86493 |      20 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| getOrder                             |           18490 |  18490 |  18490 |   18490 |     179 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| getUserOrderIds                      |            2855 |   2855 |   2855 |    2855 |       3 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| hasTradePrice                        |            2353 |   2353 |   2353 |    2353 |       3 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| lastTradePrice                       |            2348 |   2348 |   2348 |    2348 |      10 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| matchOrders                          |           31147 | 174939 |  31147 |  506267 |       5 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| placeLimitOrder                      |           27383 | 412382 | 357985 | 1064927 |     131 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| placeStopLimitOrder                  |          264566 | 284202 | 285011 |  302220 |       4 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| quoteToken                           |             261 |    261 |    261 |     261 |      27 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| requiredQuote                        |            1028 |   1028 |   1028 |    1028 |      13 |
+|--------------------------------------+-----------------+--------+--------+---------+---------|
+| triggerStopOrders                    |           29070 |  99667 |  37789 |  201203 |       5 |
+╰--------------------------------------+-----------------+--------+--------+---------+---------╯
+
+╭--------------------------------------------+-----------------+--------+--------+--------+---------╮
+| src/TokenFactory.sol:TokenFactory Contract |                 |        |        |        |         |
++===================================================================================================+
+| Deployment Cost                            | Deployment Size |        |        |        |         |
+|--------------------------------------------+-----------------+--------+--------+--------+---------|
+|                                          0 |            4683 |        |        |        |         |
+|--------------------------------------------+-----------------+--------+--------+--------+---------|
+|                                            |                 |        |        |        |         |
+|--------------------------------------------+-----------------+--------+--------+--------+---------|
+| Function Name                              | Min             | Avg    | Median | Max    | # Calls |
+|--------------------------------------------+-----------------+--------+--------+--------+---------|
+| MAX_SUPPLY                                 |             161 |    161 |    161 |    161 |       2 |
+|--------------------------------------------+-----------------+--------+--------+--------+---------|
+| createToken                                |           22503 | 508133 | 560043 | 577023 |      55 |
+|--------------------------------------------+-----------------+--------+--------+--------+---------|
+| getTokens                                  |            2160 |   3315 |   2160 |  10802 |      31 |
+|--------------------------------------------+-----------------+--------+--------+--------+---------|
+| isFactoryToken                             |             577 |   1008 |    577 |   2577 |      51 |
+|--------------------------------------------+-----------------+--------+--------+--------+---------|
+| tokenCount                                 |             323 |    656 |    323 |   2323 |      24 |
+╰--------------------------------------------+-----------------+--------+--------+--------+---------╯
+
+╭--------------------------------------------------+-----------------+---------+---------+---------+---------╮
+| test/Deploy.t.sol:DeployWithNodeChainId Contract |                 |         |         |         |         |
++============================================================================================================+
+| Deployment Cost                                  | Deployment Size |         |         |         |         |
+|--------------------------------------------------+-----------------+---------+---------+---------+---------|
+|                                          4888465 |           22235 |         |         |         |         |
+|--------------------------------------------------+-----------------+---------+---------+---------+---------|
+|                                                  |                 |         |         |         |         |
+|--------------------------------------------------+-----------------+---------+---------+---------+---------|
+| Function Name                                    | Min             | Avg     | Median  | Max     | # Calls |
+|--------------------------------------------------+-----------------+---------+---------+---------+---------|
+| defaultWallets                                   |            1129 |    1129 |    1129 |    1129 |       1 |
+|--------------------------------------------------+-----------------+---------+---------+---------+---------|
+| run                                              |           23598 | 3152009 | 3152009 | 6280421 |       2 |
+|--------------------------------------------------+-----------------+---------+---------+---------+---------|
+| setNodeChainId                                   |           26414 |   26414 |   26414 |   26414 |       1 |
+╰--------------------------------------------------+-----------------+---------+---------+---------+---------╯
+
+╭--------------------------------------------------+-----------------+-----+--------+-----+---------╮
+| test/MarketFactory.t.sol:NoDecimalsStub Contract |                 |     |        |     |         |
++===================================================================================================+
+| Deployment Cost                                  | Deployment Size |     |        |     |         |
+|--------------------------------------------------+-----------------+-----+--------+-----+---------|
+|                                            66854 |              88 |     |        |     |         |
+|--------------------------------------------------+-----------------+-----+--------+-----+---------|
+|                                                  |                 |     |        |     |         |
+|--------------------------------------------------+-----------------+-----+--------+-----+---------|
+| Function Name                                    | Min             | Avg | Median | Max | # Calls |
+|--------------------------------------------------+-----------------+-----+--------+-----+---------|
+| decimals                                         |              23 |  23 |     23 |  23 |       1 |
+╰--------------------------------------------------+-----------------+-----+--------+-----+---------╯
+
+╭-----------------------------------------------------------+-----------------+-----------+-----------+------------+---------╮
+| test/MarketFactory.t.sol:ReenteringDecimalsToken Contract |                 |           |           |            |         |
++============================================================================================================================+
+| Deployment Cost                                           | Deployment Size |           |           |            |         |
+|-----------------------------------------------------------+-----------------+-----------+-----------+------------+---------|
+|                                                    145153 |             655 |           |           |            |         |
+|-----------------------------------------------------------+-----------------+-----------+-----------+------------+---------|
+|                                                           |                 |           |           |            |         |
+|-----------------------------------------------------------+-----------------+-----------+-----------+------------+---------|
+| Function Name                                             | Min             | Avg       | Median    | Max        | # Calls |
+|-----------------------------------------------------------+-----------------+-----------+-----------+------------+---------|
+| decimals                                                  |       992166484 | 998044970 | 994059942 | 1007908485 |       3 |
+╰-----------------------------------------------------------+-----------------+-----------+-----------+------------+---------╯
+
+╭----------------------------------------------------------+-----------------+-----+--------+-----+---------╮
+| test/MarketFactory.t.sol:RevertingDecimalsToken Contract |                 |     |        |     |         |
++===========================================================================================================+
+| Deployment Cost                                          | Deployment Size |     |        |     |         |
+|----------------------------------------------------------+-----------------+-----+--------+-----+---------|
+|                                                    87615 |             185 |     |        |     |         |
+|----------------------------------------------------------+-----------------+-----+--------+-----+---------|
+|                                                          |                 |     |        |     |         |
+|----------------------------------------------------------+-----------------+-----+--------+-----+---------|
+| Function Name                                            | Min             | Avg | Median | Max | # Calls |
+|----------------------------------------------------------+-----------------+-----+--------+-----+---------|
+| decimals                                                 |             186 | 186 |    186 | 186 |       1 |
+╰----------------------------------------------------------+-----------------+-----+--------+-----+---------╯
+
+╭---------------------------------------------------+-----------------+-----+--------+-----+---------╮
+| test/OrderBookBase.t.sol:NoDecimalsToken Contract |                 |     |        |     |         |
++====================================================================================================+
+| Deployment Cost                                   | Deployment Size |     |        |     |         |
+|---------------------------------------------------+-----------------+-----+--------+-----+---------|
+|                                             66854 |              88 |     |        |     |         |
+|---------------------------------------------------+-----------------+-----+--------+-----+---------|
+|                                                   |                 |     |        |     |         |
+|---------------------------------------------------+-----------------+-----+--------+-----+---------|
+| Function Name                                     | Min             | Avg | Median | Max | # Calls |
+|---------------------------------------------------+-----------------+-----+--------+-----+---------|
+| decimals                                          |              23 |  23 |     23 |  23 |       1 |
+╰---------------------------------------------------+-----------------+-----+--------+-----+---------╯
+
+╭---------------------------------------------+-----------------+-------+--------+-------+---------╮
+| test/mocks/MockERC20.sol:MockERC20 Contract |                 |       |        |       |         |
++==================================================================================================+
+| Deployment Cost                             | Deployment Size |       |        |       |         |
+|---------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                      526331 |            2929 |       |        |       |         |
+|---------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                             |                 |       |        |       |         |
+|---------------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                               | Min             | Avg   | Median | Max   | # Calls |
+|---------------------------------------------+-----------------+-------+--------+-------+---------|
+| allowance                                   |            2811 |  2811 |   2811 |  2811 |       6 |
+|---------------------------------------------+-----------------+-------+--------+-------+---------|
+| approve                                     |           46667 | 46678 |  46679 | 46679 |    1544 |
+|---------------------------------------------+-----------------+-------+--------+-------+---------|
+| balanceOf                                   |            2559 |  2559 |   2559 |  2559 |     941 |
+|---------------------------------------------+-----------------+-------+--------+-------+---------|
+| decimals                                    |             271 |   271 |    271 |   271 |     590 |
+|---------------------------------------------+-----------------+-------+--------+-------+---------|
+| mint                                        |           34228 | 55691 |  51328 | 68428 |    1552 |
+|---------------------------------------------+-----------------+-------+--------+-------+---------|
+| transfer                                    |           34526 | 34526 |  34526 | 34526 |      11 |
+╰---------------------------------------------+-----------------+-------+--------+-------+---------╯
+
+╭-----------------------------------------------------------+-----------------+--------+--------+---------+---------╮
+| test/mocks/OrderBookHarness.sol:OrderBookHarness Contract |                 |        |        |         |         |
++===================================================================================================================+
+| Deployment Cost                                           | Deployment Size |        |        |         |         |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+|                                                   2154534 |           10179 |        |        |         |         |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+|                                                           |                 |        |        |         |         |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| Function Name                                             | Min             | Avg    | Median | Max     | # Calls |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| LOT_SIZE                                                  |             294 |    294 |    294 |     294 |       1 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| MAX_INSERT_SCAN                                           |             230 |    230 |    230 |     230 |     121 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| MAX_MATCHES_PER_TX                                        |             228 |    228 |    228 |     228 |      52 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| PRICE_SCALE                                               |             294 |    294 |    294 |     294 |       1 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| TICK_SIZE                                                 |             295 |    295 |    295 |     295 |       1 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| baseToken                                                 |             260 |    260 |    260 |     260 |       1 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| bookHead                                                  |             614 |   2595 |   2614 |    2614 |     655 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| bookNext                                                  |            2491 |   2491 |   2491 |    2491 |    1996 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| bookPrev                                                  |            2515 |   2515 |   2515 |    2515 |    1985 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| bookSeq                                                   |            2492 |   2492 |   2492 |    2492 |    1407 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| cancelOrder                                               |           28937 |  66657 |  69772 |  215166 |      56 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| exposedInsert                                             |           53132 |  84827 |  82850 |  582556 |     557 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| exposedStampBookSeq                                       |           48795 |  49414 |  48795 |   65895 |     552 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| exposedUnlink                                             |           32656 |  37678 |  36067 |   46523 |      11 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| getBestAsk                                                |            4716 |   4716 |   4716 |    4716 |      33 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| getBestBid                                                |            4683 |   4683 |   4683 |    4683 |      30 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| getBook                                                   |            3252 | 359989 |  44891 | 2124106 |      45 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| getOrder                                                  |            2446 |  17793 |  18446 |   18446 |     432 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| getUserOrderIds                                           |            2884 |   3479 |   2884 |    7423 |      23 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| hasTradePrice                                             |             420 |   2120 |   2420 |    2420 |      20 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| lastTradePrice                                            |             326 |   2206 |   2326 |    2326 |      50 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| matchOrders                                               |           26680 | 226853 | 210504 |  781693 |      47 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| nextOrderId                                               |            2370 |   2370 |   2370 |    2370 |     551 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| placeLimitOrder                                           |           27085 | 452610 | 329250 | 1808075 |    1784 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| placeStopLimitOrder                                       |           27249 | 419463 | 333360 |  793602 |     189 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| quoteToken                                                |             328 |    328 |    328 |     328 |       1 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| readOrder                                                 |           18445 |  18445 |  18445 |   18445 |    8802 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| requiredQuote                                             |            1050 |   1123 |   1050 |    1344 |       8 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| stopHead                                                  |            2635 |   2635 |   2635 |    2635 |     550 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| triggerStopOrders                                         |           26725 | 324738 | 193992 | 1998747 |      40 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| writeBookSeq                                              |           26691 |  39516 |  43791 |   43791 |       8 |
+|-----------------------------------------------------------+-----------------+--------+--------+---------+---------|
+| writeOrder                                                |           44831 | 140848 | 141531 |  141543 |     564 |
+╰-----------------------------------------------------------+-----------------+--------+--------+---------+---------╯
+
+╭-------------------------------------------------------+-----------------+--------+--------+--------+---------╮
+| test/mocks/ReentrantERC20.sol:ReentrantERC20 Contract |                 |        |        |        |         |
++==============================================================================================================+
+| Deployment Cost                                       | Deployment Size |        |        |        |         |
+|-------------------------------------------------------+-----------------+--------+--------+--------+---------|
+|                                                912767 |            4667 |        |        |        |         |
+|-------------------------------------------------------+-----------------+--------+--------+--------+---------|
+|                                                       |                 |        |        |        |         |
+|-------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| Function Name                                         | Min             | Avg    | Median | Max    | # Calls |
+|-------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| approve                                               |           46702 |  46702 |  46702 |  46702 |      55 |
+|-------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| arm(address,bytes)                                    |           47263 |  85849 |  61283 | 183344 |      68 |
+|-------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| arm(address,bytes,uint256,bool)                       |          116395 | 146353 | 136307 | 203450 |      24 |
+|-------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| balanceOf                                             |            2626 |   2626 |   2626 |   2626 |     142 |
+|-------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| decimals                                              |             271 |    271 |    271 |    271 |      26 |
+|-------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| execute                                               |           48881 | 200657 | 148365 | 565094 |      56 |
+|-------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| fired                                                 |            2408 |   2408 |   2408 |   2408 |       3 |
+|-------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| firedTo                                               |            2381 |   2381 |   2381 |   2381 |       6 |
+|-------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| firedValue                                            |            2361 |   2361 |   2361 |   2361 |       5 |
+|-------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| innerCallFailed                                       |            2364 |   2364 |   2364 |   2364 |       6 |
+|-------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| innerRevertData                                       |            3271 |   3271 |   3271 |   3271 |       6 |
+|-------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| mint                                                  |           53521 |  59529 |  53521 |  70621 |      74 |
+╰-------------------------------------------------------+-----------------+--------+--------+--------+---------╯
+
+╭---------------------------------------------------+-----------------+-------+--------+-------+---------╮
+| test/mocks/ViewSpyERC20.sol:ViewSpyERC20 Contract |                 |       |        |       |         |
++========================================================================================================+
+| Deployment Cost                                   | Deployment Size |       |        |       |         |
+|---------------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                            948245 |            4832 |       |        |       |         |
+|---------------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                                   |                 |       |        |       |         |
+|---------------------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                                     | Min             | Avg   | Median | Max   | # Calls |
+|---------------------------------------------------+-----------------+-------+--------+-------+---------|
+| approve                                           |           46673 | 46673 |  46673 | 46673 |       8 |
+|---------------------------------------------------+-----------------+-------+--------+-------+---------|
+| arm                                               |           88500 | 88500 |  88500 | 88500 |       5 |
+|---------------------------------------------------+-----------------+-------+--------+-------+---------|
+| balanceOf                                         |            2531 |  2531 |   2531 |  2531 |       5 |
+|---------------------------------------------------+-----------------+-------+--------+-------+---------|
+| decimals                                          |             271 |   271 |    271 |   271 |       5 |
+|---------------------------------------------------+-----------------+-------+--------+-------+---------|
+| mint                                              |           53624 | 64311 |  70724 | 70724 |       8 |
+|---------------------------------------------------+-----------------+-------+--------+-------+---------|
+| snapshot                                          |           17469 | 17469 |  17469 | 17469 |       5 |
+╰---------------------------------------------------+-----------------+-------+--------+-------+---------╯
+
+
+Ran 24 test suites in 432.92ms (2.37s CPU time): 313 tests passed, 0 failed, 0 skipped (313 total tests)

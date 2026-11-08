@@ -857,3 +857,174 @@ Commit and notify after each step.
 - **Blocked tool:** it tried to download the Mermaid CLI to render the diagrams. The permission classifier blocked running external code, so it did not work around it. It linted the diagram syntax instead: every label quoted, quotes balanced. Rendering is not machine-verified.
 - **Orphan processes, again:** stopping the dev server's task left an orphaned `node.exe` listening on port 3999 (the same pattern as the Phase 7 mutant orphan). The AI identified it by its command line as the scratch clone's server and killed only that process tree.
 - **Windows path limit:** the README's `git submodule update --init --recursive` failed in the deep scratch path ("Filename too long"). Recorded as an environment finding and worked around with `core.longpaths`, not reported as a README bug.
+
+## 2026-11-08: Report diagrams (publication quality)
+**Phase:** wrap-up, report figures. **Branch:** `docs/figures`.
+
+**Prompt (summary):** make the report's diagrams publication-quality, working only in `docs/report/`. There are ten diagrams:
+- architecture, lifecycle, the partial-fill sequence, book structure, the stop trigger, the batch match
+- AI workflow, a Gantt from git dates, the evidence map, issues by phase
+
+Each must be checked against the source before drawing. Use one colour-blind-safe theme with text labels, kept readable at A4. Render to SVG and a 2x PNG with the Mermaid CLI, open every PNG and fix the layout, embed the figures with captions, update the contents, commit, push, and list the figures.
+
+**What the AI did:**
+- **Sources:** `docs/report/diagrams/NN-name.mmd` (01 to 10, numbered in report order), a shared `mermaid-config.json` (Okabe-Ito palette, Arial 16 px), and `render.sh`. Rendered with `@mermaid-js/mermaid-cli@11.4.2` through Edge, because Puppeteer had no bundled Chrome.
+- **Facts checked before drawing:**
+  - lifecycle transitions against `placeLimitOrder`, `placeStopLimitOrder`, `triggerStopOrders` and `_closeAndRefund`
+  - the Figure 5 numbers (22 escrow, re-lock 13.2, refund 0.8)
+  - Figure 8 against `test_batch_multiPartySettlesFourBuyersAndFourSellersInOneCall`
+  - Gantt dates and merge hashes from `git log`
+  - evidence numbers from Sections 5 and 6
+- **Every PNG opened and inspected, then fixed and re-rendered:**
+  - crossing edges and edges through titles (Figures 3, 4): ELK layout, blank group titles
+  - a 3,800 px lifecycle redesigned around a "match" decision
+  - overflowing sequence notes (Figures 5, 8)
+  - an upside-down ELK workflow: back to dagre
+  - Gantt gridlines through labels, plus a white "today" line
+  - an evidence map first 3,000 px tall, then 5,600 px wide: four columns
+  - an issues chart first 4,800 px wide, then out of phase order: one row per phase
+- **Report:** the three inline Mermaid blocks were replaced by Figures 1 to 10. Each figure has a "Figure N" caption and a one-line explanation. A list of figures was added under Contents, plus a new section 2.5 (Timeline). The 4.2 call graph became a bullet list, so no fact was lost.
+
+**What the AI got wrong:**
+- **Figure 8 note, first draft:** said the loop ended because the best bid was below the best ask. The test asserts both sides of the book are empty. Caught by reading the test before rendering, and fixed.
+- **ELK flipped Figure 1** (the workflow) to bottom-up because of its loop-back edges. The problem was found only by looking at the PNG.
+- **Figure 9:** the first two-row layout reordered the phases. The problem was found only by looking.
+
+**What the human did:** set the scope (only `docs/report/`, facts checked against the source), the style rules and the inspection requirement.
+
+## 2026-11-08: Report Sections 1 and 8 replaced with the team's text
+**Phase:** wrap-up, report. **Branch:** `docs/sections-1-8`.
+
+**Prompt (summary):** merge the human-written Section 1 (scope) and Section 8 (lessons, Person 1's part plus shared recommendations) into `AI_AUDIT_REPORT.md`, replacing the existing text.
+- Keep Person 2's Section 8 material and every [P2 to confirm] marker.
+- Check every fact against the repo and report the corrections.
+- Keep the contents, the list of figures and the evidence index consistent, and link the figures.
+- Pull, commit, merge, push and log the session.
+
+**What the AI did:**
+- **Pull:** nothing new.
+- **Replacement:** Section 1 replaced, and Section 8 replaced as 8.1 to 8.4. A new 8.5 holds Person 2's earlier Section 8 points with their markers; 37 [P2 to confirm] markers before and after.
+- **Figure links:** Figures 3 to 8 in Section 1; Figures 1, 2, 9 and 10 in Section 8.
+- **Evidence index:** gained `docs/DEX_Trading_Engine_Plan.md`. The headings were adapted to the report's levels.
+
+**Facts checked against the repo, and the corrections made:**
+- **Interface freeze timing.** "Froze the interface before the first line of engine code" was not accurate. The draft was committed on 28 Oct (`cd35f8b`), but the freeze was in `63aee60` (1 Nov, Phase 2a), ten minutes after the Phase 1 skeleton (`7c73490`). The text now says frozen before any escrow, matching or bonus code.
+- **Who wrote the specification.** "The coding agent was only given the task after SPEC.md and CONTRACT_INTERFACE.md existed" was not accurate. Claude Code wrote `CLAUDE.md`, `SPEC.md` and the interface draft in its Phase 0 plan-mode session (this log, 28 Oct), and the plan is titled "built with Claude Code". The text now says Claude Code was asked for contract code only after those files existed. The two examples (buy escrow, `hasTradePrice`) are confirmed in the plan.
+- **Test count.** "The engine ships with 335 contract tests" is wrong: there are 245 engine tests, and 335 is the project total.
+- **Gas figure.** It was corrected by the reviewer, not by the agent itself (1,281,301 to 1,778,221, Phase 3b).
+- **Deep run.** It was reported dead while it was still running, not after it completed. It later passed.
+- **CEI exception.** The second exception (issue 002) was caught by the independent reviewer, not by the AI itself. The escrow-order conflict (Phase 2b) was flagged by the AI.
+- **Fuzz.** 0 of 500 seeds for the original test (reviewer's replay), and 0 of 40 for the AI's first replacement. Both are now stated.
+- **Confirmed unchanged:**
+  - issue 004 (73 tests; found by review F7)
+  - issue 006 (102 wei; the reviewer reproduced it in a scratch copy)
+  - mutant C1 (cancel status check)
+  - 100% line and branch coverage, and 128,000 invariant calls
+  - the deep run of 7,088 s (about two hours)
+  - the `88cedf7` commit-message overstatement
+  - the aliased memory struct, and the pinned temporary behaviour
+  - the out-of-scope list (SPEC section 1)
+  - Phase 0 human overrides (lot and tick sizes, the shared budget)
+
+**What the AI got wrong:** its first attempt to write the sections through a shell heredoc failed on quoting, so nothing was written. It switched to writing files directly.
+
+**What the human did:** wrote Sections 1 and 8.1 to 8.4 and set the checking rules.
+
+## 2026-11-08: Report, the claude.ai chat assistant added
+**Phase:** wrap-up, report. **Branch:** `docs/chat-assistant`.
+
+**Prompt (summary):** Person 1 used Claude in the claude.ai app, in one long chat from 28 Oct to 8 Nov, as planner and reviewer. Add this accurately in four places:
+- **1.6:** the chat stress-tested the brief-based plan and rewrote it as `docs/DEX_Trading_Engine_Plan.md`, before Claude Code was engaged.
+- **Section 2:** a two-tier workflow. The chat wrote the phase prompts, reviewed plans and summaries, and proposed corrections; Claude Code implemented and ran the subagent reviews; the human made every decision. Use only facts in this log, attributing logged decisions as "my corrections (drafted with the chat assistant)".
+- **Section 3:** the phase prompts were drafted in the chat and refined in Claude Code.
+- **Section 8:** a lesson on the two tiers, including the chat's factual errors in the report drafts.
+
+**What the AI did:**
+- **1.6:** rewritten as two steps (the chat, then Claude Code).
+- **2.2:** a tools row for the chat.
+- **2.4:** a tier table, and a table of six corrections, each tied to the log entry that records it as a human decision. The correction entries checked were Phase 0 planning (1) and (2), "Human decision, O1", Phase 2b "Human decisions", the Phase 6 H1 choice and "Human decision on M-1".
+- **3.1 and 3.2:** wording updated.
+- **8.3:** item 7 added.
+- **Executive summary and report rules:** the chat statements are flagged as the owner's account, because there is no committed transcript.
+
+**What the AI got wrong / flagged:** nothing new was invented. The plan file's own title says "built with Claude Code", while the owner says the plan was written in the chat before Claude Code was engaged. The report quotes the title and gives the owner's account; it does not resolve the difference.
+
+**What the human did:** stated the chat's role and dates, and the attribution rule.
+
+## 2026-11-08: Report, the chat assistant marked as minimal use
+**Phase:** wrap-up, report. **Branch:** `docs/chat-minimal`.
+
+**Prompt (summary):** the same request as the previous entry, re-sent with one new fact: the claude.ai chat was used "very minimally".
+
+**What the AI did:**
+- **Not redone:** the previous merge (`5a81a33`) already carried every requested change, so it was not repeated.
+- **"Used minimally" added in five places:** the executive summary, the 1.6 plan bullet, the 2.2 tools row, the 2.4 tier table, and the 2.4 introduction. The introduction now also says that all of the code was written through Claude Code.
+
+**What the human did:** stated that the chat was used very minimally.
+
+## 2026-11-08: Report verification, Phases 0 to 2
+**Phase:** wrap-up, verification. **Branch:** `docs/report-verification`.
+
+**Prompt (summary):** the human asked for a phased plan to verify the report, the diagrams and any other logic. The AI proposed seven phases. The human said to start Phases 0 to 2, and while those ran, asked what else could be done.
+
+**What the AI did:**
+- **Phase 0:** baseline `e868f2a`, clean tree.
+- **Phase 1:** re-ran the Phase 8 commands in sequence: Slither, lint, sizes, coverage, gas and the full `forge test`. Every figure in the report matches:
+  - **tests:** 335 passed (245 engine, 90 Person 2)
+  - **coverage:** 182/182 and 59/59
+  - **gas:** all four maximums
+  - **sizes:** OrderBook 8,461 B, MarketFactory 10,508 B
+  - **Slither:** 27 results
+  - **lint:** 6 warnings
+- **Phase 2:** a checker script found 0 broken links or anchors (143), 0 unknown hashes, matching dates, and all 22 issue IDs with files and matching severities. It also exported the 39 teammate markers.
+- **Phase 5 leads, done while forge ran:** the two brief PDFs are byte-identical; the 334 and 244 mentions are labelled Phase 7 figures; the key figures agree across documents.
+- **Evidence:** `docs/ai-audit/test-evidence/wrapup/report-verification.md` plus `verification/`.
+
+**What the AI got wrong:** in the earlier figures session, Figure 2's Person 2 bar ended on 6 Nov. The verification compared it with `git log` and found that Person 2's commits run to 7 Nov (`dd60588`). The bar and the caption were fixed and the figure re-rendered.
+
+**Open lead:** the gas report's maximum placement (1,808,075) is above `test_gas_worstCasePlacement` (1,778,221), yet a draft calls 1.78M "the worst measured". This goes to Phase 3 or 5.
+
+**What the human did:** chose to start Phases 0 to 2.
+
+## 2026-11-08: Report verification, Phases 3 to 7
+**Phase:** wrap-up, verification. **Branch:** `docs/report-verification-2`.
+
+**Prompt (summary):** continue with the remaining verification phases; commit, merge and push as needed. The human then went to sleep and asked for a phone notification when it was done.
+
+**What the AI did:**
+- **Phase 3:**
+  - **Review:** a fresh, read-only subagent checked about 190 claims and returned 25 problems.
+  - **Re-check:** the main session confirmed each against its cited source before editing.
+  - **Corrections:** all 25 were corrected in the report. Among them:
+    - reviews from Phase 3a, not Phase 1
+    - the escrow-order history
+    - three options for issue 006, not four
+    - an unsupported prompt quotation
+    - the cross-boundary edits (README engine section, `demo-journey.sh`, and `abis.ts` authorised by Person 1 only)
+    - issue 004 as injected mutants
+    - who surfaced the design forks
+    - Person 2 details
+    - the chat-assistant scope
+  - **Elsewhere:** the section drafts were marked superseded, and one line was fixed in `VIDEO_PLAN.md`.
+- **Phase 4:**
+  - **Code:** Figures 3, 4, 6, 7 and 8 were checked against the code. Figure 5's numbers were proven by a temporary test, then deleted.
+  - **Figure 10:** labels fixed (reviews found 5 of 7; the slow fuzz test).
+  - **Figure 9:** label fixed (injected bugs).
+  - **Legibility:** six figures were narrowed so that every figure prints at 7.3 pt or more on A4, up from about 5 pt.
+- **Phase 5:**
+  - **Full mutation set:** all 67, which had never been recorded. Result: 65 caught; R4 and P5q survived as documented equivalents. All the rewritten mutants are now caught.
+  - **Gas lead:** resolved. The 1.81M placement is `test_gas_worstCasePlacement` on the final code (1.78M at Phase 3b). SPEC O2 now gives both.
+- **Phase 6:**
+  - **Demo:** `demo-journey.sh` on a scratch Anvil on port 8546: every check passed, and the chain was stopped.
+  - **Front end:** `npm test`: 410 passed, 48 skipped.
+- **Phase 7:** brief 2.1 and 2.2 compliance confirmed. What remains open: the 40 Person 2 markers, the team evaluation, the plan title, and confirming on NTULearn whether a video is required.
+- **Evidence:** `docs/ai-audit/test-evidence/wrapup/report-verification.md` and `verification/`.
+
+**What the AI got wrong:**
+- **Its own Figure 10** claimed that the per-phase reviews found all 7 issues.
+- **The A4 requirement** set when the figures were first made was not checked numerically then. Four figures would have printed at about 5 to 6 pt.
+- **The first Figure 5 check** failed on the test's own wrong balance assumption, not on the figure.
+- **Twice, a heredoc append failed on shell quoting.** Nothing was written either time, and the append was redone with the file tools.
+- **Phase 3 showed that earlier sessions wrote several unsupported attributions into the report** (listed above). Each one is now corrected against its source.
+
+**What the human did:** asked for the phased plan and for it to be carried out, with commit, merge and push.

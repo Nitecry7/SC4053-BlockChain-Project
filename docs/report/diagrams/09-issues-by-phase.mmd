@@ -1,0 +1,37 @@
+---
+config:
+  flowchart:
+    rankSpacing: 30
+    nodeSpacing: 18
+---
+flowchart TB
+  classDef phase fill:#555555,stroke:#555555,color:#FFFFFF,stroke-width:2px
+  classDef high fill:#FBE3D6,stroke:#D55E00,stroke-width:3px,color:#1A1A1A
+  classDef medium fill:#FFF1D6,stroke:#E69F00,stroke-width:2px,color:#1A1A1A
+  classDef low fill:#E6F0F8,stroke:#0072B2,stroke-width:1.5px,color:#1A1A1A
+  classDef latent fill:#F4F4F4,stroke:#666666,stroke-width:1.5px,stroke-dasharray:5 3,color:#1A1A1A
+
+  subgraph R1[" "]
+    direction LR
+    P2a["Phase 2a<br/>book"]:::phase --- I1["001 _unlink could<br/>empty a side<br/>LATENT, fixed"]:::latent
+  end
+  subgraph R2[" "]
+    direction LR
+    P3a["Phase 3a<br/>matching"]:::phase
+    P3a --- I4["004 three injected bugs<br/>would pass the tests<br/>HIGH (tests), fixed"]:::high
+    P3a --- I2["002 CEI deviation<br/>undocumented<br/>MEDIUM (docs), fixed"]:::medium
+    P3a --- I3["003 fill cost overflow<br/>LOW, fixed"]:::low
+  end
+  subgraph R3[" "]
+    direction LR
+    P4["Phase 4<br/>cancel"]:::phase --- I5["005 zero-address<br/>owner check<br/>LOW, fixed"]:::low
+  end
+  subgraph R4[" "]
+    direction LR
+    P6["Phase 6<br/>stop-limit"]:::phase --- I6["006 102-wei stop blocked<br/>all triggers<br/>HIGH (availability), fixed"]:::high
+  end
+  subgraph R5[" "]
+    direction LR
+    P8["Phase 8<br/>final audit"]:::phase --- I7["007 limit-order sandwich<br/>via the fill cap<br/>MEDIUM, accepted + pinned"]:::medium
+  end
+  R1 ~~~ R2 ~~~ R3 ~~~ R4 ~~~ R5
