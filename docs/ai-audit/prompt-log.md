@@ -1215,3 +1215,17 @@ Each must be checked against the source before drawing. Use one colour-blind-saf
 - **Checks:** `forge build` clean; `npm test` 604 passed, 76 skipped.
 
 **What the human did:** set the scope (deploy essentials, no video files) and supplied the submission instructions.
+
+---
+
+## 2026-11-08: Report cover page, wording pass and Times New Roman PDF (Person 1, submission branch)
+
+**Prompt (summary):** add the team's cover page to the AI audit PDF, re-read the report so it reads as written by an experienced engineer rather than by an AI, and set it in Times New Roman at a suitable size and line spacing.
+
+**What the AI did:**
+- Report wording (`docs/report/AI_AUDIT_REPORT.md`): replaced the "How to read this report" bullet list with one "Sources" paragraph; removed "honest" as a label (three places), a sentence about internal notes, and repeated "Kept apart by source" phrasing; replaced 14 em-dash table cells with "n/a"; removed bold from 120 bullet lead-ins. No figure, number, hash or claim changed.
+- PDF: Times New Roman 12 pt, 1.5 line spacing, justified, 25 mm/22 mm margins; tables at 10 pt; code stays monospace. The cover page (supplied as a US Letter PDF) is scaled onto A4 as page 1, kept as vector. 55 pages in all; repository links remain plain text.
+
+**What the AI got wrong:** nothing new found; the earlier draft's dense bold lead-ins were the main stylistic issue.
+
+**What the human did:** supplied the cover page and asked for the wording and typography changes.
