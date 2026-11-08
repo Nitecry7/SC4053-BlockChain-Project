@@ -35,14 +35,19 @@ Test numbers below are recorded results from earlier runs, not new executions.
 | Prompt logs | Person 1 and Person 2, separate files | `docs/ai-audit/prompt-log.md`, `prompt-log-person2.md` |
 | Tools and models per phase | Written | `docs/ai-audit/tooling-and-methodology.md` |
 | User and test documentation | README Quick Start, Beginner's Guide, deployment, testing and front-end guides | `README.md`, `docs/BEGINNERS_GUIDE.md`, `DEPLOYMENT.md`, `TESTING.md`, `FRONTEND.md` |
-| Demo plan | Written, not rehearsed on the recording chain | `docs/VIDEO_PLAN.md` |
+| Demo video package | Runbook and word-for-word script written (provisional 7:30); **video not recorded, setup not yet built or rehearsed** | `docs/VIDEO_PLAN.md`, `docs/VIDEO_SCRIPT.md` |
 
 ## 3. Remaining human activities
 
 - [ ] **Read the final report as a team.** Both teammates should read `docs/report/AI_AUDIT_REPORT.md` once, in particular the sections they did not write, and confirm that it says what happened. Three facts only a person can confirm: whether Person 2 used a chat assistant (none is recorded), whether Person 2 approved Person 1 regenerating `web/lib/contracts/abis.ts` (`e375ff6`; the approval is not recorded), and that Person 1's account of the claude.ai chat (not in the repository) is accurate.
 - [ ] **Peer evaluation** (mandatory and confidential; brief sections 4 and 7). Each student submits their own, separately.
-- [ ] **Record the demo video**, if one is to be submitted (`docs/VIDEO_PLAN.md`). The plan targets 7:30 within a 6 to 8 minute window; that window is the team's own plan, not a requirement of the brief. Record a `contracts/script/demo-journey.sh` clip as a backup.
-- [ ] **Rehearse the demo on the recording chain**: a fresh Anvil, then deploy and export, so the recording starts from block 0.
+- [ ] **Record the demo video**, if one is to be submitted. The runbook is `docs/VIDEO_PLAN.md` and the spoken text is `docs/VIDEO_SCRIPT.md`. The 7:30 target (inside a 6 to 8 minute window) is the team's own plan, not a requirement of the brief. Recording deliverables, none of them done yet:
+  - [ ] the dedicated recording environment built on 8549 / 3103 (`VIDEO_PLAN.md`, section 2), without touching 8545 to 8548 or 3000 to 3102
+  - [ ] one timed rehearsal, including a 2-minute Zoom test recording played back
+  - [ ] the clean browser profile with a throwaway MetaMask (Alice, Bob, Keeper) set up
+  - [ ] the backup clip: `DEMO_PORT=8550 bash contracts/script/demo-journey.sh` recorded once (`VIDEO_PLAN.md`, section 9)
+  - [ ] the final Zoom recording made, played back and checked (voices, readable text, no key or phrase, length near 7:30)
+  - [ ] the file named and stored as NTULearn requires, and the recording environment stopped and `/tmp/sc4053-demo` removed
 - [ ] **Agree the shared-file wording**: `CLAUDE.md` still names the brief `docs/project.pdf`, while the file in the repository is `docs/Development_Project.pdf`. `CLAUDE.md` is shared, so neither teammate has edited it.
 - [ ] **Decide whether the brief PDF should stay in the public repository** (see section 6).
 - [ ] **Submit** (section 7).
@@ -60,7 +65,7 @@ The cases below were not performed with MetaMask. They are optional unless the t
 
 - The submission deadline.
 - The submission format: PDF or Markdown report, how the code is handed in, and whether a repository link or a zip is expected.
-- Whether a demo video is required, and its length and format.
+- Whether a demo video is required, and its length, format and file name (the 7:30 target in `docs/VIDEO_SCRIPT.md` is provisional).
 - How peer evaluation is submitted.
 
 ## 6. Known limitations
