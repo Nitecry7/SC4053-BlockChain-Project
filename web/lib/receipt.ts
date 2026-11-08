@@ -152,9 +152,201 @@ export function reconcileOrder(
   return problems;
 }
 
+export type CancelReceipt = {
+  orderId: bigint;
+  trader: Address;
+  /** Refund reported by `OrderCancelled`. */
+  refundBase: bigint;
+  refundQuote: bigint;
+  /** Tokens that actually moved from the market to the trader in this transaction (the tokens' own `Transfer` events). */
+  transferredBase: bigint;
+  transferredQuote: bigint;
+};
+
+export type CancelReceiptResult = { ok: true; receipt: CancelReceipt } | { ok: false; reason: "no-order-cancelled" | "ambiguous-order-cancelled" };
+
+/**
+ * Reads what a `cancelOrder` transaction actually did: the `OrderCancelled` event for the requested order, emitted by
+ * this market for this trader, and the tokens' `Transfer(market -> trader)` events. Anything else (another order's
+ * cancellation, another market, another trader) is not accepted, so a replaced transaction cannot be reported as ours.
+ */
+export function decodeCancelReceipt(input: {
+  logs: readonly RawLog[];
+  market: Address;
+  baseToken: Address;
+  quoteToken: Address;
+  user: Address;
+  orderId: bigint;
+}): CancelReceiptResult {
+  const { logs, market, baseToken, quoteToken, user, orderId } = input;
+  const cancelled = decodeFrom<{ eventName: string; args?: { orderId: bigint; trader: Address; refundBase: bigint; refundQuote: bigint } }>(orderBookAbi, logs, market).filter(
+    (e) => e.eventName === "OrderCancelled" && e.args !== undefined && e.args.orderId === orderId && same(e.args.trader, user),
+  );
+  if (cancelled.length === 0) return { ok: false, reason: "no-order-cancelled" };
+  if (cancelled.length > 1) return { ok: false, reason: "ambiguous-order-cancelled" };
+  const a = cancelled[0]!.args!;
+  const moved = (token: Address) =>
+    decodeFrom<TokenEvent>(demoTokenAbi, logs, token)
+      .filter((e): e is Extract<TokenEvent, { eventName: "Transfer" }> => e.eventName === "Transfer")
+      .map((e) => e.args)
+      .filter((t) => same(t.from, market) && same(t.to, user))
+      .reduce((sum, t) => sum + t.value, 0n);
+  return {
+    ok: true,
+    receipt: { orderId, trader: a.trader, refundBase: a.refundBase, refundQuote: a.refundQuote, transferredBase: moved(baseToken), transferredQuote: moved(quoteToken) },
+  };
+}
+
+export type MatchReceipt = {
+  /** The `Trade` events the market emitted in this transaction, in log order. Empty is a legitimate no-op (nothing crossed). */
+  fills: DecodedTrade[];
+  /** Everything the market paid out in this transaction, per token (the tokens' own `Transfer(market -> anyone)` events). */
+  baseOut: bigint;
+  quoteOut: bigint;
+  /** The same payouts per recipient (lower-case address), so each trader's receipt can be checked against their own trades. */
+  baseTo: Record<string, bigint>;
+  quoteTo: Record<string, bigint>;
+};
+
+/**
+ * Reads what a `matchOrders` transaction actually did. `matchOrders` has no event of its own: each settled fill is a
+ * `Trade` from the market. Only logs emitted BY the requested market (and its two tokens) count, so another market's
+ * trades in the same transaction cannot be reported as ours, and zero `Trade` logs yields zero fills, never a made-up one.
+ */
+export function decodeMatchReceipt(input: { logs: readonly RawLog[]; market: Address; baseToken: Address; quoteToken: Address }): MatchReceipt {
+  const { logs, market, baseToken, quoteToken } = input;
+  const fills = decodeFrom<OrderBookEvent>(orderBookAbi, logs, market)
+    .filter((e): e is { eventName: "Trade"; args: DecodedTrade } => e.eventName === "Trade" && e.args !== undefined)
+    .map((e) => e.args);
+  const paid = (token: Address) => {
+    const to: Record<string, bigint> = {};
+    let total = 0n;
+    for (const t of decodeFrom<TokenEvent>(demoTokenAbi, logs, token)
+      .filter((e): e is Extract<TokenEvent, { eventName: "Transfer" }> => e.eventName === "Transfer")
+      .map((e) => e.args)
+      .filter((t) => same(t.from, market))) {
+      to[t.to.toLowerCase()] = (to[t.to.toLowerCase()] ?? 0n) + t.value;
+      total += t.value;
+    }
+    return { to, total };
+  };
+  const base = paid(baseToken);
+  const quote = paid(quoteToken);
+  return { fills, baseOut: base.total, quoteOut: quote.total, baseTo: base.to, quoteTo: quote.to };
+}
+
+export type StopReceipt = {
+  orderId: bigint;
+  trader: Address;
+  side: Side;
+  triggerPrice: bigint;
+  limitPrice: bigint;
+  amount: bigint;
+  /** Tokens that actually moved from the trader to the market in this transaction (the tokens' own `Transfer` events). */
+  escrowBase: bigint;
+  escrowQuote: bigint;
+};
+export type StopReceiptResult = { ok: true; receipt: StopReceipt } | { ok: false; reason: "no-stop-placed" | "ambiguous-stop-placed" };
+
+/**
+ * Reads what a `placeStopLimitOrder` transaction did: the `StopOrderPlaced` event (there is NO `OrderPlaced` for a stop)
+ * emitted by this market for this trader, and the tokens' `Transfer(trader -> market)` events. Any other trader's stop,
+ * another market's or another contract's event is not accepted.
+ */
+export function decodeStopReceipt(input: { logs: readonly RawLog[]; market: Address; baseToken: Address; quoteToken: Address; user: Address }): StopReceiptResult {
+  const { logs, market, baseToken, quoteToken, user } = input;
+  const placed = decodeFrom<{ eventName: string; args?: { orderId: bigint; trader: Address; side: number; triggerPrice: bigint; limitPrice: bigint; amount: bigint } }>(orderBookAbi, logs, market).filter(
+    (e) => e.eventName === "StopOrderPlaced" && e.args !== undefined && same(e.args.trader, user),
+  );
+  if (placed.length === 0) return { ok: false, reason: "no-stop-placed" };
+  if (placed.length > 1) return { ok: false, reason: "ambiguous-stop-placed" };
+  const a = placed[0]!.args!;
+  const moved = (token: Address) =>
+    decodeFrom<TokenEvent>(demoTokenAbi, logs, token)
+      .filter((e): e is Extract<TokenEvent, { eventName: "Transfer" }> => e.eventName === "Transfer")
+      .map((e) => e.args)
+      .filter((t) => same(t.from, user) && same(t.to, market))
+      .reduce((sum, t) => sum + t.value, 0n);
+  return {
+    ok: true,
+    receipt: {
+      orderId: a.orderId,
+      trader: a.trader,
+      side: a.side === 0 ? "buy" : "sell",
+      triggerPrice: a.triggerPrice,
+      limitPrice: a.limitPrice,
+      amount: a.amount,
+      escrowBase: moved(baseToken),
+      escrowQuote: moved(quoteToken),
+    },
+  };
+}
+
+export type TriggerReceipt = {
+  /** `StopOrderTriggered` events in log order: the stop that was activated and the last trade price that made it eligible. */
+  triggered: { orderId: bigint; lastTradePrice: bigint; logIndex: number }[];
+  /** The market's `Trade` events (a triggered stop is always the taker), in log order. */
+  fills: (DecodedTrade & { logIndex: number })[];
+  /** Every `OrderCancelled` from the market. Those whose order was triggered earlier in the same transaction are the engine's own auto-cancels. */
+  cancelled: { orderId: bigint; trader: Address; refundBase: bigint; refundQuote: bigint; logIndex: number; auto: boolean }[];
+  /** Everything the market paid out in this transaction, per token and per recipient (lower-case address). */
+  baseOut: bigint;
+  quoteOut: bigint;
+  baseTo: Record<string, bigint>;
+  quoteTo: Record<string, bigint>;
+};
+
+/**
+ * Reads what a `triggerStopOrders` transaction actually did. It has no event of its own beyond `StopOrderTriggered` per
+ * activation; zero of them is a legitimate no-op. An `OrderCancelled` counts as an auto-cancel (the engine could not
+ * insert an activated remainder) only if a `StopOrderTriggered` for the same order precedes it in the same transaction;
+ * an owner cancel cannot appear here, because only the trigger call ran. Only logs emitted by the requested market and
+ * its two tokens are read.
+ */
+export function decodeTriggerReceipt(input: { logs: readonly RawLog[]; market: Address; baseToken: Address; quoteToken: Address }): TriggerReceipt {
+  const { logs, market, baseToken, quoteToken } = input;
+  const events = decodeFrom<{ eventName: string; logIndex?: number | null; args?: Record<string, unknown> }>(orderBookAbi, logs, market);
+  const at = (e: { logIndex?: number | null }) => e.logIndex ?? 0;
+  const triggered = events
+    .filter((e) => e.eventName === "StopOrderTriggered" && e.args)
+    .map((e) => ({ orderId: e.args!.orderId as bigint, lastTradePrice: e.args!.lastTradePrice as bigint, logIndex: at(e) }));
+  const fills = events.filter((e) => e.eventName === "Trade" && e.args).map((e) => ({ ...(e.args as unknown as DecodedTrade), logIndex: at(e) }));
+  const cancelled = events
+    .filter((e) => e.eventName === "OrderCancelled" && e.args)
+    .map((e) => {
+      const orderId = e.args!.orderId as bigint;
+      return {
+        orderId,
+        trader: e.args!.trader as Address,
+        refundBase: e.args!.refundBase as bigint,
+        refundQuote: e.args!.refundQuote as bigint,
+        logIndex: at(e),
+        auto: triggered.some((t) => t.orderId === orderId && t.logIndex < at(e)),
+      };
+    });
+  const paid = (token: Address) => {
+    const to: Record<string, bigint> = {};
+    let total = 0n;
+    for (const t of decodeFrom<TokenEvent>(demoTokenAbi, logs, token)
+      .filter((e): e is Extract<TokenEvent, { eventName: "Transfer" }> => e.eventName === "Transfer")
+      .map((e) => e.args)
+      .filter((t) => same(t.from, market))) {
+      to[t.to.toLowerCase()] = (to[t.to.toLowerCase()] ?? 0n) + t.value;
+      total += t.value;
+    }
+    return { to, total };
+  };
+  const base = paid(baseToken);
+  const quote = paid(quoteToken);
+  return { triggered, fills, cancelled, baseOut: base.total, quoteOut: quote.total, baseTo: base.to, quoteTo: quote.to };
+}
+
 export type TxEvent =
   | { kind: "OrderPlaced"; market: Address; orderId: bigint; trader: Address; side: Side; price: bigint; amount: bigint }
   | ({ kind: "Trade"; market: Address } & DecodedTrade)
+  | { kind: "OrderCancelled"; market: Address; orderId: bigint; trader: Address; refundBase: bigint; refundQuote: bigint }
+  | { kind: "StopOrderPlaced"; market: Address; orderId: bigint; trader: Address; side: Side; triggerPrice: bigint; limitPrice: bigint; amount: bigint }
+  | { kind: "StopOrderTriggered"; market: Address; orderId: bigint; lastTradePrice: bigint }
   | { kind: "Transfer"; token: Address; from: Address; to: Address; value: bigint }
   | { kind: "Approval"; token: Address; owner: Address; spender: Address; value: bigint };
 
@@ -176,6 +368,18 @@ export function decodeTxEvents(input: { logs: readonly (RawLog & { logIndex?: nu
         recognisedLogs++;
       } else if (e.eventName === "Trade" && e.args) {
         events.push({ logIndex: e.logIndex ?? 0, event: { kind: "Trade", market, ...(e.args as DecodedTrade) } });
+        recognisedLogs++;
+      } else if (e.eventName === "StopOrderPlaced" && e.args) {
+        const a = e.args as { orderId: bigint; trader: Address; side: number; triggerPrice: bigint; limitPrice: bigint; amount: bigint };
+        events.push({ logIndex: e.logIndex ?? 0, event: { kind: "StopOrderPlaced", market, orderId: a.orderId, trader: a.trader, side: a.side === 0 ? "buy" : "sell", triggerPrice: a.triggerPrice, limitPrice: a.limitPrice, amount: a.amount } });
+        recognisedLogs++;
+      } else if (e.eventName === "StopOrderTriggered" && e.args) {
+        const a = e.args as { orderId: bigint; lastTradePrice: bigint };
+        events.push({ logIndex: e.logIndex ?? 0, event: { kind: "StopOrderTriggered", market, orderId: a.orderId, lastTradePrice: a.lastTradePrice } });
+        recognisedLogs++;
+      } else if (e.eventName === "OrderCancelled" && e.args) {
+        const a = e.args as { orderId: bigint; trader: Address; refundBase: bigint; refundQuote: bigint };
+        events.push({ logIndex: e.logIndex ?? 0, event: { kind: "OrderCancelled", market, ...a } });
         recognisedLogs++;
       }
     }

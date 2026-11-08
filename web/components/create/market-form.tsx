@@ -113,12 +113,12 @@ export function MarketForm() {
 
   return (
     <>
-      <PageHeader title="List market" meta={markets.total !== undefined ? `${markets.total.toString()} listed so far` : undefined}>
+      <PageHeader title="List Market" meta={markets.total !== undefined ? `${markets.total.toString()} listed so far` : undefined}>
         Open an order book for a pair of 18-decimal tokens through the on-chain MarketFactory. Anyone can list a pair, once, and the base and quote you choose become permanent.
       </PageHeader>
       <StatusBanners state={ctx} />
       <div>
-        <Panel id="list-market" title={done ? "Your new market" : "Choose the pair"} className="min-w-0">
+        <Panel id="list-market" title={done ? "Your New Market" : "Choose the Pair"} className="min-w-0">
           {done ? (
             <div className="space-y-3">
               <MarketResult outcome={state.result!} />
@@ -172,7 +172,7 @@ export function MarketForm() {
                   </p>
                   <Link
                     href={`/trade?market=${pair.market}`}
-                    className="inline-flex h-9 items-center rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] px-3.5 text-[0.8125rem] font-semibold text-white hover:brightness-110"
+                    className="inline-flex h-9 items-center rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] px-3.5 text-[0.8125rem] font-semibold text-white hover:brightness-105"
                   >
                     Open the existing market
                   </Link>
@@ -225,7 +225,7 @@ export function MarketForm() {
         </Panel>
 
         <FactoryFacts
-          title="How listing works"
+          title="How Listing Works"
           address={factory}
           facts={[
             { term: "One market per pair", detail: "A pair can be listed once, in either order. The reverse pair is refused so liquidity is never split. The check is made on-chain before you sign." },

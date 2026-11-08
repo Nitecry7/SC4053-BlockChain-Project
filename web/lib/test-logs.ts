@@ -29,6 +29,27 @@ export const orderPlaced = (address: Address, orderId: bigint, trader: Address, 
   logIndex: idx++,
 });
 
+export const orderCancelled = (address: Address, orderId: bigint, trader: Address, refundBase: bigint, refundQuote: bigint): TestLog => ({
+  address,
+  topics: encodeEventTopics({ abi: orderBookAbi, eventName: "OrderCancelled", args: { orderId, trader } }) as [Hex, ...Hex[]],
+  data: encodeAbiParameters([{ type: "uint256" }, { type: "uint256" }], [refundBase, refundQuote]),
+  logIndex: idx++,
+});
+
+export const stopOrderPlaced = (address: Address, orderId: bigint, trader: Address, side: 0 | 1, triggerPrice: bigint, limitPrice: bigint, amount: bigint): TestLog => ({
+  address,
+  topics: encodeEventTopics({ abi: orderBookAbi, eventName: "StopOrderPlaced", args: { orderId, trader } }) as [Hex, ...Hex[]],
+  data: encodeAbiParameters([{ type: "uint8" }, { type: "uint256" }, { type: "uint256" }, { type: "uint256" }], [side, triggerPrice, limitPrice, amount]),
+  logIndex: idx++,
+});
+
+export const stopOrderTriggered = (address: Address, orderId: bigint, lastTradePrice: bigint): TestLog => ({
+  address,
+  topics: encodeEventTopics({ abi: orderBookAbi, eventName: "StopOrderTriggered", args: { orderId } }) as [Hex, ...Hex[]],
+  data: encodeAbiParameters([{ type: "uint256" }], [lastTradePrice]),
+  logIndex: idx++,
+});
+
 export const trade = (
   address: Address,
   makerOrderId: bigint,

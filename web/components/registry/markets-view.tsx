@@ -78,7 +78,7 @@ export function MarketsView() {
           Showing the first {reg.markets.length} of {reg.total.toString()} listed markets (oldest first). A newer market is still reachable by its address on the Trade page.
         </p>
       )}
-      <Panel title={query ? `Results for “${query}”` : "All markets"}>
+      <Panel title={query ? `Results for “${query}”` : "All Markets"}>
         {!state.live ? (
           <EmptyState title="No live markets">The registry is read once the deployment is found on this chain.</EmptyState>
         ) : !reg.markets ? (
@@ -94,12 +94,12 @@ export function MarketsView() {
             <thead className="max-md:sr-only">
               <tr className="border-b border-white/[0.09] text-[0.6875rem] text-muted-foreground">
                 <th scope="col" className="pb-2 text-left font-medium">Pair</th>
-                <th scope="col" className="pb-2 text-left font-medium">Market contract</th>
-                <th scope="col" className="pb-2 text-right font-medium">Last trade</th>
-                <th scope="col" className="pb-2 text-right font-medium">Best bid</th>
-                <th scope="col" className="pb-2 text-right font-medium">Best ask</th>
+                <th scope="col" className="pb-2 text-left font-medium">Market Contract</th>
+                <th scope="col" className="pb-2 text-right font-medium">Last Trade</th>
+                <th scope="col" className="pb-2 text-right font-medium">Best Bid</th>
+                <th scope="col" className="pb-2 text-right font-medium">Best Ask</th>
                 <th scope="col" className="pb-2 text-right font-medium">Trades</th>
-                <th scope="col" className="pb-2 text-right font-medium">Base volume</th>
+                <th scope="col" className="pb-2 text-right font-medium">Base Volume</th>
               </tr>
             </thead>
             <tbody className="max-md:block">
@@ -111,7 +111,7 @@ export function MarketsView() {
         )}
       </Panel>
       <FactoryFacts
-        title="How markets are listed"
+        title="How Markets Are Listed"
         address={DEPLOYMENT.marketFactory}
         facts={[
           { term: "One market per pair", detail: "A pair can be listed once, in either order. The reverse pair is refused, so liquidity is never split." },

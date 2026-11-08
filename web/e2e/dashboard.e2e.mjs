@@ -173,7 +173,7 @@ async function main() {
     await page.locator("#market-picker").selectOption(dttMarket);
     await page.waitForURL((u) => u.searchParams.get("market")?.toLowerCase() === dttMarket.toLowerCase(), { timeout: 10000 });
     await page.waitForFunction(() => document.querySelector("#market-selector")?.textContent?.includes("DTT / SGDx"), null, { timeout: 15000 });
-    await page.waitForFunction(() => /DTT \/ SGDx holdings/.test(document.querySelector("#holdings")?.textContent ?? ""), null, { timeout: 15000 });
+    await page.waitForFunction(() => /DTT \/ SGDx Holdings/.test(document.querySelector("#holdings")?.textContent ?? ""), null, { timeout: 15000 });
     assert(/DTT/.test(await text(page.locator("#depth"))) || /DTT/.test(await text(page.locator("#book"))), "depth / book name DTT");
     assert(/DTT \/ SGDx/.test(await text(page.locator("#book"))), "the order book is titled for the selected pair");
     assert((await page.locator('#holdings [aria-label="Share of total supply held by this wallet"] > div').count()) === 2, "the pair panel has exactly two supply-share rows (no stale row left from the loading state)");
@@ -226,7 +226,7 @@ async function main() {
     await page.waitForTimeout(800);
     const t = ticket();
     await t.getByRole("radio", { name: /Buy DTT/ }).click();
-    await t.getByLabel("Limit price").fill("2.2");
+    await t.locator("#order-price").fill("2.2");
     await t.getByLabel("Amount", { exact: true }).fill("4");
     await t.getByRole("button", { name: "Review order" }).click();
     const next = t.getByRole("button", { name: /^(Approve |Place (buy|sell) order)/ });
@@ -254,7 +254,7 @@ async function main() {
 
   await test("a token created in the app appears in the overview without a reload (in-app navigation only)", async () => {
     await page.getByRole("link", { name: "Create token" }).first().click();
-    await page.getByRole("heading", { name: "Create token", exact: true }).waitFor({ timeout: 20000 });
+    await page.getByRole("heading", { name: "Create Token", exact: true }).waitFor({ timeout: 20000 });
     await page.getByLabel("Name", { exact: true }).fill("Fresh Coin");
     await page.getByLabel("Symbol", { exact: true }).fill("FRSH");
     await page.getByLabel("Total supply").fill("250");

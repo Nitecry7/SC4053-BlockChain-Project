@@ -51,7 +51,7 @@ export function Dashboard() {
           <CreateListPanel state={state} />
         </div>
       </div>
-      <RoadmapStrip />
+      <RoadmapStrip tradeHref={`/trade?market=${state.marketAddress}`} />
     </>
   );
 }

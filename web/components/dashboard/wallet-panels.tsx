@@ -34,7 +34,7 @@ export function HoldingsPanel({ state }: { state: DashboardState }) {
   return (
     <Panel
       id="holdings"
-      title={`${base.symbol} / ${quote.symbol} holdings`}
+      title={`${base.symbol} / ${quote.symbol} Holdings`}
       className="relative min-h-[10.5rem]"
       action={
         <span className="inline-flex items-center gap-1.5 text-[0.6875rem] text-muted-foreground">
@@ -112,9 +112,9 @@ export function QuickActions({ state }: { state: DashboardState }) {
   const [copied, setCopied] = useState(false);
   const address = state.account.address;
   return (
-    <Panel id="quick-actions" title="Quick actions">
+    <Panel id="quick-actions" title="Quick Actions">
       <div className="mt-1 grid grid-cols-4 gap-2">
-        <Link href="/markets" className={cn(actionBase, "border-[rgb(200_188_255/0.3)] bg-[linear-gradient(140deg,rgb(133_108_255/0.95),rgb(75_62_164/0.9))] text-white shadow-[inset_0_1px_5px_rgb(255_255_255/0.2),0_10px_24px_-10px_rgb(124_92_242/0.8)] hover:brightness-110")}>
+        <Link href="/markets" className={cn(actionBase, "border-[rgb(200_188_255/0.3)] bg-[linear-gradient(140deg,rgb(133_108_255/0.95),rgb(75_62_164/0.9))] text-white shadow-[inset_0_1px_5px_rgb(255_255_255/0.2),0_10px_24px_-10px_rgb(124_92_242/0.8)] hover:brightness-105")}>
           <BarChart3 className="size-5" aria-hidden />
           Markets
         </Link>

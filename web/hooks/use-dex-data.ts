@@ -14,6 +14,7 @@ import { pageRanges, REGISTRY_PAGE } from "@/lib/registry-pages";
 import type { OrderSnapshot } from "@/lib/order-status";
 import { classifyDeployment, type DeploymentStatus } from "@/lib/network-status";
 import { isPerBlockRefresh, staticQuery } from "@/lib/query-scope";
+import { historyIds, readStopHistory } from "@/lib/stop-history";
 import { DEPLOYMENT_CODE_KEY, DEPLOYMENT_TARGETS } from "@/lib/deployment-targets";
 import { useRpcHealth } from "@/hooks/use-rpc-health";
 import { dataReadsAllowed, transactionsAllowed } from "@/lib/rpc-health";
@@ -327,7 +328,8 @@ export function useAllowance(token: Address | undefined, owner: Address | undefi
 }
 
 export type MyOrderTrade = { makerOrderId: bigint; takerOrderId: bigint; price: bigint; baseAmount: bigint; quoteAmount: bigint; transactionHash: Hex };
-export type MyOrder = { order: OrderSnapshot; placedTx: Hex | undefined; trades: MyOrderTrade[] };
+/** `placedBlock` is the block of a stop order's `StopOrderPlaced` (the lower bound of its history read); undefined for ordinary orders. */
+export type MyOrder = { order: OrderSnapshot; placedTx: Hex | undefined; trades: MyOrderTrade[]; placedBlock?: bigint | undefined };
 export const MY_ORDERS_LIMIT = 50;
 
 /**
@@ -351,6 +353,15 @@ export function useMyOrders(market: Address, account: Address | undefined, enabl
         client!.getContractEvents({ address: market, abi: orderBookAbi, eventName: "Trade", args: { takerOrderId: latest }, fromBlock: BigInt(D.deployBlock), toBlock: "latest" }),
       ]);
       const placedTx = new Map(placed.map((l) => [l.args.orderId as bigint, l.transactionHash as Hex]));
+      const placedBlock = new Map<bigint, bigint>();
+      // A stop-limit order has no OrderPlaced: its creating transaction is its StopOrderPlaced. One extra read, only when a stop is listed.
+      if (orders.some((o) => o.triggerPrice !== 0n)) {
+        const stops = await client!.getContractEvents({ address: market, abi: orderBookAbi, eventName: "StopOrderPlaced", args: { trader: account! }, fromBlock: BigInt(D.deployBlock), toBlock: "latest" });
+        for (const l of stops) {
+          placedTx.set(l.args.orderId as bigint, l.transactionHash as Hex);
+          if (l.blockNumber !== null && l.blockNumber !== undefined) placedBlock.set(l.args.orderId as bigint, l.blockNumber as bigint);
+        }
+      }
       const seen = new Set<string>();
       const trades: MyOrderTrade[] = [];
       for (const l of [...asMaker, ...asTaker]) {
@@ -371,10 +382,48 @@ export function useMyOrders(market: Address, account: Address | undefined, enabl
         .map((order) => ({
           order,
           placedTx: placedTx.get(order.id),
+          placedBlock: placedBlock.get(order.id),
           trades: trades.filter((t) => t.makerOrderId === order.id || t.takerOrderId === order.id),
         }))
         .reverse();
       return { rows, totalIds: ids.length };
+    },
+  });
+}
+
+/**
+ * What happened to this account's stop orders that are no longer pending (P2-8C): one `eth_getLogs` request (`readStopHistory`) for
+ * `StopOrderTriggered` and `OrderCancelled`, filtered on the indexed order ids and bounded to the stops' own lifetime
+ * (`fromBlock` = the earliest `StopOrderPlaced` block of the listed ones). It is a separate query so My Orders renders at once
+ * and a slow or failed history read cannot delay or break the list (the rows then show neutral wording).
+ *
+ * Request economy: no request when no stop is past `PendingTrigger`; the key holds the order ids and their statuses, so the
+ * same orders are never asked about twice, and it carries the `static` scope, so the refresh on every new block skips it. It is
+ * refetched only when an order's status changes (a new key) or after a confirmed transaction of this app. No automatic retry
+ * loop (one retry after 2 s at most), and no refetch on window focus or reconnect.
+ */
+export function useStopHistory(market: Address, account: Address | undefined, rows: MyOrder[] | undefined, enabled = true) {
+  const client = usePublicClient({ chainId: CHAIN_ID });
+  const ids = useMemo(() => (rows ? historyIds(rows.map((r) => r.order), MY_ORDERS_LIMIT) : []), [rows]);
+  const statusKey = useMemo(() => (rows ? rows.filter((r) => ids.includes(r.order.id)).map((r) => `${r.order.id}:${r.order.status}`).sort().join(",") : ""), [rows, ids]);
+  const fromBlock = useMemo(() => {
+    const blocks = (rows ?? []).filter((r) => ids.includes(r.order.id)).map((r) => r.placedBlock ?? BigInt(D.deployBlock));
+    return blocks.length ? blocks.reduce((a, b) => (a < b ? a : b)) : BigInt(D.deployBlock);
+  }, [rows, ids]);
+  return useQuery({
+    queryKey: ["stop-history", CHAIN_ID, market, account, statusKey],
+    enabled: enabled && Boolean(client) && Boolean(account) && ids.length > 0,
+    ...staticQuery,
+    retry: 1,
+    retryDelay: 2000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    // An unreadable history is thrown, not cached as an empty one: the single retry runs, then the rows show neutral wording
+    // (`classifyStop` with no history) and the next mount or confirmed transaction asks again.
+    queryFn: async () => {
+      const history = await readStopHistory(client!, market, ids, fromBlock);
+      if (history.status !== "ok") throw new Error("stop history unavailable");
+      return history;
     },
   });
 }

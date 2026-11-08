@@ -38,7 +38,7 @@ export function TokensView() {
           Showing the first {reg.tokens.length} of {reg.total.toString()} issued tokens (oldest first).
         </p>
       )}
-      <Panel title={query ? `Results for “${query}”` : "All tokens"}>
+      <Panel title={query ? `Results for “${query}”` : "All Tokens"}>
         {!state.live ? (
           <EmptyState title="No live tokens">The registry is read once the deployment is found on this chain.</EmptyState>
         ) : !details.data && list.length !== 0 ? (
@@ -56,8 +56,8 @@ export function TokensView() {
                 <th scope="col" className="pb-2 text-left font-medium">Token</th>
                 <th scope="col" className="pb-2 text-left font-medium">Address</th>
                 <th scope="col" className="pb-2 text-right font-medium">Decimals</th>
-                <th scope="col" className="pb-2 text-right font-medium">Total supply</th>
-                <th scope="col" className="pb-2 text-right font-medium">Your wallet</th>
+                <th scope="col" className="pb-2 text-right font-medium">Total Supply</th>
+                <th scope="col" className="pb-2 text-right font-medium">Your Wallet</th>
                 <th scope="col" className="pb-2 pl-3 text-left font-medium">Provenance</th>
               </tr>
             </thead>
@@ -101,7 +101,7 @@ export function TokensView() {
         )}
       </Panel>
       <FactoryFacts
-        title="How tokens are issued"
+        title="How Tokens Are Issued"
         address={DEPLOYMENT.tokenFactory}
         facts={[
           { term: "Fixed supply", detail: "The whole supply is minted once, to the issuer. No one can mint more or burn later." },

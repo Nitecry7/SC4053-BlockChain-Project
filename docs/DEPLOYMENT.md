@@ -77,6 +77,54 @@ How it stays honest:
 - MetaMask caches nonces per network, so after restarting Anvil you will probably need MetaMask's "Clear activity tab data" for the 31337 network. This is standard MetaMask behaviour and has **not been tested in this project**.
 - `contracts/broadcast/*/31337/` is gitignored. `web/lib/contracts/*.ts` is not. Whether to commit `deployments.ts` is your decision: it is only correct for a chain deployed the same way (a fresh Anvil, deployer at nonce 0). On such a chain it is byte-identical every time, which was checked on three separate fresh chains, so `--check` works as a CI-style guard there.
 
+## The local flow, one step at a time
+Each step does one job. None of them does the job of another.
+
+| Step | Command (directory) | What it does | What it does **not** do |
+|---|---|---|---|
+| 1. Start the chain | `anvil` (anywhere) | Starts an empty local chain at block 0 with funded, unlocked accounts | Deploy anything. A fresh Anvil has no contracts, no tokens and no markets |
+| 2. Compile | `forge build` (`contracts/`) | Writes `contracts/out/` artifacts from the Solidity source | Change any contract already on a chain. Compiling, pulling or merging source never upgrades deployed contracts |
+| 3. Deploy | `forge script script/Deploy.s.sol:Deploy --rpc-url "$RPC_URL" --broadcast --unlocked --sender "$DEPLOYER"` (`contracts/`) | Creates the factories, NTU, SGDx and the seed market on **that** chain | Tell the frontend where they are |
+| 4. Export | `node contracts/script/export-web.mjs --rpc-url "$RPC_URL"` (repo root) | Writes `web/lib/contracts/abis.ts` and `deployments.ts` after checking the chain | Deploy, or change the chain |
+| 5. Check | `scripts/check-local.sh` (repo root) | Read-only: tools, chain id, code at each exported address, export current, app answering | Fix anything. It prints PASS, WARN or FAIL and an exit status |
+| 6. Frontend | `npm run dev` (`web/`) | Serves the app, which reads the chain over `NEXT_PUBLIC_RPC_URL` (default `http://127.0.0.1:8545`) | Deploy, or reach a chain its RPC URL does not point at |
+
+**Restarting Anvil** without restoring persisted state removes everything from the former chain: contracts, custom tokens, market listings, balances, orders and trades. The new chain is at block 0. Redeploy and export, then expect the wallet to need a nonce reset (below). **Rebuilding or merging source code** changes `contracts/out/` and nothing on the chain: a market keeps the engine it was deployed with, which is why the exporter compares deployed bytecode with the current build.
+
+## Troubleshooting a local chain
+Diagnose first. Every command here is read-only. Replace `RPC_URL` (for example `http://127.0.0.1:8545`) and use the addresses from `web/lib/contracts/deployments.ts`.
+
+| Symptom | Likely cause | How to confirm (read-only) |
+|---|---|---|
+| App says "No SC4053 DEX deployment on this chain" | Anvil restarted, or the app points at another node | `scripts/check-local.sh` |
+| Exporter or check reports a contract address has no bytecode | Same: those addresses are from a chain that no longer exists, or the RPC is a different node | `cast code <address> --rpc-url "$RPC_URL"` prints `0x` |
+| MetaMask transaction pending indefinitely | A nonce gap: MetaMask used a nonce higher than the chain's next nonce, so Anvil holds the transaction until the earlier nonces are filled | Compare `latest` and `pending` nonces (below) with the nonce shown in MetaMask's transaction details |
+| Nonce gap after a local Anvil restart | MetaMask keeps its own per-network nonce and activity from the former chain; the new chain started again at nonce 0 for each account | `cast nonce <account> --rpc-url "$RPC_URL"` is lower than the nonce MetaMask used |
+| Same chain id, different RPC URL | `31337` identifies the network type, not the node. Two Anvils (for example 8545 and 8546) both say 31337 but hold different state | `cast block-number --rpc-url` on each URL, and `cast code` for the market on each |
+| Frontend and MetaMask disagree | The app reads `NEXT_PUBLIC_RPC_URL`; MetaMask uses the RPC set on its own network entry. They can be different nodes | Compare the two URLs. Run `cast code` and `cast block-number` against **both** |
+
+**Safe diagnostics.** None of these sends a transaction or changes the chain.
+```bash
+cast chain-id      --rpc-url "$RPC_URL"                      # expect 31337
+cast block-number  --rpc-url "$RPC_URL"                      # a fresh Anvil is near 0
+cast nonce <account> --rpc-url "$RPC_URL"                    # next nonce the chain will accept (latest)
+cast nonce <account> --block pending --rpc-url "$RPC_URL"    # includes transactions waiting in the pool
+cast tx <txHash>   --rpc-url "$RPC_URL"                      # blockNumber empty or null: still pending
+cast code <MarketFactory address> --rpc-url "$RPC_URL"       # 0x means nothing is deployed there
+cast call <MarketFactory address> "marketCount()(uint256)" --rpc-url "$RPC_URL"   # read-only registry read (observed on 8545 for this session: 1)
+```
+`pending` greater than `latest` means transactions are waiting. A transaction with a nonce above `latest` is **blocked by a gap**, not slow.
+
+**Recovering from a nonce gap.** In this order:
+1. **Confirm which node and which network.** Check the chain id, block number and the RPC URL MetaMask is using. Make sure you are looking at the same node as the app.
+2. **Inspect the pending transactions** with `cast tx` and the nonce commands above. Do not act on a transaction you have not identified by hash, sender and nonce.
+3. **Decide whether the chain is disposable.** Everything below applies only to a local development chain. Never reset or restart a chain someone else is using just to fix MetaMask.
+4. On a disposable Anvil, after you have confirmed a specific transaction is still pending, you may remove it from the node's pool: `cast rpc anvil_dropTransaction <txHash> --rpc-url "$RPC_URL"`. This is an Anvil-only method; it does not exist on a real network. (Checked on 2026-11-08 against a scratch Anvil with a hash that was not in the pool: it answered `null` and changed nothing.)
+5. In MetaMask use *Settings, Advanced, Clear activity tab data* for the local network (the wording varies by version). It clears MetaMask's cached nonces and activity for the selected account only; it does not touch the chain or your keys.
+6. Retry the transaction. Do not change the application to compensate for stale wallet state.
+
+This is a wallet synchronisation problem in the local development environment. It is not a Solidity defect. It is also separate from the P2-8B preflight test contamination, which came from a leftover ERC20 allowance on a scratch chain (`docs/ai-audit/test-evidence/person2/p2-8b01-preflight.md`).
+
 ## What each kind of change does to state
 | Action | What happens on the chain | What happens to the app |
 |---|---|---|
@@ -94,7 +142,7 @@ How it stays honest:
 ```bash
 cd contracts && forge build --root . --sizes
 ```
-Observed: `OrderBook` 6,325 B runtime and 6,974 B initcode; `MarketFactory` 8,358 B runtime and 8,387 B initcode (limits: 24,576 B runtime, 49,152 B initcode). `Deploy.t.sol` also asserts these limits.
+Observed on 2026-11-08 (P2-8B.1, with all four bonus functions implemented): `OrderBook` 8,461 B runtime and 9,124 B initcode; `MarketFactory` 10,508 B runtime and 10,537 B initcode (limits: 24,576 B runtime, 49,152 B initcode). Earlier, with the bonus functions still stubs, they were 6,325 / 6,974 B and 8,358 / 8,387 B. `Deploy.t.sol` also asserts these limits.
 
 ## Smoke trade on the deployed market (no wallet needed)
 SPEC section 3 worked example with real transactions. Set `NTU`, `SGDX` and `MKT` from `web/lib/contracts/deployments.ts` (`baseToken.address`, `quoteToken.address`, `market`). Account 1 sells 10 NTU at 2.0. Account 2 buys 4 NTU at a limit of 2.2.
@@ -115,4 +163,4 @@ Expected afterwards: account 1 holds 9,990 NTU and 10,008 SGDx; account 2 holds 
 - **Checked with `forge`, `anvil` and `cast` (commands run by hand in this project, not an automated pipeline):** the deploy script, the export, redeploy, stale-chain detection, the chain-id guard bypass and its fix, custom `DEPLOYER` and `DEMO_WALLETS`, and the smoke trade, all on scratch Anvils. See `docs/ai-audit/test-evidence/person2/p2-3-deployment.md` for exact commands and results.
 - **Not verified:** any MetaMask or browser flow, any UI, and any chain other than a local Anvil.
 - The script's post-deployment checks run against the state the script just built. Under `--broadcast` that is Forge's simulation. The exporter and the checks above are what confirm the live chain.
-- The deployed `OrderBook` ABI has **unnamed parameters** on the four unimplemented functions (`cancelOrder`, `matchOrders`, `placeStopLimitOrder`, `triggerStopOrders`), while `IOrderBook` names them. Types are identical, so encoding is unaffected. Call these positionally. Names will appear once they are implemented with named parameters.
+- The four bonus functions are now implemented and the compiled `OrderBook` ABI names their parameters (`cancelOrder(orderId)`, `matchOrders(maxMatches)`, `placeStopLimitOrder(side, triggerPrice, limitPrice, amount)`, `triggerStopOrders(maxCount)`); checked on 2026-11-08 against `contracts/out`, and the committed `web/lib/contracts/abis.ts` is byte-identical to a fresh scratch export (`p2-8b01-preflight.md`). Earlier versions of this file said these parameters were unnamed while the functions were stubs.

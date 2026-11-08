@@ -75,7 +75,7 @@ const text = async (locator) => (await locator.textContent())?.replace(/\s+/g, "
 async function readyToPlaceSell({ price, amount }) {
   const t = ticket();
   await t.getByRole("radio", { name: /Sell NTU/ }).click();
-  await t.getByLabel("Limit price").fill(price);
+  await t.locator("#order-price").fill(price);
   await t.getByLabel("Amount", { exact: true }).fill(amount);
   await t.getByRole("button", { name: "Review order" }).click();
   const next = t.getByRole("button", { name: /^(Approve |Place (buy|sell) order)/ });

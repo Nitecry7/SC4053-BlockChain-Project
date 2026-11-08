@@ -16,7 +16,7 @@ export type FieldErrorCode =
   | "insufficient-balance";
 
 export type FieldError = { code: FieldErrorCode; message: string };
-export type OrderFieldErrors = { price?: FieldError; amount?: FieldError; balance?: FieldError };
+export type OrderFieldErrors = { price?: FieldError; amount?: FieldError; balance?: FieldError; trigger?: FieldError };
 
 /** A fully validated order, in the engine's units. `collateral` is what the order book will pull into escrow. */
 export type ValidOrder = {
@@ -27,6 +27,10 @@ export type ValidOrder = {
   collateralToken: "base" | "quote";
   /** Buy: `requiredQuote(amount, price)`. Sell: `amount`. */
   collateral: bigint;
+  /** Appended (P2-8B.4): "stop" for a stop-limit order, whose `price` is the LIMIT price. Absent means a plain limit order. */
+  kind?: "limit" | "stop";
+  /** Appended (P2-8B.4): the stop's trigger price. Only present for `kind: "stop"`. Never used for the escrow. */
+  triggerPrice?: bigint;
 };
 
 export type OrderValidation = { ok: true; order: ValidOrder } | { ok: false; errors: OrderFieldErrors };

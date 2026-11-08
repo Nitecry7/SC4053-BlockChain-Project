@@ -104,7 +104,7 @@ export function TxView() {
         </dl>
 
         <div>
-          <h2 className="mb-2 text-[0.9375rem] font-semibold tracking-[-0.02em]">Decoded events</h2>
+          <h2 className="mb-2 text-[0.9375rem] font-semibold tracking-[-0.02em]">Decoded Events</h2>
           {registriesFailed ? (
             <p className="text-[0.75rem] text-muted-foreground">The market and token registries could not be read, so this page cannot tell which events to trust and decodes none.</p>
           ) : !registriesReady ? (
@@ -158,7 +158,7 @@ function EventLine({
   pairOf: (market: Address) => { base: Address; quote: Address } | undefined;
 }) {
   // Amounts in order and trade events are base amounts and quote-per-base prices of that event's market.
-  const pair = e.kind === "OrderPlaced" || e.kind === "Trade" ? pairOf(e.market) : undefined;
+  const pair = e.kind === "OrderPlaced" || e.kind === "Trade" || e.kind === "OrderCancelled" || e.kind === "StopOrderPlaced" ? pairOf(e.market) : undefined;
   const b = pair ? symbol(pair.base) : undefined;
   const q = pair ? symbol(pair.quote) : undefined;
   switch (e.kind) {
@@ -174,6 +174,30 @@ function EventLine({
         <>
           <strong>Trade</strong>: maker #{e.makerOrderId.toString()} with taker #{e.takerOrderId.toString()}, <Amount value={e.baseAmount} visible={4} showTail={false} symbol={b} /> at the maker&rsquo;s price{" "}
           <Amount value={e.price} visible={4} showTail={false} symbol={q} /> for <Amount value={e.quoteAmount} visible={4} showTail={false} symbol={q} />
+        </>
+      );
+    case "OrderCancelled":
+      return (
+        <>
+          <strong>Order #{e.orderId.toString()} cancelled</strong> by <AddressChip address={e.trader} copy={false} className="text-[0.75rem]" />: refund{" "}
+          {e.refundBase > 0n ? <Amount value={e.refundBase} visible={4} showTail={false} symbol={b} /> : null}
+          {e.refundBase > 0n && e.refundQuote > 0n ? " and " : null}
+          {e.refundQuote > 0n ? <Amount value={e.refundQuote} visible={4} showTail={false} symbol={q} /> : null}
+          {e.refundBase === 0n && e.refundQuote === 0n ? "nothing (no escrow was left)" : null}
+        </>
+      );
+    case "StopOrderPlaced":
+      return (
+        <>
+          <strong>Stop-limit order #{e.orderId.toString()} placed</strong> by <AddressChip address={e.trader} copy={false} className="text-[0.75rem]" />: {e.side === "buy" ? "Buy" : "Sell"}{" "}
+          <Amount value={e.amount} visible={4} showTail={false} symbol={b} />, trigger <Amount value={e.triggerPrice} visible={4} showTail={false} symbol={q} />, limit{" "}
+          <Amount value={e.limitPrice} visible={4} showTail={false} symbol={q} />. It is pending, not on the order book.
+        </>
+      );
+    case "StopOrderTriggered":
+      return (
+        <>
+          <strong>Stop order #{e.orderId.toString()} activated</strong> at a last trade price of <Amount value={e.lastTradePrice} visible={4} showTail={false} />. Activation is not a fill: see the trades below it, if any.
         </>
       );
     case "Transfer":

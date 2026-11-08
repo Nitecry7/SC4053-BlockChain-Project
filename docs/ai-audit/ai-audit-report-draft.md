@@ -1,5 +1,7 @@
 # AI Audit Report: preliminary draft (SC4053 DEX)
 
+> **Superseded.** The final report is [`docs/report/AI_AUDIT_REPORT.md`](../report/AI_AUDIT_REPORT.md), which replaces this preliminary draft. The statuses, gaps and "needs" notes below describe 6 Nov and are kept as the record of how the report was assembled.
+
 Status: **preliminary draft**, prepared 2026-11-06 (P2-8A) from the repository's own records. It follows the eight sections required by the official brief (`docs/Development_Project.pdf`, section 2.1) and the four-part major-issue format (section 2.2). It is written for the team to edit; it is not final and it is not the submission.
 
 **Rules used.** Every statement here is traceable to a prompt-log entry, an issue file or an evidence file, which are linked. Nothing is invented: no vulnerability, tool use, manual test or review. Person 1's contributions are marked where they are missing. Where only the owner can supply a fact, the section says so.

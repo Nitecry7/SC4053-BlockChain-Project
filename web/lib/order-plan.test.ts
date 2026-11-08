@@ -73,7 +73,7 @@ describe("estimateExecution (mirrors OrderBook._matchTaker/_settleFill)", () => 
     expect(sell.filledBase).toBe(dec("1"));
   });
 
-  it("stops at the fill cap and flags a remainder that still crosses (matchOrders is not available)", () => {
+  it("stops at the fill cap and flags a remainder that still crosses (the Match orders action settles it)", () => {
     const book = Array.from({ length: 12 }, (_, i) => lvl(i + 1, "2", "1"));
     const e = estimateExecution({ side: "buy", price: dec("2"), amount: dec("12"), book, maxMatches: 10, snapshotDepth: 12 });
     expect(e.fills).toHaveLength(10);

@@ -51,7 +51,7 @@ export type RunnerDeps = {
   inspectChain?: (anchor: ChainAnchor, hash: Hex) => Promise<{ verdict: ChainVerdict; txKnown?: boolean }>;
 };
 
-export type Dispatch = (event: FlowEvent<OrderOutcome>) => void;
+export type Dispatch<R = OrderOutcome> = (event: FlowEvent<R>) => void;
 
 export type PairInfo = { market: Address; baseToken: Address; quoteToken: Address };
 
@@ -147,7 +147,7 @@ export async function waitBounded<R>(
 }
 
 /** Step 1 of an order that needs allowance: approve exactly the collateral for the order book (never MarketFactory). */
-export async function runApproval(deps: RunnerDeps, p: RunParams, dispatch: Dispatch, isCurrent: () => boolean): Promise<void> {
+export async function runApproval<R = OrderOutcome>(deps: RunnerDeps, p: RunParams, dispatch: Dispatch<R>, isCurrent: () => boolean): Promise<void> {
   const token = p.order.collateralToken === "quote" ? p.pair.quoteToken : p.pair.baseToken;
   const call: ContractCall = { address: token, abi: demoTokenAbi, functionName: "approve", args: [p.pair.market, p.order.collateral] };
   let hash: Hex | undefined;
@@ -281,7 +281,7 @@ export async function runOrder(deps: RunnerDeps, p: RunParams, dispatch: Dispatc
  * names only; it never changes which function is called). Found by the real-chain test (issue p2-001) and extended in
  * P2-6 for `InvalidTokens` and `UnsupportedDecimals`.
  */
-const ERROR_DEFINITIONS = (() => {
+export const ERROR_DEFINITIONS = (() => {
   const seen = new Map<string, (typeof demoTokenAbi)[number]>();
   for (const item of [...demoTokenAbi, ...orderBookAbi, ...tokenFactoryAbi, ...marketFactoryAbi]) {
     if (item.type !== "error") continue;

@@ -2,11 +2,13 @@
 
 import { ChartNoAxesColumn } from "lucide-react";
 import Link from "next/link";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Amount } from "@/components/data/amount";
 import { EmptyState } from "@/components/data/states";
 import { PairMark } from "@/components/data/token-mark";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketRegistry, useMarketSnapshot, useTokenDetails, useTradeStats, type BookLevel, type RegisteredMarket } from "@/hooks/use-dex-data";
+import { bookSpread } from "@/lib/crossed-book";
 import { buildDepth, position } from "@/lib/depth";
 import { quoteCost } from "@/lib/units";
 import { cn } from "@/lib/utils";
@@ -55,16 +57,22 @@ function MarketSummary({ state }: { state: DashboardState }) {
   const b = state.pair.base.symbol;
   const q = state.pair.quote.symbol;
   const cells = [
-    { label: "Spread", value: spread !== undefined ? <Amount value={spread} visible={4} showTail={false} symbol={q} /> : "—" },
+    {
+      label: "Spread",
+      value: spread.kind === "spread" ? <Amount value={spread.value} visible={4} showTail={false} symbol={q} /> : spread.kind === "crossed" ? "Crossed" : "—",
+    },
     { label: "Trades", value: trades ? trades.count.toString() : "…" },
-    { label: "Base volume", value: trades ? <Amount value={trades.baseVolume} visible={2} showTail={false} symbol={b} /> : "…" },
-    { label: "Quote volume", value: trades ? <Amount value={trades.quoteVolume} visible={2} showTail={false} symbol={q} /> : "…" },
+    { label: "Base Volume", value: trades ? <Amount value={trades.baseVolume} visible={2} showTail={false} symbol={b} /> : "…" },
+    { label: "Quote Volume", value: trades ? <Amount value={trades.quoteVolume} visible={2} showTail={false} symbol={q} /> : "…" },
   ];
   return (
     <dl className="glass-inset mt-3 grid grid-cols-2 gap-x-4 gap-y-2 rounded-[0.875rem] px-3.5 py-3 sm:grid-cols-4" aria-label={`${b}/${q} market summary`}>
       {cells.map((c) => (
         <div key={c.label}>
-          <dt className="text-[0.6875rem] text-muted-foreground">{c.label}</dt>
+          <dt className="flex items-center text-[0.6875rem] text-muted-foreground">
+            {c.label}
+            {c.label === "Spread" && <InfoTip term="spread" />}
+          </dt>
           <dd className="tabular mt-0.5 text-[0.8125rem] font-semibold">{c.value}</dd>
         </div>
       ))}
@@ -78,10 +86,11 @@ export function MarketBoard({ state, limit = 4 }: { state: DashboardState; limit
   return (
     <Panel
       id="market-board"
-      title="Market board"
+      title="Market Board"
+      info="marketBoard"
       action={
         <Link href="/markets" className="text-[0.75rem] font-medium text-lilac hover:text-white">
-          All markets <span aria-hidden>→</span>
+          All Markets <span aria-hidden>→</span>
         </Link>
       }
     >
@@ -120,16 +129,16 @@ export function MarketBoard({ state, limit = 4 }: { state: DashboardState; limit
   );
 }
 
-/** Best ask minus best bid, when both sides rest; undefined otherwise (no spread to state). */
-function spreadOf(snap: { bestBid: { price: bigint }; bestAsk: { price: bigint } } | undefined) {
-  if (!snap || snap.bestBid.price === 0n || snap.bestAsk.price === 0n) return undefined;
-  return snap.bestAsk.price - snap.bestBid.price;
+/** Best ask minus best bid when both sides rest and the book is not crossed; "crossed" or "none" otherwise (see `bookSpread`). */
+function spreadOf(snap: { bestBid: { id: bigint; price: bigint }; bestAsk: { id: bigint; price: bigint } } | undefined) {
+  return snap ? bookSpread(snap.bestBid, snap.bestAsk) : ({ kind: "none" } as const);
 }
 
 /** Real cumulative depth from `getBook`, drawn as a step chart; an honest empty state when nothing rests. */
 export function DepthPanel({ state }: { state: DashboardState }) {
   const snap = state.market.data;
   const depth = snap ? buildDepth(snap.bids, snap.asks) : undefined;
+  const spread = spreadOf(snap);
   const pair = `${state.pair.base.symbol} / ${state.pair.quote.symbol}`;
   const W = 460;
   const H = 150;
@@ -155,7 +164,7 @@ export function DepthPanel({ state }: { state: DashboardState }) {
   const ask = depth ? toPath(depth.asks, "ask") : undefined;
 
   return (
-    <Panel id="depth" title={`Market depth: ${pair}`} className="min-h-[16rem]">
+    <Panel id="depth" title={`Market Depth: ${pair}`} info="marketDepth" className="min-h-[16rem]">
       <div className="flex items-end justify-between">
         <div>
           <p className="text-[1.375rem] font-semibold tracking-[-0.03em]">
@@ -170,15 +179,21 @@ export function DepthPanel({ state }: { state: DashboardState }) {
               <span className="text-base text-muted-foreground">—</span>
             )}
           </p>
-          <p className="text-[0.6875rem] text-muted-foreground">Last trade price</p>
+          <p className="flex items-center text-[0.6875rem] text-muted-foreground">Last Trade Price<InfoTip term="lastTradePrice" /></p>
         </div>
-        {spreadOf(snap) !== undefined && (
+        {spread.kind === "spread" && (
           <div className="text-right">
             <p className="tabular text-[0.9375rem] font-semibold">
-              <Amount value={spreadOf(snap)!} visible={4} showTail={false} />
+              <Amount value={spread.value} visible={4} showTail={false} />
               <span className="ml-1 text-xs font-medium text-muted-foreground">{state.pair.quote.symbol}</span>
             </p>
-            <p className="text-[0.6875rem] text-muted-foreground">Spread (best ask − best bid)</p>
+            <p className="flex items-center justify-end text-[0.6875rem] text-muted-foreground">Spread (best ask − best bid)<InfoTip term="spread" /></p>
+          </div>
+        )}
+        {spread.kind === "crossed" && (
+          <div className="text-right">
+            <p className="flex items-center justify-end text-[0.9375rem] font-semibold text-warn">Crossed Book<InfoTip term="crossedBook" /></p>
+            <p className="text-[0.6875rem] text-muted-foreground">Best bid is at or above best ask</p>
           </div>
         )}
       </div>
@@ -242,7 +257,7 @@ function BookRow({ level, side }: { level: BookLevel; side: "Buy" | "Sell" }) {
     <tr className="border-b border-white/[0.06] last:border-0">
       <td className="py-1.5">
         <span className={cn("inline-block rounded-full px-2.5 py-0.5 text-[0.6875rem] font-semibold", side === "Buy" ? "bg-buy/15 text-buy" : "bg-sell/15 text-sell")}>
-          {side}
+          {side === "Buy" ? "Buy (bid)" : "Sell (ask)"}
         </span>
       </td>
       <td className="tabular py-1.5 text-right">
@@ -265,7 +280,7 @@ export function BookPanel({ state, levels = 4 }: { state: DashboardState; levels
   const bids = snap ? snap.bids.slice(0, levels) : [];
   const empty = snap && asks.length === 0 && bids.length === 0;
   return (
-    <Panel id="book" title={`Buyers / sellers (${state.pair.base.symbol} / ${state.pair.quote.symbol})`} className="min-h-[16rem]">
+    <Panel id="book" title={`Order Book (${state.pair.base.symbol} / ${state.pair.quote.symbol})`} info="orderBook" className="min-h-[16rem]">
       {!state.live ? (
         <EmptyState title="Order book unavailable" className="py-8">
           The book is read from the market contract once the deployment is found.

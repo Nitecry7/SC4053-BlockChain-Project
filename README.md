@@ -52,7 +52,7 @@ SC4053 DEX is a small exchange for the SC4053 course. It is an **order book, not
 
 Everything runs on a **local Anvil chain** (chain ID `31337`). Nothing is deployed to a public network, and this repository makes no claim about one.
 
-> **Scope.** The official assignment brief (kept locally in `docs/Development_Project.pdf`, git-ignored) is the authority for requirements. Cancelling orders, batch matching and stop-limit orders are **not implemented** in the shared engine (see [Implemented and pending](#implemented-and-pending)).
+> **Scope.** The official assignment brief (`docs/Development_Project.pdf`) is the authority for requirements. The shared engine implements cancelling orders, batch matching and stop-limit orders; the app has a **Cancel** action (P2-8B.2) and a **Match Orders** panel (P2-8B.3) and, since P2-8B.4, a **Stop-limit** mode in the order ticket with a **Trigger Stops** panel (see [Implemented and pending](#implemented-and-pending)).
 
 ---
 
@@ -68,10 +68,12 @@ Everything runs on a **local Anvil chain** (chain ID `31337`). Nothing is deploy
 | 📖 **On-chain limit-order trading** for buy and sell orders | ✅ Built | **Trade** |
 | ⚡ **Automatic matching, partial fills and maker-price settlement** inside the order transaction | ✅ Built in the engine. The SPEC worked example was checked with MetaMask by the owner | **Trade** |
 | 🔐 **Token approvals and escrow**: the exact amount is approved, and escrow is shown as its own balance | ✅ Built. Approval and order are separate wallet confirmations | Order ticket |
-| 🧾 **Refunds and order history**: refunds, fills and remaining escrow, plus a transaction page | ✅ Built | **My orders**, `/tx/<hash>` |
+| 🧾 **Refunds and order history**: refunds, fills and remaining escrow, plus a transaction page | ✅ Built | **My Orders**, `/tx/<hash>` |
 | 📊 **Multi-market dashboard and token holdings**: choose any listed market; balances per token, never added together | ✅ Built (P2-6.1) | **Dashboard** |
 | 🔁 **Transaction replacement tracking and local chain-reset detection**: a sped-up, cancelled or replaced transaction is followed to what was mined; a restarted chain is reported with its evidence | ✅ Built (P2-7). Mock-wallet and real-chain tests pass; the wallet's own speed-up and cancel buttons are not yet tested by hand | Result cards, chain-reset notice |
-| ❌ **Cancel an order**, 🧮 **batch matching**, 🎯 **stop-limit orders** | ⛔ **Not implemented.** The engine's `cancelOrder`, `matchOrders`, `placeStopLimitOrder` and `triggerStopOrders` still `revert()`, so the app shows no control for them | none |
+| ❌ **Cancel an order** (Bonus 1) | ✅ Built (P2-8B.2). A **Cancel** action on your own open, partly filled and pending orders states the refund first, needs no approval, and reports success only from the confirmed receipt. Verified with a mock wallet and on a scratch chain; **MetaMask not tested** | **My Orders** |
+| 🧮 **Match crossed orders** (Bonus 2) | ✅ Built (P2-8B.3). When the market reports a crossed book (a placement stopped at the engine's 10-fill cap), a **Match Orders** panel under the order book lets any connected wallet send `matchOrders`: it is reviewed and simulated first, needs no approval, and the result is shown only from the confirmed receipt's `Trade` events. Each transaction settles at most 10 fills and is one deliberate click. Verified with a mock wallet and a real scratch chain; **the happy path was also confirmed with MetaMask by the owner on a scratch chain (2026-11-08)**; the MetaMask rejection and account-switch cases are not yet run | **Trade** |
+| 🎯 **Stop-limit orders** (Bonus 3) | ✅ Built (P2-8B.4). A **Stop-limit** mode in the ticket takes a trigger and a limit price, escrows at the **limit** price with an exact approval, and shows the order as **pending** (never filled) until a **Trigger stops** transaction, which anyone can send, activates it. My Orders tells *waiting for price* apart from *eligible now: needs a Trigger stops transaction*; the Trigger Stops panel reports what each activated stop actually did (rests, fills, or is refunded by the engine) only from the confirmed receipt. Verified with a mock wallet and a real scratch chain; **the happy path was run with MetaMask by the owner on 2026-11-08** (see `docs/TESTING.md`, Test 14); a cancelled stop's history line currently reads "Activated", a known wording defect | **Trade** |
 
 ---
 
@@ -130,7 +132,7 @@ flowchart TD
     Rest["⏳ Order rests<br/>escrow stays in the OrderBook"]
     Match["⚡ OrderBook matches in the same transaction<br/>at the maker's price, partial fills allowed"]
     Settle["✅ Pay the seller and the buyer<br/>refund unused buy escrow"]
-    Outcome["🔍 Check the outcome<br/>receipt, fills, My orders"]
+    Outcome["🔍 Check the outcome<br/>receipt, fills, My Orders"]
 
     Connect --> Create
     Create --> List
@@ -178,7 +180,7 @@ AI assistance was used across the project for planning, coding, design explorati
 | Claude Code and model roles | Claude Code; Opus 5.5, Sonnet 5.5 and Haiku 5.5 in different phases | Used in every phase. Model attribution is given where the prompt logs record it, and is marked "not recorded" otherwise |
 | Context7 and MCPs | Context7 (library documentation); shadcn and Awwwards MCPs (P2-4); Playwright MCP | Context7 accepted in P2-3 to P2-5. The Playwright MCP was attempted and did not launch. Awwwards results were rejected |
 | Solidity Security skill and Slither | `solidity-security` skill (P2-3 and P2-8A); Slither 0.11.6 on the Person 2 contracts and deployment script | Slither: 0 results (P2-1), 5 accepted notes (P2-2), 6 accepted notes (P2-3), re-run at HEAD in P2-8A. The skill is a checklist and produced no finding of its own. Slither has not been run on `OrderBook.sol` by Person 2 |
-| Foundry and contract testing | `forge` (185 tests, including fuzz), `anvil` and `cast` on scratch chains | Unit, fuzz and integration tests exist. A dedicated stateful invariant suite is planned for Engine Phase 7 and not yet implemented |
+| Foundry and contract testing | `forge` (335 tests, including fuzz and the engine's invariant suite), `anvil` and `cast` on scratch chains | Unit, fuzz, invariant and integration tests exist (335 passed in the 2026-11-08 run) |
 | Playwright and browser testing | `playwright-core` 1.64.1 with Chromium, and a mock wallet | Mock-wallet suites pass. These are not MetaMask results |
 | Frontend design and quality | `frontend-design`, `ui-ux-pro-max`, `impeccable`, `taste-skill` (P2-4); `impeccable detect` later; `react-best-practices` and a temporary pinned axe-core (P2-8A) | Design work in P2-4. The detector runs regex rules only, so its zero results are an undercount. The P2-8A audit measured performance and found two accessibility violation types, reported and not yet fixed |
 | Independent reviews and AI audit evidence | Read-only reviewers in P2-1 to P2-6; prompt logs; issue reports; test evidence | P2-3 reproduced two Medium defects, which were fixed. Other reviews found no High or Medium contract defects |
@@ -191,7 +193,7 @@ Full methodology, including each tool's status (invoked, attempted, or only inst
 SC4053-BlockChain-Project/
 ├── contracts/                 Solidity project (Foundry)
 │   ├── src/                   OrderBook (matching engine), TokenFactory, MarketFactory, DemoToken
-│   ├── test/                  Foundry unit, fuzz and integration tests (185); the stateful invariant suite is planned for Phase 7, not yet implemented
+│   ├── test/                  Foundry unit, fuzz, invariant and integration tests (335)
 │   └── script/                Deploy.s.sol (deployment), export-web.mjs (ABIs and addresses for the app)
 ├── web/                       Next.js app
 │   ├── app/                   Routes: overview, markets, tokens, trade, create-token, list-market, tx/[hash]
@@ -217,6 +219,8 @@ SC4053-BlockChain-Project/
 ## 🚀 Quickstart
 
 Run everything inside the **Ubuntu (WSL) terminal**. Keep the project in the Linux filesystem (for example `~/projects/`), not under `/mnt/c`. The app is opened in a Windows browser with MetaMask installed. Brave is the browser this project was tested with.
+
+> **New to Anvil, MetaMask or local blockchains?** Read the [Beginner's Guide](docs/BEGINNERS_GUIDE.md) first: it explains what each command does and why, the three test environments (3000/8545, 3100/8546, 3101/8547), MetaMask setup and troubleshooting. This Quickstart is the short version.
 
 ### First-time setup (once per machine)
 
@@ -248,7 +252,7 @@ cd web && npm ci && cd ..             # run in web/ (exact versions from package
 
 ### Every working session
 
-Anvil keeps its state **only while it runs**. A restart gives a new, empty chain at block 0. Use three WSL terminals:
+Anvil keeps its state **only while it runs**. A restart gives a new, empty chain at block 0, and everything on the former chain (contracts, custom tokens, market listings, balances, orders) is gone. **Starting Anvil does not deploy anything**, and **rebuilding or merging source code does not upgrade contracts that are already deployed.** The six separate steps are start Anvil, `forge build`, deploy with `Deploy.s.sol`, export ABIs and addresses, `scripts/check-local.sh`, and `npm run dev`; [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#the-local-flow-one-step-at-a-time) says what each does and does not do. Use three WSL terminals:
 
 | Terminal | Directory | Command | Stays running? |
 |---|---|---|---|
@@ -321,16 +325,18 @@ Run each command in the directory shown. "Observed" means it was run on the proj
 | `cast receipt <txHash> --rpc-url …` | any | Read a transaction's receipt | `status 1 (success)` means it was mined and succeeded. A missing receipt means it is not mined yet, or the node has dropped it |
 | `cast call <MarketFactory> "marketCount()(uint256)" --rpc-url …` | any | Count the registered markets | Observed: `2` (NTU/SGDx and one more on the owner's chain) |
 | `forge build` | `contracts/` | Compile | Ends with `Compiler run successful`. Regenerated artifacts go to `contracts/out/` |
-| `forge test` | `contracts/` | Contract tests | Observed for the recorded run: `185 passed`. Any `failed` line means a broken contract or test |
+| `forge test` | `contracts/` | Contract tests | Observed for the recorded run (2026-11-08, P2-8B.1): `335 passed`. Any `failed` line means a broken contract or test |
 | `node --test contracts/script/export-web.test.mjs` | repo root | Exporter tests | Recorded: `21 passed` |
 | `forge script script/Deploy.s.sol:Deploy --rpc-url … --broadcast --unlocked --sender …` | `contracts/` | Deploy (local only) | Logs with the deployer, `TokenFactory`, `MarketFactory`, NTU, SGDx and the NTU/SGDx market, then `ONCHAIN EXECUTION COMPLETE & SUCCESSFUL`. Run only on a chain with no contract code |
 | `node contracts/script/export-web.mjs --rpc-url …` | repo root | Write ABIs and addresses for the app | Writes `web/lib/contracts/`. Refuses to write if the chain, the deployment record and the build disagree |
 | `node contracts/script/export-web.mjs --check --rpc-url …` | repo root | Confirm the export is current; writes nothing | `up to date` means the files match. A `stale deployment` message means the chain was restarted without a redeploy |
 | `scripts/check-local.sh` | repo root | Read-only environment check | Observed: `Result: ready. 0 warning(s). No deployment is needed.` See the table above for other results |
 | `npm run dev` | `web/` | Start the Next.js dev server on `localhost:3000` | `Ready in …` and `Local: http://localhost:3000` |
-| `npm test` | `web/` | Unit tests (Vitest, no chain needed) | Recorded (P2-8A.2): `410 passed`, and `48` gated real-chain and browser tests skipped |
+| `scripts/seed-crossed-book.sh` (`status`, `verify-after`) | repo root | Builds a **crossed order book** on a **scratch** chain for the manual Match orders test, then verifies it from the chain. It **never sends `matchOrders`**, refuses port 8545 and any chain id other than 31337, uses no private key, and writes nothing in the repository | See `docs/TESTING.md`, Test 13. Run on 2026-11-08 against a scratch Anvil on 8546 (all checks passed); the owner then ran the MetaMask happy path against it and `verify-after` passed (2026-11-08) |
+| `scripts/seed-stop-orders.sh` (`status`, `prepare`, `move-price`, `add-bid`, `verify-after`) | repo root | Prepares and checks a **scratch** chain for the manual stop-limit test: funds the stop owner, makes the trades that set and move the last trade price, and verifies the keeper's trigger transaction. It **never sends `triggerStopOrders` and never places a stop**, refuses port 8545 and any chain id other than 31337, uses no private key, and writes nothing in the repository | See `docs/TESTING.md`, Test 14. Run on 2026-11-08 against a scratch Anvil on 8547: a full dry run in a reverted snapshot, then `prepare` for real (all checks passed); the MetaMask test itself has **not** been performed |
+| `npm test` | `web/` | Unit tests (Vitest, no chain needed) | Recorded (P2-8C): `604 passed`, and `76` gated real-chain tests skipped (576 and 75 in P2-8B.4) |
 | `npm run typecheck`, `npm run lint`, `npm run build` | `web/` | Types, lint, production build | Each exits with no errors |
-| `npm run e2e`, `e2e:create`, `e2e:dashboard`, `e2e:hardening`, `e2e:liveness` | `web/` | Browser tests with a **mock wallet** | These need a **scratch** chain (port 8546) and a scratch server (port 3100), set up as described in [docs/FRONTEND.md](docs/FRONTEND.md). They never touch your main chain |
+| `npm run e2e`, `e2e:create`, `e2e:dashboard`, `e2e:hardening`, `e2e:liveness`, `e2e:cancel`, `e2e:match`, `e2e:stop`, `e2e:ux` | `web/` | Browser tests with a **mock wallet** | These need a **scratch** chain (port 8546) and a scratch server (port 3100), set up as described in [docs/FRONTEND.md](docs/FRONTEND.md). They never touch your main chain |
 
 ---
 
@@ -392,8 +398,10 @@ Read the **Action** column first: it says whether to restart, reconnect, check, 
 | Token balances do not match your expectation | Wrong account or network, or the token is not imported into MetaMask. Holdings show only the connected account | **Check** the account address and the network, then **reconnect**. Import the token address into MetaMask if it is missing. No redeploy needed |
 | Token allowance is insufficient | The order needs more approval than you gave. The ticket shows an approval step | **Approve** the exact amount, then place the order. The app does not reuse a stale allowance |
 | Why does an order need two confirmations? | An ERC20 `approve` and the order (`placeLimitOrder`) are two transactions. The token must allow the OrderBook to move funds before the OrderBook can escrow them | **Expected.** Confirm both. Approvals are separate from the order |
-| Transaction status is unknown or pending | The app waits in bounded windows. A transaction can still be mined later, or the node can drop it | **Check** *My orders* and the transaction page before placing the order again. Do not repeat an order just because a card says "not confirmed yet" |
+| Transaction status is unknown or pending | The app waits in bounded windows. A transaction can still be mined later, or the node can drop it | **Check** *My Orders* and the transaction page before placing the order again. Do not repeat an order just because a card says "not confirmed yet" |
 | A notice says the local chain was reset | Anvil restarted (block identity changed). The app shows the evidence | **Reload** the page. If the contracts are gone, **deploy** and **export** |
+| MetaMask transaction pending indefinitely, especially right after you restarted Anvil | A nonce gap: MetaMask kept the former chain's nonces, so the new chain is waiting for earlier nonces. Compare `cast nonce <account>` (latest) with `cast nonce <account> --block pending` and the nonce in MetaMask | **Inspect first**, with read-only `cast` commands. Only on a disposable local chain, after confirming the transaction is pending, drop that one transaction and clear MetaMask's activity data for the network. Never reset a live chain as the default fix. Steps: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#troubleshooting-a-local-chain) |
+| App and MetaMask show different balances or blocks, though both say chain 31337 | The chain id is the same but the RPC URLs differ (for example 8545 and a second Anvil on 8546), so they are different nodes | **Check** `cast block-number --rpc-url` on each URL. Point the app (`NEXT_PUBLIC_RPC_URL`) and MetaMask at the same node |
 | Command fails with "no such file" or "not a project" | Wrong terminal directory. `npm` needs `web/`, `forge` needs `contracts/`, `check-local.sh` runs from the repo root | **Change directory** (see the table in Quickstart) |
 | Next.js: port 3000 already in use | Another dev server is running | **Stop** that `npm run dev` (find it with `ss -ltnp \| grep :3000`). Do not stop Anvil |
 | Hydration warning mentioning an attribute such as `cz-shortcut-listen` | A browser extension changes the page before React loads. Recorded in `docs/TESTING.md`, section E | **Ignore** it or test in a window without extensions. It is not an app error |
@@ -413,7 +421,7 @@ More detail, with diagnosis steps, is in [docs/TESTING.md](docs/TESTING.md#e-tro
 - **multi-party batch matching** (Bonus 2), `matchOrders`
 - **stop-limit orders** (Bonus 3), `placeStopLimitOrder` and `triggerStopOrders`
 
-The "Not implemented" rows elsewhere in this README describe the **app**, which still needs a redeploy and the bonus UI. See the engine handoff below. `web/lib/contracts/abis.ts` is already regenerated for the current engine.
+The app now has a front end for all three bonuses (cancel, batch matching and stop-limit orders; see the feature overview above), and `web/lib/contracts/abis.ts` is regenerated for the current engine. A local chain that was deployed before the engine finished needs a fresh Anvil, deploy and export (see the engine handoff below).
 
 | Read | For |
 |---|---|
@@ -448,6 +456,7 @@ bash contracts/script/demo-journey.sh
 
 | Document | What it covers |
 |---|---|
+| [docs/BEGINNERS_GUIDE.md](docs/BEGINNERS_GUIDE.md) | A standalone guide for newcomers: how the system works, setup on WSL, MetaMask and accounts, troubleshooting, feature walkthroughs and what each test layer proves |
 | [docs/TESTING.md](docs/TESTING.md) | The manual trading walkthrough with MetaMask (Alice and Bob), test layers, which steps were performed, and troubleshooting |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | The deploy script, the exporter and its safety checks, what each kind of change does to chain state, and size and gas after engine changes |
 | [docs/FRONTEND.md](docs/FRONTEND.md) | The front end's architecture, the trading, creation and dashboard flows, transaction hardening, the test suites and known limits |
@@ -471,7 +480,9 @@ bash contracts/script/demo-journey.sh
 
 **Verification status.** The SPEC worked example (Alice sells 10 NTU at 2 SGDx, Bob buys 4 NTU at a limit of 2.2) was checked on a scratch chain by automated tests, in a browser with a **mock** wallet, and by the project owner with real MetaMask accounts. The owner also reported creating DTT, listing DTT/SGDx and a trade on that market. Those reports are recorded in [docs/TESTING.md](docs/TESTING.md), section F, which says which steps were not performed.
 
-**Pending:** cancel an order, batch matching and stop-limit orders are not built. The engine functions revert, so the interface offers no control for them. The manual cases for negative paths, speed-up and cancel in MetaMask are procedures, not yet performed.
+**Usability polish (P2-8C):** Title Case headings, accessible information tips beside the main trading terms, coloured status badges (Pending Trigger amber), the Trigger Price shown for the whole life of a stop, and an evidence-based history line for stops; verified with a mock wallet and a scratch chain, not with MetaMask (`docs/ai-audit/test-evidence/person2/p2-8c-ux-polish.md`).
+
+**Pending:** **stop-limit orders** (P2-8B.4) had their happy path run by the owner with MetaMask on a scratch chain (2026-11-08, `docs/TESTING.md` Test 14, hashes re-read from the chain); the rejection, account-switch, outage, chain-reset and deep-book-refund cases were not run, and the wording defect that call a stop cancelled before activation "Activated" was found by that run and fixed in P2-8C. **Cancelling an order** had its happy path run with MetaMask by the owner (2026-11-08). **Matching crossed orders** (P2-8B.3) had its happy path confirmed by the owner with MetaMask on a scratch chain (2026-11-08, `docs/TESTING.md` Test 13); the rejection (13c) and account-switch (13g) cases are not yet run. The manual MetaMask cases for negative paths, speed-up, cancel-a-transaction and the other cancel-an-order cases (Test 12g to 12i) are procedures, not yet performed.
 
 ---
 

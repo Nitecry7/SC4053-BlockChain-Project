@@ -1,6 +1,6 @@
-# Video plan: SC4053 DEX demo (6 to 8 minutes)
+# Video plan: SC4053 DEX demo (planned 6 to 8 minutes)
 
-**Target length:** 7:30. **Speakers:** P1 = Person 1 (engine), P2 = Person 2 (factories, front end). Check NTULearn for the required length and format before recording.
+**Target length:** 7:30. **Speakers:** P1 = Person 1 (engine), P2 = Person 2 (factories, front end). The length is the team's own plan: the assignment brief does not mention a video, so check NTULearn for whether one is required and for its length and format before recording.
 
 **Recording setup:**
 - **Screen:** 1920×1080; browser zoom 110% so numbers are readable.
@@ -11,8 +11,9 @@
 | Item | Needed for | Status on 8 Nov |
 |---|---|---|
 | Base trading UI (place order, partial fill, order history) | Segment 3 | Built (Person 2) |
-| **Cancel button, Match orders button, stop-limit form and Trigger stops button** | Segments 3c, 4a, 4b in the UI | **Not built yet** (Person 2; see `docs/ENGINE_HANDOFF.md`). If they are missing, use the **terminal path** in each segment |
-| Your local chain runs the current engine | Every UI segment | **Redeploy needed**: a fresh Anvil, then deploy and export (below) |
+| **Cancel button and Match Orders panel** | Segments 3c and 4a in the UI | **Built** (P2-8B.2 and P2-8B.3; Cancel's happy path run with MetaMask by the owner, Match orders: happy path confirmed with MetaMask by the owner on a scratch chain, 2026-11-08, but not yet rehearsed on the recording chain). Rehearse them on the recording chain; the **terminal path** in each segment remains the fallback |
+| **Stop-limit form and Trigger Stops panel** | Segment 4b in the UI | **Built** (P2-8B.4; verified with a mock wallet and a scratch chain, and the **happy path was run with MetaMask by the owner on 2026-11-08**; rehearse on the recording chain; the "Activated" wording that wrongly appeared on a stop cancelled before activation was fixed in P2-8C). The **terminal path** remains the fallback |
+| The recording chain runs the current engine | Every UI segment | Start the recording from a fresh Anvil, deploy and export (below). The owner's main chain (8545) was already found running the current engine on 8 Nov (P2-8B.1) |
 
 ## Setup (do this before recording)
 All commands are from the repo root unless the step says otherwise. The README Quickstart is the reference: Person 2 uses WSL. On Windows with Git Bash, run `export PATH="$HOME/.foundry/bin:$PATH"` first.
@@ -55,7 +56,7 @@ cd web && npm run dev     # open http://localhost:3000
 3. **Import tokens** for Alice and Bob: NTU and SGDx, using the addresses from `deployments.ts` or the app's Tokens page.
 4. **After any Anvil restart,** use MetaMask's *Clear activity tab data* for the network.
 
-> [P2 to confirm] `docs/TESTING.md` uses account 0 as Alice and account 1 as Bob. This plan uses accounts 1 and 2, which start with exactly 10,000 of each token, so the on-screen numbers are round. It also matches `contracts/script/demo-journey.sh`.
+> **Account convention.** `docs/TESTING.md` uses account 0 as Alice and account 1 as Bob. This plan uses accounts 1 and 2, which start with exactly 10,000 of each token, so the on-screen numbers are round; it also matches `contracts/script/demo-journey.sh`. Follow this plan's accounts for the recording and TESTING.md's for the manual tests.
 
 **Rehearse once,** then restart Anvil and redeploy, so the recording starts from block 0.
 
@@ -75,7 +76,7 @@ cd web && npm run dev     # open http://localhost:3000
 ### 3. The journey (Alice = account 1, Bob = account 2, on NTU/SGDx)
 | Step | Action (UI) | On screen afterwards |
 |---|---|---|
-| 3a | **Alice:** sell **100 NTU at 2.0**. Approve exactly 100 NTU, then place | Order book: ask 100 @ 2.0. Alice: **9,900 NTU** (100 in escrow), 10,000 SGDx |
+| 3a | **Alice:** sell **100 NTU at 2.0**. Approve exactly 100 NTU, then place | Order Book: ask 100 @ 2.0. Alice: **9,900 NTU** (100 in escrow), 10,000 SGDx |
 | 3b | **Bob:** buy **40 NTU at 2.0**. Approve exactly 80 SGDx, then place | One trade, 40 @ 2.0. Bob: **10,040 NTU, 9,920 SGDx**. Alice: **10,080 SGDx**. Alice's order: PartiallyFilled, 40 of 100, **60 left** |
 | 3b′ (optional) | Bob instead buys at a limit of **2.2** | It still executes at **2.0** (the maker's price). Bob escrows 88 and gets **8 SGDx back** at once (price improvement) |
 | 3c | **Alice: Cancel** on her order (bonus UI) | Alice gets exactly **60 NTU** back, to **9,960 NTU**. Order: Cancelled. Book: empty. Bob trying to cancel Alice's order is refused (`NotOrderOwner`) |
@@ -100,7 +101,7 @@ Scroll to step 3 of its output:
 - One `Keeper matchOrders(10)` transaction settled all four: orders 23 to 26 Filled.
 - Balances: Alice 9,949 NTU / 10,102 SGDx; Carol 9,989 / 10,022; Bob 10,051 / 9,898; Dan 970,011 / 969,978; **Keeper 0 / 0**; market 0 / 0.
 
-**UI path** (only if Person 2's Match orders button exists): create the same crossed book on the app's chain with the `cast` lines from `demo-journey.sh` step 3, using `--rpc-url http://127.0.0.1:8545`. Then press **Match orders** from the Keeper account and show the two fills.
+**UI path** (the Match Orders panel exists since P2-8B.3; its happy path was confirmed with MetaMask by the owner on a scratch chain on 2026-11-08, but **not yet rehearsed on the recording chain**): create the same crossed book on the app's chain with the `cast` lines from `demo-journey.sh` step 3 (or the setup in `docs/TESTING.md`, Test 13), using `--rpc-url http://127.0.0.1:8545`. Open Trade as the token-less Keeper account, press **Review match**, then **Confirm match**, and show the two fills in the result table. The spread reads **Crossed** until it is settled.
 
 ### 4b. Stop-limit (Bonus 3)
 **Say:** a stop-limit waits, escrowed, until the last trade price reaches its trigger. Then anyone can activate it, and it becomes a normal limit order.
@@ -111,7 +112,7 @@ Scroll to step 3 of its output:
 - Carol sells 1 at 1.8, so the last price is 1.8.
 - The keeper triggers: **1 activated**, which sells 10 into Bob's 1.75 bid. Alice **+17.5 SGDx**, to **10,119.5**.
 
-**UI path** (only if the stop form and Trigger button exist): place the stop as Alice, make the 1.8 trade as Carol, and press **Trigger stops**.
+**UI path** (the Stop-limit mode and the Trigger Stops panel exist since P2-8B.4; **the happy path was run with MetaMask on 2026-11-08, on a scratch chain; the recording chain itself is not yet rehearsed**): in Stop-limit mode place the stop as Alice, make the 1.8 trade as Carol, then press **Review trigger** and **Confirm trigger** from the Keeper account. The stop's own line in the result says what happened to it (it fills here); the My Orders line says *Waiting for price* before the trade and *Eligible now* after it. The setup helper and a manual procedure are in `docs/TESTING.md`, Test 14.
 
 **Mention:** stops trigger on the last trade price, which a single trade can move. That is a documented teaching limitation (SPEC section 8).
 

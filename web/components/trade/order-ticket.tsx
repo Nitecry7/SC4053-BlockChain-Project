@@ -1,5 +1,6 @@
 "use client";
 
+import { ActingAs } from "@/components/wallet/acting-as";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ArrowDownUp, CircleAlert, ShieldCheck } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
@@ -7,6 +8,8 @@ import { useSwitchChain } from "wagmi";
 import { AddressChip } from "@/components/data/address-chip";
 import { Amount } from "@/components/data/amount";
 import { TokenMark } from "@/components/data/token-mark";
+import { InfoTip } from "@/components/ui/info-tip";
+import type { GlossaryKey } from "@/lib/glossary";
 import { Panel } from "@/components/dashboard/panel";
 import type { DashboardState } from "@/components/dashboard/use-dashboard";
 import { WalletOutcome, WalletWaiting } from "@/components/wallet/wallet-pending-notice";
@@ -15,10 +18,13 @@ import { useOrderFlow } from "@/hooks/use-order-flow";
 import { anvil } from "@/lib/chains";
 import { describeError } from "@/lib/errors";
 import { validateOrderInput, type Side } from "@/lib/order-input";
+import { stopHints, stopState, stopStateText, validateStopInput } from "@/lib/stop-orders";
+import { isStopOutcome } from "@/lib/stop-runner";
 import { TICKET_BOOK_DEPTH, allowanceStep, estimateExecution } from "@/lib/order-plan";
 import { formatExact, quoteCost } from "@/lib/units";
 import { cn } from "@/lib/utils";
 import { OrderResult } from "./order-result";
+import { StopResult } from "./stop-result";
 import { TxStatus } from "./tx-status";
 
 function Field({
@@ -30,9 +36,12 @@ function Field({
   hint,
   error,
   disabled,
+  info,
 }: {
   id: string;
   label: string;
+  /** A glossary term: an information icon beside the label. */
+  info?: GlossaryKey;
   value: string;
   onChange: (v: string) => void;
   symbol: string;
@@ -42,9 +51,12 @@ function Field({
 }) {
   return (
     <div className={cn("glass-inset relative rounded-[0.875rem] px-3.5 py-3", error && "border-sell/50")}>
-      <label htmlFor={id} className="text-[0.6875rem] text-[#c3cce0]">
-        {label}
-      </label>
+      <div className="flex items-center gap-0.5">
+        <label htmlFor={id} className="text-[0.6875rem] text-[#c3cce0]">
+          {label}
+        </label>
+        {info && <InfoTip term={info} />}
+      </div>
       <div className="mt-1 flex items-center gap-2">
         <input
           id={id}
@@ -78,10 +90,13 @@ function Field({
   );
 }
 
-function Row({ label, children, strong }: { label: string; children: ReactNode; strong?: boolean }) {
+function Row({ label, children, strong, info }: { label: string; children: ReactNode; strong?: boolean; info?: GlossaryKey }) {
   return (
     <>
-      <dt className="text-muted-foreground">{label}</dt>
+      <dt className="flex items-center text-muted-foreground">
+        {label}
+        {info && <InfoTip term={info} />}
+      </dt>
       <dd className={cn("tabular text-right", strong && "font-semibold")}>{children}</dd>
     </>
   );
@@ -107,6 +122,8 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
   const snap = state.market.data;
   const { base, quote } = pair;
 
+  const [mode, setMode] = useState<"limit" | "stop">("limit");
+  const [triggerText, setTriggerText] = useState("");
   const [side, setSide] = useState<Side>("buy");
   const [priceText, setPriceText] = useState("");
   const [amountText, setAmountText] = useState("");
@@ -131,9 +148,13 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
   }
 
   const wallet = ready && balances.data ? { base: balances.data[0]!, quote: balances.data[1]! } : undefined;
-  const validation = snap ? validateOrderInput({ side, priceText, amountText, lotSize: snap.lotSize, tickSize: snap.tickSize, balances: wallet }) : undefined;
+  const validation = snap
+    ? mode === "stop"
+      ? validateStopInput({ side, triggerText, priceText, amountText, lotSize: snap.lotSize, tickSize: snap.tickSize, balances: wallet })
+      : validateOrderInput({ side, priceText, amountText, lotSize: snap.lotSize, tickSize: snap.tickSize, balances: wallet })
+    : undefined;
   const order = validation?.ok ? validation.order : undefined;
-  const errors = validation && !validation.ok ? validation.errors : {};
+  const errors: { price?: { message: string }; amount?: { message: string }; balance?: { message: string }; trigger?: { message: string } } = validation && !validation.ok ? validation.errors : {};
   const showErr = (text: string, e?: { message: string }) => (text !== "" ? e?.message : undefined);
 
   const collateralToken = order?.collateralToken === "quote" ? quote : base;
@@ -142,7 +163,7 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
 
   // At most `maxMatches` iterations of bigint arithmetic: cheap enough to compute on every render.
   let estimate: ReturnType<typeof estimateExecution> | undefined;
-  if (order && snap) {
+  if (mode === "limit" && order && snap) {
     try {
       estimate = estimateExecution({
         side: order.side,
@@ -184,12 +205,12 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
   else if (flow.busy) cta = { label: BUSY_LABEL[phase as keyof typeof BUSY_LABEL] ?? "Working…", disabled: true };
   else if (phase === "stale") cta = { label: "Dismiss", onClick: flow.reset };
   else if (phase === "failed") cta = { label: "Try again", onClick: flow.reset };
-  else if (!order) cta = { label: priceText === "" && amountText === "" ? "Enter a price and amount" : "Fix the highlighted fields", disabled: true };
-  else if (!reviewing) cta = { label: "Review order", onClick: () => setReviewing(true) };
+  else if (!order) cta = { label: priceText === "" && amountText === "" && triggerText === "" ? (mode === "stop" ? "Enter a trigger, a limit and an amount" : "Enter a price and amount") : "Fix the highlighted fields", disabled: true };
+  else if (!reviewing) cta = { label: mode === "stop" ? "Review stop-limit order" : "Review order", onClick: () => setReviewing(true) };
   else if (step === "unknown") cta = { label: "Checking allowance…", disabled: true };
   else if (step === "approval-required")
     cta = { label: `Approve ${formatExact(order.collateral)} ${collateralToken.symbol}`, onClick: () => flow.startApproval(order) };
-  else cta = { label: `Place ${side} order`, onClick: () => flow.startOrder(order) };
+  else cta = { label: mode === "stop" ? `Place ${side} stop-limit order` : `Place ${side} order`, onClick: () => flow.startOrder(order) };
 
   const done = phase === "done" && flow.state.result;
   const approvalKind = phase === "approve-wallet" || phase === "approve-confirming" || (phase === "failed" && flow.state.failure?.step === "approve");
@@ -197,10 +218,10 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
   const bestBid = snap && snap.bestBid.id !== 0n ? snap.bestBid.price : undefined;
 
   return (
-    <Panel id="order" title="Limit order" action={action}>
+    <Panel id="order" title={mode === "stop" ? "Stop-Limit Order" : "Limit Order"} info={mode === "stop" ? "stopLimitOrder" : "limitOrder"} action={action}>
       {done ? (
         <div className="space-y-3">
-          <OrderResult outcome={flow.state.result!} state={state} />
+          {isStopOutcome(flow.state.result) ? <StopResult outcome={flow.state.result} state={state} /> : <OrderResult outcome={flow.state.result!} state={state} />}
           <button
             type="button"
             onClick={() => {
@@ -208,6 +229,7 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
               setReviewing(false);
               setAmountText("");
               setPriceText("");
+              setTriggerText("");
             }}
             className="h-11 w-full rounded-xl border border-white/20 bg-white/[0.04] text-[0.8125rem] font-semibold text-white hover:bg-white/[0.08]"
           >
@@ -216,6 +238,25 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
         </div>
       ) : (
         <>
+          <div role="radiogroup" aria-label="Order type" className="mb-2 flex gap-1 rounded-[0.875rem] border border-white/[0.1] bg-[#10162a]/60 p-1">
+            {(["limit", "stop"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                role="radio"
+                aria-checked={mode === m}
+                data-testid={`mode-${m}`}
+                disabled={locked}
+                onClick={() => edit(() => setMode(m))}
+                className={cn(
+                  "flex-1 rounded-[0.625rem] border border-transparent py-1.5 text-[0.75rem] font-medium text-[#c5cce3] transition-colors disabled:cursor-not-allowed",
+                  mode === m && "glass-active text-white",
+                )}
+              >
+                {m === "limit" ? "Limit" : "Stop-Limit"}
+              </button>
+            ))}
+          </div>
           <div role="radiogroup" aria-label="Order side" className="mb-3 flex gap-1 rounded-[0.875rem] border border-white/[0.1] bg-[#10162a]/60 p-1">
             {(["buy", "sell"] as const).map((s) => (
               <button
@@ -237,9 +278,43 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
 
           <fieldset disabled={locked || !live || settling} className="min-w-0 space-y-2">
             <legend className="sr-only">Order details</legend>
+            {mode === "stop" && (
+              <>
+                <Field
+                  id="order-trigger"
+                  label="Trigger Price"
+                  info="triggerPrice"
+                  value={triggerText}
+                  onChange={(v) => edit(() => setTriggerText(v))}
+                  symbol={quote.symbol}
+                  error={showErr(triggerText, errors.trigger)}
+                  hint={
+                    <span className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                      <span>
+                        {side === "sell" ? "Becomes eligible when the last trade is at or below this" : "Becomes eligible when the last trade is at or above this"}
+                      </span>
+                      <span data-testid="last-trade-hint">
+                        {snap?.hasTradePrice ? (
+                          <>
+                            Last trade <Amount value={snap.lastTradePrice} visible={4} showTail={false} />
+                          </>
+                        ) : (
+                          "No trade yet: stops cannot trigger until the first trade"
+                        )}
+                      </span>
+                    </span>
+                  }
+                />
+                <p className="px-1 text-[0.6875rem] text-subtle" data-testid="stop-explainer">
+                  The <strong className="font-medium text-[#c3cce0]">trigger price</strong> is the market condition that makes the pending order eligible. The{" "}
+                  <strong className="font-medium text-[#c3cce0]">limit price</strong> is the price boundary at which it may trade once it is activated. The order waits, with its collateral escrowed, outside the order book.
+                </p>
+              </>
+            )}
             <Field
               id="order-price"
-              label="Limit price"
+              label="Limit Price"
+              info="limitPrice"
               value={priceText}
               onChange={(v) => edit(() => setPriceText(v))}
               symbol={quote.symbol}
@@ -287,13 +362,18 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
           <dl className="mt-3 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-[0.6875rem]">
             <Row label={`Wallet ${base.symbol}`}>{wallet ? <Amount value={wallet.base} visible={4} showTail={false} /> : "—"}</Row>
             <Row label={`Wallet ${quote.symbol}`}>{wallet ? <Amount value={wallet.quote} visible={4} showTail={false} /> : "—"}</Row>
-            <Row label="Lot size">{snap ? <Amount value={snap.lotSize} visible={9} showTail={false} symbol={base.symbol} /> : "—"}</Row>
-            <Row label="Tick size">{snap ? <Amount value={snap.tickSize} visible={9} showTail={false} symbol={quote.symbol} /> : "—"}</Row>
+            <Row label="Lot Size">{snap ? <Amount value={snap.lotSize} visible={9} showTail={false} symbol={base.symbol} /> : "—"}</Row>
+            <Row label="Tick Size">{snap ? <Amount value={snap.tickSize} visible={9} showTail={false} symbol={quote.symbol} /> : "—"}</Row>
           </dl>
 
           {order && (
             <dl className="glass-inset mt-3 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 rounded-[0.875rem] px-3.5 py-3 text-[0.75rem]" aria-label="Order summary">
-              <Row label={`Escrowed collateral (${collateralToken.symbol})`} strong>
+              {order.kind === "stop" && order.triggerPrice !== undefined && (
+                <Row label="Trigger Price">
+                  <Amount value={order.triggerPrice} visible={4} showTail={false} symbol={quote.symbol} />
+                </Row>
+              )}
+              <Row label={order.kind === "stop" ? `Escrowed now, at the limit price (${collateralToken.symbol})` : `Escrowed collateral (${collateralToken.symbol})`} strong info="escrow">
                 <Amount value={order.collateral} visible={4} showTail={false} symbol={collateralToken.symbol} />
               </Row>
               <Row label={order.side === "buy" ? "Most you can pay" : "You receive if filled at your limit"}>
@@ -304,13 +384,13 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
                   <Amount value={(order.collateralToken === "quote" ? wallet.quote : wallet.base) - order.collateral} visible={4} showTail={false} />
                 </Row>
               )}
-              <Row label="Order book allowance">
+              <Row label="Order Book Allowance">
                 {allowance.data !== undefined ? <Amount value={allowance.data} visible={4} showTail={false} symbol={collateralToken.symbol} /> : "—"}
               </Row>
               {estimate && (
                 <>
                   <dt className="col-span-2 mt-1 border-t border-white/[0.08] pt-2 text-[0.6875rem] font-medium text-[#c3cce0]">Estimate against the current book</dt>
-                  <Row label="Fills right away">
+                  <Row label="Fills Right Away">
                     {estimate.fills.length > 0 ? (
                       <>
                         <Amount value={estimate.filledBase} visible={4} showTail={false} symbol={base.symbol} /> in {estimate.fills.length}
@@ -340,7 +420,7 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
                   {estimate.crossedRemainder && (
                     <dd className="col-span-2 text-[0.6875rem] text-warn">
                       The engine matches at most {snap?.maxMatchesPerTx.toString()} orders per transaction. The rest would be placed on the book and could stay
-                      crossed; nothing matches it in the background.
+                      crossed; nothing matches it in the background, but anyone can settle it afterwards with Match orders.
                     </dd>
                   )}
                   {estimate.bookSnapshotExhausted && (
@@ -351,33 +431,54 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
             </dl>
           )}
 
+          {mode === "stop" && order && order.triggerPrice !== undefined && snap && (
+            <ul className="mt-2 space-y-1 text-[0.6875rem] text-warn" data-testid="stop-hints" aria-label="Stop-limit notes">
+              {stopHints({ side: order.side, triggerPrice: order.triggerPrice, limitPrice: order.price, lastTradePrice: snap.lastTradePrice, hasTradePrice: snap.hasTradePrice }).map((h) => (
+                <li key={h.code}>{h.text}</li>
+              ))}
+            </ul>
+          )}
+
           {reviewing && order && (
             <div className="mt-3 space-y-2 rounded-[0.875rem] border border-lilac/30 bg-[#161d36]/70 px-3.5 py-3 text-[0.75rem]" role="group" aria-labelledby="order-review-title" data-testid="review">
               <p id="order-review-title" className="flex items-center gap-1.5 text-[0.8125rem] font-semibold">
-                <ShieldCheck className="size-4 text-lilac" aria-hidden /> Review before you sign
+                <ShieldCheck className="size-4 text-lilac" aria-hidden /> Review Before You Sign
               </p>
               <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1">
+                <ActingAs address={account.address} />
                 <Row label="Market">
                   {base.symbol} / {quote.symbol}
                 </Row>
                 <Row label="Side">{order.side === "buy" ? `Buy ${base.symbol}` : `Sell ${base.symbol}`}</Row>
-                <Row label="Limit price">
+                {order.kind === "stop" && order.triggerPrice !== undefined && (
+                  <Row label="Trigger Price">
+                    <Amount value={order.triggerPrice} visible={4} showTail={false} symbol={quote.symbol} />
+                  </Row>
+                )}
+                <Row label="Limit Price">
                   <Amount value={order.price} visible={4} showTail={false} symbol={quote.symbol} />
                 </Row>
                 <Row label="Amount">
                   <Amount value={order.amount} visible={4} showTail={false} symbol={base.symbol} />
                 </Row>
-                <Row label="Market contract">
+                <Row label="Market Contract">
                   <AddressChip address={marketAddress} copy={false} className="text-[0.6875rem]" />
                 </Row>
                 <Row label={`${collateralToken.symbol} token contract`}>
                   <AddressChip address={collateralToken.address} copy={false} className="text-[0.6875rem]" />
                 </Row>
               </dl>
+              {order.kind === "stop" && order.triggerPrice !== undefined && snap && (
+                <p className="text-[#c3cce0]" data-testid="stop-review-state">
+                  This is a <strong>stop-limit</strong> order. It is escrowed now, at the limit price, and stays <strong>pending</strong> (not on the order book, not tradable) until it is activated.{" "}
+                  {stopStateText(stopState(order.side, order.triggerPrice, snap.lastTradePrice, snap.hasTradePrice), order.side, formatExact(order.triggerPrice))}{" "}
+                  Activation is a separate transaction (Trigger stops) that anyone can send, and activation is not a guaranteed fill.
+                </p>
+              )}
               <p className="text-[0.6875rem] text-subtle">Symbols are chosen by whoever issues a token. The contract address is what identifies it.</p>
               {step === "approval-required" ? (
                 <p className="text-[#c3cce0]">
-                  Step 1 of 2: approve exactly <strong>{formatExact(order.collateral)} {collateralToken.symbol}</strong> for the order book{" "}
+                  Step 1 of 2: approve<InfoTip term="allowance" /> exactly <strong>{formatExact(order.collateral)} {collateralToken.symbol}</strong> for the order book{" "}
                   <AddressChip address={marketAddress} copy={false} className="text-[0.6875rem]" />. It lets the order book move that amount into escrow when you
                   place this order, and nothing more. Step 2 is a separate wallet request to place the order.
                 </p>
@@ -449,12 +550,14 @@ export function OrderTicket({ state, action }: { state: DashboardState; action?:
             type="button"
             disabled={cta.disabled}
             onClick={cta.onClick}
-            className="mt-3 h-11 w-full rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] text-[0.8125rem] font-semibold text-white shadow-[inset_0_1px_5px_rgb(255_255_255/0.2),0_10px_24px_-12px_rgb(124_92_242/0.8)] transition-[filter] hover:brightness-110 disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-[linear-gradient(100deg,rgb(101_86_204/0.4),rgb(162_139_248/0.4)_49%,rgb(120_98_220/0.4))] disabled:text-white/70 disabled:shadow-none disabled:hover:brightness-100"
+            className="mt-3 h-11 w-full rounded-xl border border-[rgb(208_199_255/0.3)] bg-[linear-gradient(100deg,rgb(111_92_232/0.9),rgb(118_96_228/0.9)_49%,rgb(120_98_220/0.9))] text-[0.8125rem] font-semibold text-white shadow-[inset_0_1px_5px_rgb(255_255_255/0.2),0_10px_24px_-12px_rgb(124_92_242/0.8)] transition-[filter] hover:brightness-105 disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-[linear-gradient(100deg,rgb(101_86_204/0.4),rgb(162_139_248/0.4)_49%,rgb(120_98_220/0.4))] disabled:text-white/70 disabled:shadow-none disabled:hover:brightness-100"
           >
             {cta.label}
           </button>
           <p className="mt-2 text-center text-[0.6875rem] text-muted-foreground">
-            Limit orders only. Your tokens stay in your wallet until an order escrows them, and every fill settles on-chain at the maker&rsquo;s price.
+            {mode === "stop"
+              ? "Limit and stop-limit orders only. The trigger uses this market's own last trade price, not an outside price feed. A stop is not a guarantee of execution or of price."
+              : "Limit orders only. Your tokens stay in your wallet until an order escrows them, and every fill settles on-chain at the maker\u2019s price."}
           </p>
         </>
       )}

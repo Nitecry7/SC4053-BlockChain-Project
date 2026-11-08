@@ -24,7 +24,7 @@ export function RpcHealthBanner() {
         <div className="text-[0.8125rem]">
           <p className="font-semibold">The node is answering again. Verifying the chain.</p>
           <p className="mt-0.5 text-muted-foreground">
-            Checking that this is still the same chain and re-reading balances, orders and markets. Placing orders and creating tokens or markets stay off until
+            Checking that this is still the same chain and re-reading balances, orders and markets. Placing or cancelling orders and creating tokens or markets stay off until
             that is confirmed.
           </p>
         </div>
