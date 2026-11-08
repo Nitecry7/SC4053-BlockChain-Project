@@ -66,7 +66,7 @@ const CONTRACT_ERROR_TEXT: Record<string, { title: string; detail: string }> = {
   InvalidTickSize: { title: "The price is not a multiple of the tick size", detail: "Use a multiple of the market's tick size." },
   BookTooDeep: {
     title: "The book is too deep for this price",
-    detail: "More orders rank ahead of this one than the engine will scan (BookTooDeep). Try a price closer to the best price.",
+    detail: "More orders rank ahead of this one than the engine will scan (BookTooDeep). For a limit order, try a price closer to the best price. For a stop-limit order, too many stops on this side rank ahead of this trigger: try a trigger closer to the current one, or cancel an older stop.",
   },
   NotOrderOwner: {
     title: "This is not your order",

@@ -40,3 +40,14 @@ describe("describeTxError: InvalidMaxCount (P2-8B.3)", () => {
     expect(d.detail).toMatch(/MAX_MATCHES_PER_TX/);
   });
 });
+
+describe("describeTxError: BookTooDeep covers stops too (P2-8B.4)", () => {
+  it("mentions both a limit order and a stop-limit order, in plain words", async () => {
+    const { describeTxError } = await import("./errors");
+    const e = Object.assign(new Error("x"), { name: "ContractFunctionExecutionError", cause: Object.assign(new Error("y"), { name: "ContractFunctionRevertedError", data: { errorName: "BookTooDeep" } }) });
+    const d = describeTxError(e);
+    expect(d).toMatchObject({ kind: "reverted", errorName: "BookTooDeep" });
+    expect(d.detail).toMatch(/stop-limit order/);
+    expect(d.detail).toMatch(/limit order/);
+  });
+});

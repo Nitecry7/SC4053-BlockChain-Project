@@ -11,6 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCancelFlow } from "@/hooks/use-cancel-flow";
 import { MY_ORDERS_LIMIT, useMyOrders } from "@/hooks/use-dex-data";
 import { canCancel, collateralHeld, remainingBase, statusLabel } from "@/lib/order-status";
+import { isStopOrder, stopState, stopStateText } from "@/lib/stop-orders";
+import { formatExact } from "@/lib/units";
 import { cn } from "@/lib/utils";
 import { CancelPanel } from "./cancel-panel";
 
@@ -34,6 +36,7 @@ export function MyOrders({ state }: { state: DashboardState }) {
   const [selected, setSelected] = useState<bigint | undefined>();
   const selectedRow = q.data?.rows.find((r) => r.order.id === selected);
   const idle = flow.state.phase === "idle";
+  const snap = state.market.data;
 
   let body: React.ReactNode;
   if (!live) body = <EmptyState title="Orders unavailable">They are read once the deployment is found on this chain.</EmptyState>;
@@ -105,6 +108,30 @@ export function MyOrders({ state }: { state: DashboardState }) {
                       >
                         Cancel
                       </button>
+                    )}
+                    {isStopOrder(order) && (
+                      <div className="mt-1 max-w-[19rem] text-[0.6875rem] leading-snug text-muted-foreground" data-testid={`stop-info-${order.id.toString()}`}>
+                        <span className="font-medium text-[#c3cce0]">Stop-limit</span>: trigger{" "}
+                        <Amount value={order.triggerPrice} visible={4} showTail={false} symbol={pair.quote.symbol} />, limit <Amount value={order.price} visible={4} showTail={false} symbol={pair.quote.symbol} />.{" "}
+                        {order.status === 4 ? (
+                          snap ? (
+                            (() => {
+                              const st = stopState(order.side, order.triggerPrice, snap.lastTradePrice, snap.hasTradePrice);
+                              return (
+                                <span data-testid={`stop-state-${order.id.toString()}`} data-state={st.kind} className={st.kind === "eligible" ? "text-warn" : undefined}>
+                                  {stopStateText(st, order.side, formatExact(order.triggerPrice))}
+                                </span>
+                              );
+                            })()
+                          ) : (
+                            "Reading the market…"
+                          )
+                        ) : (
+                          <span data-testid={`stop-state-${order.id.toString()}`} data-state="activated">
+                            Activated: it is now an ordinary order at its limit price{order.status === 3 ? " (cancelled)" : order.status === 2 ? " (filled)" : ""}.
+                          </span>
+                        )}
+                      </div>
                     )}
                   </td>
                   <td className="py-2.5 text-right max-lg:py-0 max-lg:text-left">

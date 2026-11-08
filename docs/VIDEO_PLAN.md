@@ -12,7 +12,7 @@
 |---|---|---|
 | Base trading UI (place order, partial fill, order history) | Segment 3 | Built (Person 2) |
 | **Cancel button and Match orders panel** | Segments 3c and 4a in the UI | **Built** (P2-8B.2 and P2-8B.3; Cancel's happy path run with MetaMask by the owner, Match orders: happy path confirmed with MetaMask by the owner on a scratch chain, 2026-11-08, but not yet rehearsed on the recording chain). Rehearse them on the recording chain; the **terminal path** in each segment remains the fallback |
-| **Stop-limit form and Trigger stops button** | Segment 4b in the UI | **Not built yet** (Person 2; see `docs/ENGINE_HANDOFF.md`). Use the **terminal path** |
+| **Stop-limit form and Trigger stops panel** | Segment 4b in the UI | **Built** (P2-8B.4; verified with a mock wallet and a scratch chain, and the **happy path was run with MetaMask by the owner on 2026-11-08**; rehearse on the recording chain, and avoid showing a cancelled stop's history line until its "Activated" wording is fixed). The **terminal path** remains the fallback |
 | Your local chain runs the current engine | Every UI segment | **Redeploy needed**: a fresh Anvil, then deploy and export (below) |
 
 ## Setup (do this before recording)
@@ -112,7 +112,7 @@ Scroll to step 3 of its output:
 - Carol sells 1 at 1.8, so the last price is 1.8.
 - The keeper triggers: **1 activated**, which sells 10 into Bob's 1.75 bid. Alice **+17.5 SGDx**, to **10,119.5**.
 
-**UI path** (only if the stop form and Trigger button exist): place the stop as Alice, make the 1.8 trade as Carol, and press **Trigger stops**.
+**UI path** (the Stop-limit mode and the Trigger stops panel exist since P2-8B.4; **the happy path was run with MetaMask on 2026-11-08, on a scratch chain; the recording chain itself is not yet rehearsed**): in Stop-limit mode place the stop as Alice, make the 1.8 trade as Carol, then press **Review trigger** and **Confirm trigger** from the Keeper account. The stop's own line in the result says what happened to it (it fills here); the My orders line says *Waiting for price* before the trade and *Eligible now* after it. The setup helper and a manual procedure are in `docs/TESTING.md`, Test 14.
 
 **Mention:** stops trigger on the last trade price, which a single trade can move. That is a documented teaching limitation (SPEC section 8).
 

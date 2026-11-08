@@ -351,6 +351,11 @@ export function useMyOrders(market: Address, account: Address | undefined, enabl
         client!.getContractEvents({ address: market, abi: orderBookAbi, eventName: "Trade", args: { takerOrderId: latest }, fromBlock: BigInt(D.deployBlock), toBlock: "latest" }),
       ]);
       const placedTx = new Map(placed.map((l) => [l.args.orderId as bigint, l.transactionHash as Hex]));
+      // A stop-limit order has no OrderPlaced: its creating transaction is its StopOrderPlaced. One extra read, only when a stop is listed.
+      if (orders.some((o) => o.triggerPrice !== 0n)) {
+        const stops = await client!.getContractEvents({ address: market, abi: orderBookAbi, eventName: "StopOrderPlaced", args: { trader: account! }, fromBlock: BigInt(D.deployBlock), toBlock: "latest" });
+        for (const l of stops) placedTx.set(l.args.orderId as bigint, l.transactionHash as Hex);
+      }
       const seen = new Set<string>();
       const trades: MyOrderTrade[] = [];
       for (const l of [...asMaker, ...asTaker]) {

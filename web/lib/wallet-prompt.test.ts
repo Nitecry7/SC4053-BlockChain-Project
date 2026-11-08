@@ -68,3 +68,12 @@ describe("match requests (P2-8B.3)", () => {
     expect(rejected.body).toMatch(/Nothing was sent/);
   });
 });
+
+describe("trigger requests (P2-8B.4)", () => {
+  it("are worded as a trigger request and never as an order, a match or a cancel", () => {
+    expect(waitingCopy("trigger", 0).title).toBe("Trigger request sent to your wallet");
+    expect(successCopy("trigger").title).toBe("Trigger transaction confirmed on-chain");
+    const rejected = failureCopy("trigger", { kind: "rejected", title: "x", detail: "y" });
+    expect(rejected.title).toBe("You rejected the trigger request");
+  });
+});

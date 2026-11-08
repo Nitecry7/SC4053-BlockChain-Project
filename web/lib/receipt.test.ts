@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  ALICE, BOB, EVIL, MARKET, NTU, SGDX, approval, dec, orderCancelled, orderPlaced, resetLogIndex, specExampleLogs, trade, transfer,
+  ALICE, BOB, EVIL, MARKET, NTU, SGDX, approval, dec, orderCancelled, orderPlaced, resetLogIndex, specExampleLogs, stopOrderPlaced, stopOrderTriggered, trade, transfer,
 } from "./test-logs";
-import { decodeCancelReceipt, decodeMatchReceipt, decodeOrderReceipt, decodeTxEvents, reconcileOrder } from "./receipt";
+import { decodeCancelReceipt, decodeMatchReceipt, decodeOrderReceipt, decodeStopReceipt, decodeTriggerReceipt, decodeTxEvents, reconcileOrder } from "./receipt";
 
 // The logs are SYNTHETIC (built with viem's event encoders in test-logs.ts, not captured from a chain). The
 // chain-backed equivalents are in trading.integration.test.ts, run against a scratch Anvil.
@@ -258,5 +258,78 @@ describe("decodeMatchReceipt (P2-8B.3)", () => {
       transfer(NTU, ALICE, BOB, dec("5")), // not from the market
     ];
     expect(decodeMatchReceipt({ logs, ...pair })).toEqual({ fills: [], baseOut: 0n, quoteOut: 0n, baseTo: {}, quoteTo: {} });
+  });
+});
+
+describe("decodeStopReceipt (P2-8B.4)", () => {
+  const pair = { market: MARKET, baseToken: NTU, quoteToken: SGDX };
+  it("reads StopOrderPlaced (there is no OrderPlaced for a stop) and the escrow that moved to the market", () => {
+    resetLogIndex();
+    const logs = [transfer(NTU, ALICE, MARKET, dec("10")), stopOrderPlaced(MARKET, 7n, ALICE, 1, dec("1.8"), dec("1.7"), dec("10"))];
+    const r = decodeStopReceipt({ logs, ...pair, user: ALICE });
+    expect(r).toEqual({ ok: true, receipt: { orderId: 7n, trader: ALICE, side: "sell", triggerPrice: dec("1.8"), limitPrice: dec("1.7"), amount: dec("10"), escrowBase: dec("10"), escrowQuote: 0n } });
+  });
+  it("a buy stop's escrow is quote", () => {
+    resetLogIndex();
+    const logs = [transfer(SGDX, BOB, MARKET, dec("10.4")), stopOrderPlaced(MARKET, 8n, BOB, 0, dec("2.5"), dec("2.6"), dec("4"))];
+    const r = decodeStopReceipt({ logs, ...pair, user: BOB });
+    expect(r.ok && r.receipt).toMatchObject({ side: "buy", escrowQuote: dec("10.4"), escrowBase: 0n });
+  });
+  it("refuses a missing event, another trader's stop, another contract's event, and an ambiguous receipt", () => {
+    resetLogIndex();
+    expect(decodeStopReceipt({ logs: [], ...pair, user: ALICE })).toEqual({ ok: false, reason: "no-stop-placed" });
+    expect(decodeStopReceipt({ logs: [stopOrderPlaced(MARKET, 7n, BOB, 1, 1n, 1n, 1n)], ...pair, user: ALICE })).toEqual({ ok: false, reason: "no-stop-placed" });
+    expect(decodeStopReceipt({ logs: [stopOrderPlaced(EVIL, 7n, ALICE, 1, 1n, 1n, 1n)], ...pair, user: ALICE })).toEqual({ ok: false, reason: "no-stop-placed" });
+    resetLogIndex();
+    const two = [stopOrderPlaced(MARKET, 7n, ALICE, 1, 1n, 1n, 1n), stopOrderPlaced(MARKET, 8n, ALICE, 1, 1n, 1n, 1n)];
+    expect(decodeStopReceipt({ logs: two, ...pair, user: ALICE })).toEqual({ ok: false, reason: "ambiguous-stop-placed" });
+  });
+  it("an OrderPlaced is not a stop: a plain limit order's receipt is refused here", () => {
+    resetLogIndex();
+    expect(decodeStopReceipt({ logs: [orderPlaced(MARKET, 1n, ALICE, 1, dec("2"), dec("1"))], ...pair, user: ALICE })).toEqual({ ok: false, reason: "no-stop-placed" });
+  });
+  it("the transaction page now decodes both stop events", () => {
+    resetLogIndex();
+    const logs = [stopOrderPlaced(MARKET, 7n, ALICE, 1, dec("1.8"), dec("1.7"), dec("10")), stopOrderTriggered(MARKET, 7n, dec("1.8"))];
+    const { events, unrecognised } = decodeTxEvents({ logs, markets: [MARKET], tokens: [NTU, SGDX] });
+    expect(events.map((e) => e.kind)).toEqual(["StopOrderPlaced", "StopOrderTriggered"]);
+    expect(events[1]).toMatchObject({ kind: "StopOrderTriggered", orderId: 7n, lastTradePrice: dec("1.8") });
+    expect(unrecognised).toBe(0);
+  });
+});
+
+describe("decodeTriggerReceipt (P2-8B.4)", () => {
+  const pair = { market: MARKET, baseToken: NTU, quoteToken: SGDX };
+  it("an activation without a fill: one StopOrderTriggered, no trade, no cancel", () => {
+    resetLogIndex();
+    const r = decodeTriggerReceipt({ logs: [stopOrderTriggered(MARKET, 7n, dec("1.8"))], ...pair });
+    expect(r.triggered).toEqual([{ orderId: 7n, lastTradePrice: dec("1.8"), logIndex: 0 }]);
+    expect(r.fills).toEqual([]);
+    expect(r.cancelled).toEqual([]);
+  });
+  it("an activation with a fill: the stop is the taker and the payouts are summed", () => {
+    resetLogIndex();
+    const logs = [stopOrderTriggered(MARKET, 7n, dec("1.8")), trade(MARKET, 3n, 7n, BOB, ALICE, dec("1.9"), dec("2"), dec("3.8")), transfer(SGDX, MARKET, ALICE, dec("3.8")), transfer(NTU, MARKET, BOB, dec("2"))];
+    const r = decodeTriggerReceipt({ logs, ...pair });
+    expect(r.fills).toHaveLength(1);
+    expect(r.fills[0]).toMatchObject({ makerOrderId: 3n, takerOrderId: 7n, price: dec("1.9"), baseAmount: dec("2") });
+    expect(r.quoteOut).toBe(dec("3.8"));
+    expect(r.baseTo[BOB.toLowerCase()]).toBe(dec("2"));
+  });
+  it("an OrderCancelled after a trigger for the SAME order is an auto-cancel; one for another order is not", () => {
+    resetLogIndex();
+    const logs = [stopOrderTriggered(MARKET, 7n, dec("1.8")), orderCancelled(MARKET, 7n, ALICE, dec("10"), 0n), orderCancelled(MARKET, 9n, BOB, 0n, dec("1"))];
+    const r = decodeTriggerReceipt({ logs, ...pair });
+    expect(r.cancelled.map((c) => [c.orderId, c.auto])).toEqual([[7n, true], [9n, false]]);
+  });
+  it("a cancel logged BEFORE the trigger of that order is not an auto-cancel", () => {
+    resetLogIndex();
+    const logs = [orderCancelled(MARKET, 7n, ALICE, dec("10"), 0n), stopOrderTriggered(MARKET, 7n, dec("1.8"))];
+    expect(decodeTriggerReceipt({ logs, ...pair }).cancelled[0]!.auto).toBe(false);
+  });
+  it("a no-op transaction (no logs) decodes to nothing; another market's or contract's events are ignored", () => {
+    resetLogIndex();
+    expect(decodeTriggerReceipt({ logs: [], ...pair })).toMatchObject({ triggered: [], fills: [], cancelled: [], baseOut: 0n, quoteOut: 0n });
+    expect(decodeTriggerReceipt({ logs: [stopOrderTriggered(EVIL, 7n, 1n)], ...pair }).triggered).toEqual([]);
   });
 });

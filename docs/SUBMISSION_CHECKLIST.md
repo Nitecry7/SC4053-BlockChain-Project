@@ -14,7 +14,7 @@ State on 8 Nov: `main` includes the `engine-final` tag (`fd8869a`) and the docum
 | M7 | Simple front end | ✅ Done (baseline) | `web/`; 410 unit tests; browser suites (mock wallet) |
 | B1 | Bonus 1: cancel unfilled amounts | ✅ **Engine** · ✅ **UI (Person 2): cancel from My orders; mock-wallet tests plus one owner-run MetaMask happy path, other manual cases pending** | `cancelOrder`; `OrderBook.Cancel.t.sol` (52); demo step 2 |
 | B2 | Bonus 2: batched multi-party matching | ✅ **Engine** · ✅ **UI (Person 2): Match orders panel on Trade; mock-wallet and real-chain tests, a four-trader scenario with a token-less keeper; happy path confirmed with MetaMask by the owner on a scratch chain; rejection and account-switch cases not yet run** | `matchOrders`; 4 + 4 traders in one transaction (`OrderBook.Batch.t.sol`, demo step 3) |
-| B3 | Bonus 3: conditional orders | ✅ **Engine** · ⏳ **UI (Person 2)** | `placeStopLimitOrder`, `triggerStopOrders`; `OrderBook.Stop.t.sol` (42); demo step 4 |
+| B3 | Bonus 3: conditional orders | ✅ **Engine** · ✅ **UI (Person 2): Stop-limit mode, pending stops, Trigger stops panel; mock-wallet and real-chain tests; MetaMask happy path run by the owner 2026-11-08 (Test 14); negative cases and screenshots outstanding** | `placeStopLimitOrder`, `triggerStopOrders`; `OrderBook.Stop.t.sol` (42); demo step 4 |
 | T1 | Tricky point: who triggers execution, and how often | ✅ Answered | `SPEC.md` section 6 |
 | T2 | Tricky point: priority of older orders | ✅ Answered | `SPEC.md` sections 2 and 7 (O1, `bookSeq`) |
 | D1 | AI Audit Report, 8 sections | 📝 Full draft; confirmations pending | `docs/report/AI_AUDIT_REPORT.md` |

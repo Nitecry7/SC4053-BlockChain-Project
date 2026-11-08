@@ -1,7 +1,7 @@
 import type { DescribedError } from "./errors";
 
 /** The kinds of request that open a prompt in the user's wallet. */
-export type WalletRequestKind = "connect" | "approve" | "order" | "switch" | "token" | "market" | "cancel" | "match";
+export type WalletRequestKind = "connect" | "approve" | "order" | "switch" | "token" | "market" | "cancel" | "match" | "trigger";
 
 /** After this long without an answer, the notice adds recovery steps. */
 export const ESCALATION_MS = 20_000;
@@ -22,6 +22,7 @@ const TITLES: Record<WalletRequestKind, string> = {
   market: "Market listing request sent to your wallet",
   cancel: "Cancel request sent to your wallet",
   match: "Match request sent to your wallet",
+  trigger: "Trigger request sent to your wallet",
 };
 
 const SUCCESS_TITLES: Record<WalletRequestKind, string> = {
@@ -33,6 +34,7 @@ const SUCCESS_TITLES: Record<WalletRequestKind, string> = {
   market: "Market listed on-chain",
   cancel: "Cancellation confirmed on-chain",
   match: "Matching confirmed on-chain",
+  trigger: "Trigger transaction confirmed on-chain",
 };
 
 /** Steps for a request that has been pending a while. */
@@ -80,6 +82,7 @@ export function failureCopy(kind: WalletRequestKind, error: DescribedError): Pro
       market: "market listing",
       cancel: "cancel",
       match: "match",
+      trigger: "trigger",
     };
     return {
       state: "rejected",
