@@ -17,11 +17,11 @@ Companion to [`VIDEO_PLAN.md`](VIDEO_PLAN.md), which has the setup, the recordin
 | 5 | 3:40 | 4:25 | Bonus 2: batch matching by a keeper | P1 and P2 (P1 56, P2 24) | 80 | 45 | 1.78 |
 | 6 | 4:25 | 5:40 | Bonus 3: stop-limit order, trigger and execution | P1 and P2 (P1 66, P2 72) | 138 | 75 | 1.84 |
 | 7 | 5:40 | 6:30 | Solidity security, testing and audit evidence | P1 (P1 101, P2 0) | 101 | 50 | 2.02 |
-| 8 | 6:30 | 7:10 | AI-assisted methodology and lessons | P1 and P2 (P1 48, P2 34) | 82 | 40 | 2.05 |
+| 8 | 6:30 | 7:10 | AI-assisted methodology and lessons | P1 and P2 (P1 49, P2 34) | 83 | 40 | 2.08 |
 | 9 | 7:10 | 7:30 | Limitations and conclusion | P1 and P2 (P1 21, P2 17) | 38 | 20 | 1.90 |
-| | 0:00 | 7:30 | **Total** | P1 445 (54%), P2 371 (45%) | **816** | 450 | 1.81 |
+| | 0:00 | 7:30 | **Total** | P1 446 (54%), P2 371 (45%) | **817** | 450 | 1.82 |
 
-**How the time is used.** About 816 spoken words in 450 seconds is 1.8 words per second (roughly 108 words per minute), slower than normal speech on purpose: the rest is time for clicks, MetaMask confirmations and block times. Person 2 also operates every action, so the word split understates Person 2's share of the work. Rehearse with a stopwatch: if a segment runs more than 5 seconds long twice in a row, shorten its first sentence, not the demonstration.
+**How the time is used.** About 817 spoken words in 450 seconds is 1.8 words per second (roughly 108 words per minute), slower than normal speech on purpose: the rest is time for clicks, MetaMask confirmations and block times. Person 2 also operates every action, so the word split understates Person 2's share of the work. Rehearse with a stopwatch: if a segment runs more than 5 seconds long twice in a row, shorten its first sentence, not the demonstration.
 
 **Counts are estimates, not measurements.** The words were counted by script from the quoted text; the seconds are the plan. The real timing is the rehearsal's.
 
@@ -154,7 +154,7 @@ Companion to [`VIDEO_PLAN.md`](VIDEO_PLAN.md), which has the setup, the recordin
 
 **Say:**
 
-**P1:** "We gave the AI written specification files and a frozen interface, and logged every session. A fresh AI reviewer checked each phase. It found issue six: for about one hundred two wei, one stop could block every trigger. In total we logged twenty-four issues, each with its evidence."
+**P1:** "We set the rules in specification files; the AI coded inside them. A fresh AI reviewer checked each phase, and we decided every fix. It found issue six: about one hundred two wei could block every trigger, and we chose auto-cancel. We logged twenty-four issues, each with its evidence."
 
 **P2:** "On the front end, mock-wallet tests passed while real MetaMask exposed a stale-nonce problem and a misleading label on a cancelled stop. Different kinds of evidence prove different things, so we kept them apart."
 

@@ -1028,3 +1028,26 @@ Each must be checked against the source before drawing. Use one colour-blind-saf
 - **Phase 3 showed that earlier sessions wrote several unsupported attributions into the report** (listed above). Each one is now corrected against its source.
 
 **What the human did:** asked for the phased plan and for it to be carried out, with commit, merge and push.
+
+## 2026-11-08: Verification of `faheem` and human-judgement wording
+**Phase:** wrap-up. **Branch:** `docs/final-verification`, from `origin/faheem` (`4110aa5`).
+
+**Prompt (summary):** the `faheem` branch is the newest; verify it and, if it is sound, open a PR and merge it into `main`. Some report passages read as if AI did more than human judgement; change them where needed. Person 2's D1 status summary was pasted for context.
+
+**What the AI did:**
+- **State:** PR #4 had already merged `faheem` up to `5122a0c` into `main` (`f810e40`). The only unmerged commit was `4110aa5` (`VIDEO_PLAN.md`, new `VIDEO_SCRIPT.md`, `SUBMISSION_CHECKLIST.md`).
+- **Checks run on `4110aa5`:**
+  - no change under `contracts/`, and none to `SPEC.md`, `CLAUDE.md` or `CONTRACT_INTERFACE.md` since `b976591`
+  - no Anvil private key in the tree (the 64-hex strings are transaction hashes)
+  - `phase2-check.py`: 157 links, 0 findings, 0 markers; the links in the other changed documents resolve (one template path in `TESTING.md` is an instruction, not a link)
+  - `npm test`: 604 passed, 76 skipped; `forge test`: 335 passed, 0 failed
+- **Wording:** the report now says what the humans decided rather than what the AI did, using only decisions recorded in the two prompt logs:
+  - a new Section 2.6 table of 16 human decisions, each tied to its log entry
+  - the executive summary, 1.6, the 2.4 tier table (decision-maker first) and 3.2 put the decisions in the first person
+  - 7 (issue 001 guard) and 8.1 to 8.2 (review practice, escrow order)
+  - the version header now names `main` after PR #4
+  - one P1 line in `VIDEO_SCRIPT.md` segment 8 (49 words, from 48; timing table updated)
+
+**What the AI got wrong:** the first draft gave reasons for the 006 and 007 decisions that the log does not record, and attributed F5 and F6 to the human. It removed all three before committing. It also placed Section 2.6 before 2.5 at first and moved it.
+
+**What the human did:** asked for the verification, the wording change and the PR.
