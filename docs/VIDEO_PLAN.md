@@ -2,9 +2,9 @@
 
 **Status: prepared, not recorded.** Nothing here claims that the video exists. The spoken words are in [`VIDEO_SCRIPT.md`](VIDEO_SCRIPT.md); this file is how to prepare and record.
 
-**Requirements (NTULearn):** at most **10 minutes** and **300 MB**, file **`GroupName.mp4`**; start with a quick introduction to the architecture; a detailed hands-on demo of the solution deployed locally; a README detailed enough to reproduce the demo. The 7:30 target leaves margin under the 10-minute limit. Read-along version of the script: [`VIDEO_CUE_SHEET.md`](VIDEO_CUE_SHEET.md).
+**Requirements (NTULearn):** at most **10 minutes** and **300 MB**, file **`GroupName.mp4`**; start with a quick introduction to the architecture; a detailed hands-on demo of the solution deployed locally; a README detailed enough to reproduce the demo. We record in two Zoom calls (section 5): a silent screen capture that aims at **9:00** and never passes **9:30**, then a voice-over on top of it, which keeps at least 30 seconds of safety under the 10-minute limit. The step-by-step sheet for both calls is [`VIDEO_CUE_SHEET.md`](VIDEO_CUE_SHEET.md).
 
-**Speakers.** Person 1 (engine, Solidity security, invariant testing, engine audit, AI audit method) only speaks. Person 2 (front end, factories, deployment, integration) operates the terminal, the browser, MetaMask and the screen share for the whole video, and speaks as well.
+**Roles.** Person 2 (front end, factories, deployment, integration) operates the terminal, the browser, MetaMask and the screen share in Call 1, and speaks in Call 2. Person 1 (engine, Solidity security, invariant testing, engine audit, AI audit method) keeps the stopwatch and notes the segment times in Call 1, and speaks in Call 2.
 
 New to Anvil, MetaMask or WSL? Read [`BEGINNERS_GUIDE.md`](BEGINNERS_GUIDE.md) first: it explains the terms used below. Commands marked 🔍 only read; commands marked ✏️ start a process, change a chain or write a file (the place is named).
 
@@ -157,24 +157,53 @@ Alice's order #1 reads Partially Filled (40 of 100) before the cancel and Cancel
 
 **Differences you will see:** gas figures, transaction hashes and block numbers.
 
-## 5. Recording with Zoom
+## 5. Recording with Zoom: two calls
 
-Menu names change between Zoom versions; look for the equivalent. Zoom's own settings were not tested for this plan.
+Menu names change between Zoom versions, so look for the equivalent. Zoom's own settings were not tested for this plan, so the 1-minute pipeline test in section 6 is what proves them.
 
-1. **Create and join.** Person 2 opens Zoom, starts a **New meeting** as host, and sends Person 1 the invitation link. Person 1 joins with audio. Cameras are optional and not needed.
-2. **Microphones.** Both use a headset (speakers cause echo). In Zoom's audio settings run the microphone test, and say a sentence to check both people hear each other.
-3. **Recording permission.** Person 2, as host, uses **Record, Record on this computer**. Zoom tells participants it is recording. In Zoom's recording settings (web or app) turn on recording video during screen sharing, and leave transcripts and cloud options off.
-4. **Resolution.** Set Windows to 1920 by 1080, scale 100 or 125 per cent; browser zoom 110 per cent; terminal font 16 points or larger; Zoom's video setting HD if it has one. The recording's resolution follows what is shared, so check it in the rehearsal file (step 8).
-5. **Share the whole screen,** not one window. MetaMask's confirmation popup is a separate window and would be missing from a single-window share. Person 2 arranges the browser (demo profile) and the demo terminal side by side on that one screen, with VS Code ready for Segments 7 and 8, and shares **that screen only**.
-6. **Scripts off the shared screen.** Person 1 reads `VIDEO_SCRIPT.md` on their own computer. Person 2 reads their lines from a second monitor, a tablet or a printout, never from the shared screen.
-7. **Turns.** Follow the handoff cues in the script. Unmute only to speak; do not talk over a MetaMask wait. Use the bridge lines (script, section 5) for delays.
-8. **Privacy.** Use the clean profile (Step 5); close other windows; turn on Windows Focus Assist / Do Not Disturb; set a short terminal prompt (`PS1='$ '`) and run `clear`; keep Terminal A (the Anvil banner with keys) and the key-derivation terminal minimized; never show MetaMask Settings, Security or a recovery phrase; no email or personal tabs.
-9. **Pause and resume** for the crossed-book preparation (Segment 5): use Zoom's pause and resume recording button. The recording continues in the same file. Say aloud in the video that the book was prepared off camera (the script does).
-10. **Stop and save.** Press **Stop recording** (or end the meeting). Zoom then converts the recording; the default folder is the `Zoom` folder inside Documents on Windows, in a folder named for the date and time, with an `.mp4`. Copy it somewhere safe.
+**Settings for both calls** (Zoom desktop app, Settings):
+- **Recording:** local recording ("Record on this computer"). Leave transcripts and cloud recording off. If there is an option to record video during screen sharing, or to show participants' video next to or over the shared screen, turn it **off**, so that the file is the shared screen only.
+- **Video:** cameras off for both people.
+- **Resolution:** Windows at 1920 by 1080, scale 100 or 125%. Browser zoom 125%, terminal font 18 points or larger. Turn on Zoom's HD video if it has the option. The video is encoded twice (once in each call), so text must be larger than usual.
+
+### Call 1: silent screen capture (Person 2 operates, Person 1 times)
+
+1. **Create and join.** Person 2 starts a **New meeting** as host and sends Person 1 the link. Person 1 joins.
+2. **Mute both microphones** and keep them muted for the whole recording, so that Call 1 has no sound. Turn off Windows notifications (Focus Assist or Do Not Disturb).
+3. **Share the whole screen,** not one window. MetaMask's confirmation popup is a separate window and would be missing from a single-window share. Arrange the browser (demo profile) and Terminal B side by side on that one screen, with VS Code ready for Segments 7 and 8.
+4. **Privacy.**
+   - Use the clean profile (Step 5) and close other windows.
+   - Set a short terminal prompt (`PS1='$ '`) and run `clear`.
+   - Keep Terminal A (the Anvil banner with keys) and the key-derivation terminal minimized.
+   - Never show MetaMask Settings, Security or a recovery phrase, and no email or personal tabs.
+   - Person 2 reads the cue sheet's Part A from a second monitor, a tablet or a printout, never from the shared screen.
+5. **Record:** **Record, Record on this computer**. Person 1 starts the stopwatch at the same moment.
+6. **Do Part A** of the cue sheet, holding each screen for its time. Person 1 writes down the stopwatch time at the start of each segment and compares it with the checkpoints.
+7. **Pause and resume** with Zoom's pause button for the crossed-book preparation (Segment 5), and to fix a failed step (cue sheet, Part A). The recording continues in the same file. Person 1 pauses the stopwatch at the same time.
+8. **Stop and save.** Press **Stop recording**, then end the meeting. Zoom converts the recording. On Windows the default folder is `Documents\Zoom`, in a sub-folder named for the date and time, with an `.mp4` inside. Copy it somewhere safe and name it, for example, `call1-silent.mp4`.
+9. **Check it** (cue sheet, "After Call 1"): about 9:00 and no more than 9:30, silent, readable, with no key or phrase. If it is too long, take it again after the reset (section 6), pausing during waits as the cue sheet says.
+
+### Between the calls
+
+Both of you watch `call1-silent.mp4` once and fill in the **At** column of the cue sheet's Part B. If Person 1 will share in Call 2, Person 2 sends them the file first (for example through a shared drive).
+
+### Call 2: voice-over (both speak; the person with the file shares it)
+
+1. **Create and join** as in Call 1. Both use a **headset** (speakers cause echo). In Zoom's audio settings run the microphone test, and say a sentence to check that both of you hear each other.
+2. **Share the video.** The sharer uses **Share Screen, Advanced, Video**, if their Zoom has it, and picks `call1-silent.mp4`. Zoom then plays the file in its own player and sends it smoothly. Pause it at 0:00.
+   - **If there is no Video option:** open the file in a media player at full screen, muted, and share that screen with **Optimize for video clip** ticked.
+   - The file is silent, but set the player's volume to 0 anyway.
+3. **Scripts off the shared screen.** Each person reads the cue sheet's Part B on their own second screen, tablet or printout.
+4. **Record:** **Record, Record on this computer**. Wait two seconds in silence, then press **Play**. P2 starts line 1.1 as the video starts.
+5. **Read the lines** as their cues appear (Part B). Do not pause the video. A small slip is fine: carry on. For a bad mistake, press **Stop recording**, return the video to 0:00, and start again from step 4; each attempt makes a new file.
+6. **Stop.** When the video reaches its last frame, wait one second and press **Stop recording**, then stop sharing and end the meeting. Zoom converts the file into a new dated folder under `Documents\Zoom`.
+7. **Save it as `GroupName.mp4`** and check it (section 11).
+
+Why two calls: the silent capture removes the pressure of clicking and talking at once, and a voice-over that goes wrong can be redone in nine minutes without touching the chain again.
 
 ## 6. Rehearse, then reset for the real take
 
-**Rehearsal (once, with a stopwatch).** Do the whole sequence including a 2-minute Zoom test recording: share the screen, speak, stop, find the file, play it back. Check: both voices are clear; MetaMask popups are visible; text is readable; no key or phrase appears; the length is near 7:30. Segments 3, 4 and 6 are the tightest. If the actions alone exceed the segment, cut in this order: (1) make the token listing in Segment 3 a read-only look at the Markets page (and say so), (2) shorten the narration, never the transactions.
+**Rehearsal (once, with a stopwatch).** Do the whole Part A sequence of the cue sheet once without recording and compare the stopwatch with its checkpoints; Segments 3, 4 and 6 are the tightest. Then test the two-call pipeline with a short sample: record 1 minute of Call 1 (Segments 1 and 2, silent), then play it in a test Call 2, speak over it for that minute, and play back the result. Check: both voices are clear and in time with the picture; no Zoom thumbnail covers the content; MetaMask popups are visible; text is readable after the two encodes; no key or phrase appears. If the full run is past a checkpoint's "latest", pause during waits as the cue sheet says (Part A, "If the take runs long"); never shorten a hold or cut a required feature.
 
 **Reset for the real take** (a fresh chain with the same app):
 1. Terminal A: press Ctrl+C to stop Anvil. Check: `ss -ltnp | grep ':8549'` prints nothing.
@@ -206,7 +235,7 @@ Open these in this order, in tabs or editor windows, so Person 2 switches by cli
 5. `CLAUDE.md`, then `docs/ai-audit/issues/006-stop-activation-booktoodeep-blocks-all-triggers.md` (section 4), the `docs/ai-audit/issues/` folder, and `docs/ai-audit/issues/p2-017-cancelled-stop-labelled-activated.md`.
 6. Optional extras for the AI segment: Figure 1 (`01-ai-workflow.png`) and Figure 9 (`09-issues-by-phase.png`).
 
-No test is run on camera. Do not open `docs/TESTING.md` screenshots or any file showing a key.
+No test is run on camera. Do not open any file or terminal that shows a private key.
 
 ## 9. Backup clip (record in advance)
 
@@ -229,12 +258,14 @@ DEMO_PORT=8550 bash contracts/script/demo-journey.sh      # ✏️ starts and st
 - [ ] Reset done for the real take (section 6); nonces read as 0.
 - [ ] No private key, recovery phrase or personal tab visible; notifications off; Terminal A minimized.
 - [ ] Evidence files open (section 8).
-- [ ] Zoom: headsets, microphone test, record on this computer, whole screen shared, scripts on other screens.
+- [ ] Two-call pipeline tested with a 1-minute sample (section 6): readable text, voices in time, no thumbnail over the content.
+- [ ] Call 1: whole screen shared, both microphones muted, record on this computer, Person 1 has a stopwatch and the cue sheet's Part A.
+- [ ] Call 2: headsets, microphone test, the silent file on the sharer's computer, the cue sheet's Part B with the "At" column filled in, scripts on other screens.
 - [ ] Backup clip recorded (section 9).
 
 ## 11. After recording
 
-1. Check the file: play it from the start; both voices; popups visible; text readable at the video's resolution; no key or phrase; length near 7:30; the segment 5 narration says the book was prepared off camera.
+1. Check the final file from Call 2: play it from the start; both voices, in time with the picture; popups visible; text readable at the video's resolution; no key or phrase; length about 9:00, at most 9:30 plus a few seconds, and under 10:00; the Segment 5 narration says the book was prepared off camera. Keep the silent file from Call 1 too, in case the voice-over has to be redone.
 2. Save the final file as **`GroupName.mp4`** (your group's name). Check it is at most 10 minutes and 300 MB; if it is larger, re-export at 1080p or lower before uploading.
 3. Stop the recording environment. Identify before killing:
    ```bash
@@ -249,5 +280,5 @@ DEMO_PORT=8550 bash contracts/script/demo-journey.sh      # ✏️ starts and st
 
 ## 12. Open decisions for the team
 
-- Whether a live listing in Segment 3 stays in or becomes a read-only look if the rehearsal runs long.
-- Whether the crossed-book preparation is recorded with Zoom's pause (the default here) or kept on camera for about 25 seconds more, which the 10-minute limit would allow.
+- Settled: the live token creation and listing in Segment 3 always stay in, because ERC20 issuance and token listing are required features. Only a failure (Segment 3 fallback) replaces them with the Markets page.
+- The crossed-book preparation is cut out with Zoom's pause. Keeping it on camera would add about 25 seconds, which Call 1's 9:00 target does not leave room for.

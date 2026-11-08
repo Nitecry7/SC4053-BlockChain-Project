@@ -14,7 +14,7 @@ Every test below is tagged. Nothing is described as passed unless that is true.
 | **Mock-wallet result** | An automated browser run passed with an injected *mock* wallet. This is **not** MetaMask |
 | **Procedure only** | Written down, **not yet performed manually**. Do not read it as a passed test |
 
-Screenshots are labelled the same way: **Reference render** = a screenshot of this DEX from the automated mock-wallet run (it shows the UI, **never** a MetaMask window; its accounts differ from this guide, see the note under Section D); **Screenshot to supply** = a real image the owner still has to capture (list in Section D).
+Images are labelled **Reference render**: a screenshot of this DEX from the automated mock-wallet run (it shows the UI, **never** a MetaMask window; its accounts differ from this guide, see the note under Section D). We decided not to add MetaMask screenshots to the repository; the demo video shows the MetaMask flow.
 
 ---
 
@@ -109,7 +109,6 @@ In MetaMask add a custom network (menu names vary by MetaMask version):
 
 Then switch MetaMask to **Anvil Local**. The app and MetaMask must use the *same* Anvil: the app reads the chain over its own RPC connection (even before you connect a wallet), and MetaMask uses the RPC you just entered. "Connect wallet" in the app is a third, separate thing: permission for the site to see one account.
 
-> **Screenshot to supply:** `images/manual-testing/01-metamask-add-network.png` (the filled-in network form).
 
 ### A10. Verify balances
 Two accounts matter (details in Section B): **Alice** = Anvil account 0 `0xf39F…2266`, **Bob** = account 1 `0x7099…79C8`. From the repo root, read-only:
@@ -173,12 +172,10 @@ The long form `cast wallet private-key --mnemonic "$ANVIL_MNEMONIC" --mnemonic-i
 ### B5. Import an account into MetaMask
 In MetaMask (menu names vary by version): open the **account selector** at the top, choose **Add account or hardware wallet**, then **Import account**, keep the type **Private Key**, paste the key, and press **Import**. Do this once for Alice's key and once for Bob's key. Make sure **Anvil Local** is the selected network afterwards.
 
-> **Screenshot to supply:** `images/manual-testing/02-metamask-import-account.png`. Capture the dialog **without** the key visible (before pasting, or with the field cropped out).
 
 ### B6. The label "Imported Account 1" does not mean Anvil account 1
 MetaMask names imported accounts in the order *you* imported them ("Imported Account 1", "Imported Account 2", …). That has nothing to do with Anvil's numbering. **The address is the only authority**: Alice is the account that starts `0xf39F…`, Bob is the one that starts `0x7099…`. Check the shortened address under the account name (click it to copy the full address) before every test. You can rename accounts in MetaMask to "Alice" and "Bob" to avoid mistakes.
 
-> **Screenshot to supply:** `images/manual-testing/03-metamask-account-list-alice-bob.png`.
 
 ---
 
@@ -196,8 +193,6 @@ Use the **Trade** page (**http://localhost:3000/trade**, or *Open Trade view* on
    > ![Trade page before connecting](ai-audit/test-evidence/person2/p2-5-screens/trade-disconnected-desktop.jpg)
 3. In the dialog **Connect a Wallet**, choose the browser-wallet entry. (In the automated run it was labelled "Browser Wallet"; with MetaMask installed the label may differ. Pick the only wallet entry listed.)
 4. Approve the connection in the **MetaMask window** that opens, choosing the account you want the site to see.
-
-   > **Screenshot to supply:** `images/manual-testing/04-dex-connect-wallet-dialog.png` and `images/manual-testing/05-metamask-connect-request.png`.
 5. **If nothing seems to happen:** the MetaMask request may be hidden. The app shows a card: *"Waiting for MetaMask confirmation. Check the MetaMask icon in your browser toolbar. If no popup appears, open your browser's Extensions menu and look for a pending request."* In Brave, click the **Extensions (puzzle) icon** in the toolbar, open **MetaMask** and approve the pending request. After 20 seconds the card adds recovery steps and a **Try again** button.
 
    > Reference render (mock wallet): the card above RainbowKit's dialog, then with recovery steps.
@@ -206,7 +201,6 @@ Use the **Trade** page (**http://localhost:3000/trade**, or *Open Trade view* on
 
 **Expected:** the header chip shows `0xf39F…2266`; the dashboard *Wallet* card shows the same address and the *Network* card shows `Anvil (local)`, chain 31337; the Trade ticket's button changes from "Connect wallet" to "Enter a price and amount". The ticket's rows "Wallet NTU" and "Wallet SGDx" show Alice's balances (970,000 each on a fresh deployment).
 
-> **Screenshot to supply:** `images/manual-testing/06-dex-connected-alice.png`.
 
 ## Test 2: Alice places a Sell NTU limit order
 **Status: owner-verified with MetaMask (Alice sold 10 NTU at 2 SGDx and it rested).**
@@ -221,21 +215,14 @@ Remember: an **ERC20 approval** and **placing the order** are two *different* bl
 
    > Reference render (mock wallet): review card and the waiting card (the mock run's seller is `0x7099…`, not Alice).
    > ![Review and waiting for the wallet](ai-audit/test-evidence/person2/p2-5-screens/order-wallet-pending-desktop.jpg)
-   >
-   > **Screenshot to supply:** `images/manual-testing/07-dex-sell-form-review.png`, `images/manual-testing/08-metamask-spending-cap-ntu.png`.
 6. When the approval is mined the app says **"The order book can move 10 NTU for you. Place the order when ready."** and the main button changes to **Place sell order**.
-
-   > **Screenshot to supply:** `images/manual-testing/09-dex-approval-confirmed.png`.
 7. Click **Place sell order** and confirm the second MetaMask window (a contract interaction on Anvil Local with a small ETH fee).
 
-   > **Screenshot to supply:** `images/manual-testing/10-metamask-confirm-place-sell.png`.
 
 **Expected result:** the card **Order #1 confirmed: Resting** (a fresh book gives id 1). *Executed in this transaction*: Filled `0.0000 NTU of 10.0000`, Remaining unfilled `10.0000 NTU`. *Still locked in escrow*: Collateral (NTU) `10.0000 NTU`. *In your wallet now*: NTU `969,990.0000` (a drop of exactly 10 from 970,000) and an allowance left of `0.0000` (the approval was exactly the amount and the order used it). The depth chart and the **Order Book** shows a **Sell (ask)** row at `2.0000` for `10.00`, and **My Orders** lists `#1`, `Sell`, status `Resting`.
 
    > Reference render (mock wallet): a resting sell result.
    > ![Resting sell order](ai-audit/test-evidence/person2/p2-5-screens/order-result-resting-desktop.jpg)
-   >
-   > **Screenshot to supply:** `images/manual-testing/11-dex-order1-resting.png`.
 
 **Check on the chain (read-only):** `cast call <market> "getUserOrderIds(address)(uint256[])" 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --rpc-url http://127.0.0.1:8545` prints `[1]`. (Alice's receipt has two events: an NTU transfer of 10 into the market and the order-placed event; I confirmed that on the owner's chain.)
 
@@ -248,7 +235,6 @@ Remember: an **ERC20 approval** and **placing the order** are two *different* bl
 
 **Expected:** within a moment the header chip shows `0x7099…79C8`; the *Wallet* card changes; the ticket's rows show Bob's balances (`10,000.0000` NTU and `10,000.0000` SGDx on a fresh deployment); the previous account's review step and result card are gone; **My Orders** shows no orders for Bob. Nothing from Alice's session appears under Bob.
 
-> **Screenshot to supply:** `images/manual-testing/12-metamask-account-selector-bob.png`, `images/manual-testing/13-dex-connected-bob.png`.
 
 ## Test 4: Bob places a Buy NTU limit order
 **Status: owner-verified with MetaMask.**
@@ -257,18 +243,13 @@ Remember: an **ERC20 approval** and **placing the order** are two *different* bl
 2. The summary shows *Escrowed collateral (SGDx)* `8.8000 SGDx`, and under the estimate: *Fills right away* `4.0000 NTU in 1`, *Paid at maker prices* `8.0000 SGDx`, *Refund for price improvement* `0.8000 SGDx`.
 3. Click **Review order**. It states *"approve exactly 8.8 SGDx"*.
 4. Click **Approve 8.8 SGDx**. **MetaMask popup 1:** a spending-cap request for **SGDx**, amount **8.8**, spender the market address. Confirm.
-
-   > **Screenshot to supply:** `images/manual-testing/14-metamask-spending-cap-sgdx.png`.
 5. When the app says the order book can move 8.8 SGDx, click **Place buy order**. **MetaMask popup 2:** the contract-interaction confirmation. Confirm.
 
-   > **Screenshot to supply:** `images/manual-testing/15-metamask-confirm-place-buy.png`.
 
 **Expected result:** **Order #2 confirmed: Filled**. *Executed in this transaction*: Filled `4.0000 NTU of 4.0000`; Quote paid at maker prices `8.0000 SGDx` (Alice's price of 2, not your limit of 2.2); **Refunded (price improvement) `0.8000 SGDx`**; Remaining unfilled `0.0000`. *Trades (1)*: `vs #1   4.0000 @ 2.0000   8.0000 SGDx`. *In your wallet now*: NTU `10,004.0000`, SGDx `9,992.0000`, allowance left `0.0000`. In short: Bob received 4 NTU and paid 8 SGDx net (8.8 escrowed, 0.8 refunded).
 
    > Reference render (mock wallet): the same example (accounts differ).
    > ![Filled buy order](ai-audit/test-evidence/person2/p2-5-screens/order-result-filled-desktop.jpg)
-   >
-   > **Screenshot to supply:** `images/manual-testing/16-dex-order2-filled.png`.
 
 ## Test 5: switch back to Alice and inspect Order #1
 **Status: not separately reported by the owner. The chain state below was checked read-only (see Section F); the on-screen steps are a procedure.**
@@ -279,8 +260,6 @@ Remember: an **ERC20 approval** and **placing the order** are two *different* bl
 **Expected:** order `#1`, `Sell`, `2.0000`, Amount `10.0000`, Filled `4.0000`, Remaining `6.0000`, Locked collateral `6.0000 NTU`, status **`Partially Filled`**. The book shows a Sell row of `6.00` at `2.0000`. Alice's SGDx rose by 8 (to `970,008.0000` on a fresh deployment) and her NTU is `969,990.0000`; the market contract holds the 6 NTU.
 
 **Chain check (verified on the owner's chain):** `getOrder(1)` returns side `1` (Sell), amount `10e18`, filled `4e18`, status `1` (PartiallyFilled); `getOrder(2)` returns status `2` (Filled); the market holds `6` NTU.
-
-> **Screenshot to supply:** `images/manual-testing/17-dex-alice-order1-partly-filled.png`.
 > Reference render (mock wallet): My Orders with a partly filled order.
 > ![My Orders](ai-audit/test-evidence/person2/p2-5-screens/my-orders-desktop.jpg)
 
@@ -303,8 +282,6 @@ Remember: an **ERC20 approval** and **placing the order** are two *different* bl
 
    > Reference render (mock wallet): the transaction page.
    > ![Transaction page](ai-audit/test-evidence/person2/p2-5-screens/tx-page-desktop.jpg)
-   >
-   > **Screenshot to supply:** `images/manual-testing/18-dex-tx-page-bob.png`.
 
 ## Test 7: negative and recovery cases
 **Status: every case here is a PROCEDURE ONLY. None has been performed manually with MetaMask.** Where an automated mock-wallet run covered the same behaviour, that is noted; it does not count as a MetaMask result.
@@ -365,33 +342,11 @@ After 7f or 7g you may need to reset MetaMask's cached nonce (Section E, item 1)
 
 ---
 
-# D. Screenshots
+# D. Reference renders
 
 **Reference renders** used above live in [`ai-audit/test-evidence/person2/p2-5-screens/`](ai-audit/test-evidence/person2/p2-5-screens/) (reused, not copied: about 1.9 MB in total). They were captured by an automated browser run with a **mock wallet** against a scratch chain. They show this DEX's interface faithfully, but they are **not MetaMask screenshots**, and in them the acting accounts are `0x7099…` (the seller, "Alice") and `0x3C44…` (the buyer, "Bob"). In **this guide** Alice is account 0 (`0xf39F…`) and Bob is account 1 (`0x7099…`). Compare addresses against this guide, not against those images.
 
-**Real screenshots still needed from the project owner.** None were present in the repository when this guide was written, so the steps above carry placeholders. Save each as a PNG in `docs/images/manual-testing/` using exactly these names, then replace the placeholder line with `![caption](images/manual-testing/NAME.png)`. Keep images under about 300 KB (crop to the relevant window) and **never include a private key or seed phrase**.
-
-| File | What to capture |
-|---|---|
-| `01-metamask-add-network.png` | The Anvil Local network form, filled in |
-| `02-metamask-import-account.png` | The Import account dialog (key field empty or cropped out) |
-| `03-metamask-account-list-alice-bob.png` | The account selector with both accounts, addresses visible |
-| `04-dex-connect-wallet-dialog.png` | The app's "Connect a Wallet" dialog |
-| `05-metamask-connect-request.png` | MetaMask's connection request |
-| `06-dex-connected-alice.png` | Dashboard or Trade page connected as Alice |
-| `07-dex-sell-form-review.png` | Sell NTU, price 2, amount 10, with the "Review before you sign" card |
-| `08-metamask-spending-cap-ntu.png` | MetaMask's spending-cap request for NTU (10) |
-| `09-dex-approval-confirmed.png` | "The order book can move 10 NTU for you…" and the Place sell order button |
-| `10-metamask-confirm-place-sell.png` | MetaMask confirmation of the order transaction |
-| `11-dex-order1-resting.png` | "Order #1 confirmed: Resting" |
-| `12-metamask-account-selector-bob.png` | MetaMask account selector, choosing Bob |
-| `13-dex-connected-bob.png` | The app showing Bob's address and balances |
-| `14-metamask-spending-cap-sgdx.png` | MetaMask's spending-cap request for SGDx (8.8) |
-| `15-metamask-confirm-place-buy.png` | MetaMask confirmation of the buy order |
-| `16-dex-order2-filled.png` | "Order #2 confirmed: Filled" with the refund and final balances |
-| `17-dex-alice-order1-partly-filled.png` | Alice's My Orders with #1 Partially Filled, 6 NTU locked |
-| `18-dex-tx-page-bob.png` | The transaction page for Bob's order |
-| `19-metamask-extensions-pending-request.png` | Brave's Extensions menu with a pending MetaMask request |
+We decided not to add MetaMask screenshots to the repository; the demo video shows the MetaMask flow.
 
 ## Test 11: the node stops and comes back (P2-8A.2)
 
@@ -401,13 +356,13 @@ After 7f or 7g you may need to reset MetaMask's cached nonce (Section E, item 1)
 2. **Expected within about 10 s:** a red banner "Cannot reach the local Anvil node" that calls the data "last known, not current", "Last known, not current" chips on the panels, and the trade area saying the node is unreachable. No order or create button is usable.
 3. Restart Anvil **with the same state** (`anvil --state <file>`): **expected within about 10 to 20 s:** a short "The node is answering again. Verifying the chain." message, then the banners clear, with no "chain changed" notice, and the ticket works again.
 4. Instead restart a **fresh** `anvil` (a different chain with the same chain ID): **expected:** the verification message, then one "The local chain changed" notice, and either "No SC4053 DEX deployment on this chain" (until you redeploy) or live data again. The ticket must stay unavailable until the notice and the verification are done.
-5. Record what you saw. Screenshots still needed: the outage banner, the verification message and the chain-changed notice.
+5. Record what you saw.
 
 ---
 
 ## Test 12: cancel an order (P2-8B.2)
 
-**Status: the happy path (12a to 12f) was performed by the owner with MetaMask on 2026-11-08 (owner-reported, cross-checked read-only against the chain); the rest is procedure only.** The owner's journey used different numbers from the table below: Alice (account 0) sold 5 NTU at 2; Bob (account 1) bought 2 NTU at a limit of 2.2; the trade executed at 2 (2 NTU, 4 SGDx, 0.4 SGDx returned to Bob); Alice's order was PartiallyFilled with 3 NTU left; Alice cancelled it, the confirmation said 3 NTU, and the result reported event refund 3 NTU, transfer to Alice 3 NTU, escrow remaining 0, with the order kept in My Orders. **Still not performed manually:** 12g (MetaMask rejection), 12h (account switch while a request is open), 12i (cancelling a buy order), an RPC outage and a chain reset during a cancel. **Evidence still to collect:** screenshots and transaction hashes (none are recorded in this repository). Details and the cross-check: `ai-audit/test-evidence/person2/p2-8b2-cancellation.md`, section 9. The same behaviour passed a mock-wallet browser run and a real-chain suite on a scratch chain (see `ai-audit/test-evidence/person2/p2-8b2-cancellation.md`). The engine on your chain must be the new one (the owner's 8545 chain was checked read-only on 2026-11-08), and the app must be restarted or rebuilt to include this feature. The expected numbers assume the Test 2 and Test 4 orders (Alice sold 10 NTU at 2; Bob bought 4 NTU at 2.2, so Alice's order is partly filled with 6 NTU left); other balances will differ.
+**Status: the happy path (12a to 12f) was performed by the owner with MetaMask on 2026-11-08 (owner-reported, cross-checked read-only against the chain); the rest is procedure only.** The owner's journey used different numbers from the table below: Alice (account 0) sold 5 NTU at 2; Bob (account 1) bought 2 NTU at a limit of 2.2; the trade executed at 2 (2 NTU, 4 SGDx, 0.4 SGDx returned to Bob); Alice's order was PartiallyFilled with 3 NTU left; Alice cancelled it, the confirmation said 3 NTU, and the result reported event refund 3 NTU, transfer to Alice 3 NTU, escrow remaining 0, with the order kept in My Orders. **Still not performed manually:** 12g (MetaMask rejection), 12h (account switch while a request is open), 12i (cancelling a buy order), an RPC outage and a chain reset during a cancel. Transaction hashes for this run are not recorded in this repository. Details and the cross-check: `ai-audit/test-evidence/person2/p2-8b2-cancellation.md`, section 9. The same behaviour passed a mock-wallet browser run and a real-chain suite on a scratch chain (see `ai-audit/test-evidence/person2/p2-8b2-cancellation.md`). The engine on your chain must be the new one (the owner's 8545 chain was checked read-only on 2026-11-08), and the app must be restarted or rebuilt to include this feature. The expected numbers assume the Test 2 and Test 4 orders (Alice sold 10 NTU at 2; Bob bought 4 NTU at 2.2, so Alice's order is partly filled with 6 NTU left); other balances will differ.
 
 | # | Do this | Expect |
 |---|---|---|
@@ -421,7 +376,6 @@ After 7f or 7g you may need to reset MetaMask's cached nonce (Section E, item 1)
 | 12h | Start a cancel and, while MetaMask is open, switch MetaMask to the other account | "Your account or network changed"; no result is shown for either account |
 | 12i | Try to cancel a buy order (place a buy first) | The panel states the refund in **SGDx** (the locked quote), and after confirmation that exact amount returns |
 
-Screenshots still needed: the confirmation panel, MetaMask's single prompt, and the result card.
 
 ## Test 13: match crossed orders (P2-8B.3)
 
@@ -500,7 +454,7 @@ The four resting orders on the prepared chain are #45 (account 1's sell at 2), #
 
 **Performed on 2026-11-08 (owner-reported):** 13b (keeper `0x15d3…6A65` through MetaMask to the scratch app on port 3100, RPC 8546: Review match showed `matchOrders(10)`, about 2 fills, a gas estimate of **277124**, no approval), 13d (confirmed in MetaMask: block 78, 2 fills, #45 with #47 and #46 with #48 at 1 NTU for 2 SGDx, 2 NTU and 4 SGDx settled, 1.5 SGDx returned, all four orders Filled, no longer crossed, **224189** gas used) and 13e (`scripts/seed-crossed-book.sh verify-after`: every check passed). The transaction was then re-read from the chain by the AI: `0x52162ab7d8b916a6aba588cbc940e30a2cebfe2e620f597cf63c072a111ec779`, block 78, from the keeper, nonce 0, to the market, calldata `matchOrders(10)`, status success, 224,189 gas, two `Trade` events.
 
-**Not performed (no report, no independent evidence):** 13a (the view without a wallet; the AI saw it only in a headless browser), 13c (a MetaMask rejection), 13f (the transaction page), 13g (an account switch mid-request) and 13h. **Screenshots are still to be supplied;** the full transaction hash is recorded in the evidence file.
+**Not performed (no report, no independent evidence):** 13a (the view without a wallet; the AI saw it only in a headless browser), 13c (a MetaMask rejection), 13f (the transaction page), 13g (an account switch mid-request) and 13h. The full transaction hash is recorded in the evidence file.
 
 ## Test 14: stop-limit orders (P2-8B.4)
 
@@ -690,15 +644,15 @@ There is no background process. Matching happens **inside the transaction of a n
 | 6. My Orders and transaction details | **Not separately reported** | Decoded events verified read-only against the owner's receipt |
 | 7a to 7h. Negative and recovery cases | **No** | Procedures only |
 | 8. Create a token and list a market (Test 8 steps) | **Partly.** The owner reported creating **DTT** and listing **DTT / SGDx** in the app. The individual steps 8a to 8l were not confirmed one by one | Owner report. Chain, read by the AI (read-only, 2026-11-06): the second registered market has base `DTT` (`0xeEBe00Ac0756308ac4AaBfD76c05c4F3088B8883`) and quote SGDx (`0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968`); its `lastTradePrice()` is 2e18, i.e. a trade at 2 SGDx per DTT has happened |
-| 8j. DTT trade (partial sell fill, maker-price settlement) | **Reported by the owner**, not checked step by step against 8j | Owner report of a partially filled sell at the maker's price. The chain reads above are consistent with a trade at 2 but do not by themselves show the fill amounts. No transaction hashes or screenshots are recorded in this repository. **Update, 2026-11-06 (P2-8A):** a later read-only audit read both orders and the `Trade` log from the owner's chain: order 1 a sell of 10 at 2 (4 filled, PartiallyFilled), order 2 a buy of 4 at a limit of 2.2 (Filled), and one trade of 4 at 2 for 8 quote. See [`p2-8a-audit.md`](ai-audit/test-evidence/person2/p2-8a-audit.md) section 5.5. The MetaMask prompts and any screenshots are still not recorded |
+| 8j. DTT trade (partial sell fill, maker-price settlement) | **Reported by the owner**, not checked step by step against 8j | Owner report of a partially filled sell at the maker's price. The chain reads above are consistent with a trade at 2 but do not by themselves show the fill amounts. No transaction hashes are recorded in this repository. **Update, 2026-11-06 (P2-8A):** a later read-only audit read both orders and the `Trade` log from the owner's chain: order 1 a sell of 10 at 2 (4 filled, PartiallyFilled), order 2 a buy of 4 at a limit of 2.2 (Filled), and one trade of 4 at 2 for 8 quote. See [`p2-8a-audit.md`](ai-audit/test-evidence/person2/p2-8a-audit.md) section 5.5. The MetaMask prompts are not recorded |
 | 9 and 10. Dashboard selector, speed-up and cancel (of a transaction) | **No** | Procedures only |
 | 11. The node stops and comes back | **No** | Procedure only |
-| 12. Cancel an order (P2-8B.2), happy path (12a to 12f) | **Yes, by the owner, 2026-11-08** (a different journey: sell 5 NTU at 2, buy 2 at 2.2, cancel the 3 NTU remainder) | Owner report; chain read-only on 8545: order 1 Cancelled, filled 2e18, `OrderCancelled` refund 3e18; Alice 969,998 NTU and 970,004 SGDx; market escrow 0. No screenshots or hashes recorded yet |
+| 12. Cancel an order (P2-8B.2), happy path (12a to 12f) | **Yes, by the owner, 2026-11-08** (a different journey: sell 5 NTU at 2, buy 2 at 2.2, cancel the 3 NTU remainder) | Owner report; chain read-only on 8545: order 1 Cancelled, filled 2e18, `OrderCancelled` refund 3e18; Alice 969,998 NTU and 970,004 SGDx; market escrow 0. No transaction hashes recorded |
 | 12g to 12i, outage and chain reset during a cancel | **No** | Procedures only. Mock-wallet and real-chain evidence: `ai-audit/test-evidence/person2/p2-8b2-cancellation.md` |
 | 13. Match crossed orders (P2-8B.3) | **Partly** | Owner-reported, 2026-11-08 (13b, 13d, 13e: the keeper's matching transaction on the scratch chain, then `verify-after`). 13a, 13c, 13f, 13g and 13h not performed (Test 13). Mock-wallet and real-chain evidence: `ai-audit/test-evidence/person2/p2-8b3-batch-matching.md`. Needs a long `cast` setup because the book can only cross through the 10-fill cap |
-| 14. Stop-limit orders (P2-8B.4) | **Partly** | Happy path performed by the owner with MetaMask on 2026-11-08 (buy stop placed and cancelled, sell stop placed, price moved, keeper trigger, `verify-after`), then re-read from the chain by the AI with the full hashes in Test 14, section 14-4. Rejection, account switch, outage, chain reset and deep-book refund not performed; screenshots not in the repository. A My Orders wording defect for a cancelled stop, found by that run, was fixed in P2-8C (Test 14, section 14-4). Mock-wallet and real-chain evidence: `ai-audit/test-evidence/person2/p2-8b4-stop-limit.md` |
+| 14. Stop-limit orders (P2-8B.4) | **Partly** | Happy path performed by the owner with MetaMask on 2026-11-08 (buy stop placed and cancelled, sell stop placed, price moved, keeper trigger, `verify-after`), then re-read from the chain by the AI with the full hashes in Test 14, section 14-4. Rejection, account switch, outage, chain reset and deep-book refund not performed. A My Orders wording defect for a cancelled stop, found by that run, was fixed in P2-8C (Test 14, section 14-4). Mock-wallet and real-chain evidence: `ai-audit/test-evidence/person2/p2-8b4-stop-limit.md` |
 
 The orders were created on-chain at 2026-11-05 15:00:21 UTC (order 1) and 15:29:48 UTC (order 2); the owner reported the result on 2026-11-06. The same SPEC example also passed in the automated mock-wallet browser run and in the real-chain suite on a scratch Anvil: see [`ai-audit/test-evidence/person2/p2-5-trading.md`](ai-audit/test-evidence/person2/p2-5-trading.md).
 
 # G. Keeping this guide current
-When a later phase materially changes behaviour (new forms, new pages, changed numbers), update the README, this guide's steps and expected values, the troubleshooting items, and the screenshot list in the same change. The rule is recorded in the project's local agent instructions.
+When a later phase materially changes behaviour (new forms, new pages, changed numbers), update the README, this guide's steps and expected values, and the troubleshooting items in the same change. The rule is recorded in the project's local agent instructions.

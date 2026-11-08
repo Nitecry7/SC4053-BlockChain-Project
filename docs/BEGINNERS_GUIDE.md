@@ -513,7 +513,6 @@ A step passes only when the **screen**, the **transaction** and the **chain** ag
 3. A read-only check agrees (`cast`, or `seed-*.sh verify-after` printing PASS on every line).
 
 ## H4. Collect evidence
-- **Screenshots:** the review card, the MetaMask request, the result card, My Orders, and the transaction page. Name them as TESTING.md section D suggests. Never include a key or recovery phrase.
 - **Transaction hashes:** copy the full hash from the app's result or the receipt. You can list a block's transactions with `cast rpc eth_getBlockByNumber <hex block> false --rpc-url <RPC>`.
 - Write down the RPC URL, block numbers and date next to each result.
 

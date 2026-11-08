@@ -325,7 +325,7 @@ The demo video shows, on a fresh local chain: issuing a token and listing a mark
 
 1. **Set up** as in [Quickstart](#quickstart) (tools, `git submodule update --init --recursive`, `forge build`, `npm ci`).
 2. **Build the demo environment** with [docs/VIDEO_PLAN.md](docs/VIDEO_PLAN.md), Steps 0 to 6: a fresh Anvil, `Deploy.s.sol`, the app built for that chain, and MetaMask with Alice (Anvil account 1), Bob (account 2) and a Keeper (account 4, no trading tokens). It uses its own ports (8549 and 3103) so it never touches another chain.
-3. **Follow the steps** in [docs/VIDEO_CUE_SHEET.md](docs/VIDEO_CUE_SHEET.md) (each action, in order) or [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md) (each action with the values the screen should show). Two helper scripts prepare the bonus scenes from the terminal: `scripts/seed-crossed-book.sh` (24 orders that leave the book crossed) and `scripts/seed-stop-orders.sh` (`move-price`, `add-bid`).
+3. **Follow the steps** in [docs/VIDEO_CUE_SHEET.md](docs/VIDEO_CUE_SHEET.md) (Part A lists each action in order) or [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md) (each action with the values the screen should show). Two helper scripts prepare the bonus scenes from the terminal: `scripts/seed-crossed-book.sh` (24 orders that leave the book crossed) and `scripts/seed-stop-orders.sh` (`move-price`, `add-bid`).
 4. **Without MetaMask:** `bash contracts/script/demo-journey.sh` replays the partial fill, cancel, batch match and stop trigger on its own private chain with balance checks, and ends with `DEMO COMPLETE: every check passed` (see [Trading engine](#trading-engine-orderbook)).
 
 ---
@@ -484,7 +484,7 @@ bash contracts/script/demo-journey.sh
 | [docs/FRONTEND.md](docs/FRONTEND.md) | The front end's architecture, the trading, creation and dashboard flows, transaction hardening, the test suites and known limits |
 | [docs/MARKET_FACTORY.md](docs/MARKET_FACTORY.md) | The accepted MarketFactory architecture, its workflow diagram, the comparison with manual deployment, and tradeoffs |
 | [docs/report/AI_AUDIT_REPORT.md](docs/report/AI_AUDIT_REPORT.md) | **The final AI Audit Report**, in the brief's eight sections |
-| [docs/VIDEO_PLAN.md](docs/VIDEO_PLAN.md), [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md), [docs/VIDEO_CUE_SHEET.md](docs/VIDEO_CUE_SHEET.md) | How to build the demo environment, the demo script, and a step-by-step read-along version |
+| [docs/VIDEO_PLAN.md](docs/VIDEO_PLAN.md), [docs/VIDEO_SCRIPT.md](docs/VIDEO_SCRIPT.md), [docs/VIDEO_CUE_SHEET.md](docs/VIDEO_CUE_SHEET.md) | How to build the demo environment, the demo script, and the step-by-step sheet for recording it (silent capture, then voice-over) |
 | [docs/BONUS_INTEGRATION.md](docs/BONUS_INTEGRATION.md) | How the three bonus features were integrated into the front end |
 | [PRODUCT.md](PRODUCT.md) | Product purpose, users, what is implemented today, and the verification status |
 | [DESIGN.md](DESIGN.md) | The approved visual system for the web app |
