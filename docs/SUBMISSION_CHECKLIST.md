@@ -35,18 +35,19 @@ Test numbers below are recorded results from earlier runs, not new executions.
 | Prompt logs | Person 1 and Person 2, separate files | `docs/ai-audit/prompt-log.md`, `prompt-log-person2.md` |
 | Tools and models per phase | Written | `docs/ai-audit/tooling-and-methodology.md` |
 | User and test documentation | README Quick Start, Beginner's Guide, deployment, testing and front-end guides | `README.md`, `docs/BEGINNERS_GUIDE.md`, `DEPLOYMENT.md`, `TESTING.md`, `FRONTEND.md` |
-| Demo video package | Runbook, word-for-word script (7:30, under the 10-minute limit) and a read-along cue sheet; the on-chain sequence of Segments 3 to 6 was rehearsed with `cast` on a fresh scratch chain (8 Nov) and every expected value matched; README section "Reproduce the demo". **Video not recorded; the MetaMask rehearsal is not done** | `docs/VIDEO_PLAN.md`, `docs/VIDEO_SCRIPT.md`, `docs/VIDEO_CUE_SHEET.md` |
+| Demo video package | Runbook, word-for-word script and a cue sheet for the two-call recording (a silent screen capture aimed at 9:00 and never over 9:30, then a voice-over; under the 10-minute limit; every brief requirement and all three bonuses shown live); the on-chain sequence of Segments 3 to 6 was rehearsed with `cast` on a fresh scratch chain (8 Nov) and every expected value matched; README section "Reproduce the demo". **Video not recorded; the MetaMask rehearsal is not done** | `docs/VIDEO_PLAN.md`, `docs/VIDEO_SCRIPT.md`, `docs/VIDEO_CUE_SHEET.md` |
 
 ## 3. Remaining human activities
 
 - [ ] **Read the final report as a team.** Both teammates should read `docs/report/AI_AUDIT_REPORT.md` once, in particular the sections they did not write, and confirm that it says what happened. Three facts only a person can confirm: whether Person 2 used a chat assistant (none is recorded), whether Person 2 approved Person 1 regenerating `web/lib/contracts/abis.ts` (`e375ff6`; the approval is not recorded), and that Person 1's account of the claude.ai chat (not in the repository) is accurate.
 - [ ] **Peer evaluation** (mandatory and confidential; brief sections 4 and 7). Each student submits their own, separately.
-- [ ] **Record the demo video** (required: at most 10 minutes and 300 MB, `GroupName.mp4`, architecture first, then a hands-on demo of the local deployment). The runbook is `docs/VIDEO_PLAN.md`, the spoken text is `docs/VIDEO_SCRIPT.md`, and `docs/VIDEO_CUE_SHEET.md` interleaves the lines with the actions for reading along. Recording deliverables, none of them done yet:
+- [ ] **Record the demo video** (required: at most 10 minutes and 300 MB, `GroupName.mp4`, architecture first, then a hands-on demo of the local deployment). The runbook is `docs/VIDEO_PLAN.md`, the spoken text is `docs/VIDEO_SCRIPT.md`, and `docs/VIDEO_CUE_SHEET.md` has the two calls step by step (Part A: Person 2's silent screen capture; Part B: the voice-over by both). Recording deliverables, none of them done yet:
   - [ ] the dedicated recording environment built on 8549 / 3103 (`VIDEO_PLAN.md`, section 2), without touching 8545 to 8548 or 3000 to 3102
-  - [ ] one timed rehearsal, including a 2-minute Zoom test recording played back
+  - [ ] one timed run of Part A against its checkpoints, and a 1-minute test of the two-call pipeline played back
   - [ ] the clean browser profile with a throwaway MetaMask (Alice, Bob, Keeper) set up
   - [ ] the backup clip: `DEMO_PORT=8550 bash contracts/script/demo-journey.sh` recorded once (`VIDEO_PLAN.md`, section 9)
-  - [ ] the final Zoom recording made, played back and checked (voices, readable text, no key or phrase, length near 7:30)
+  - [ ] Call 1: the silent screen capture made and checked (about 9:00, at most 9:30, readable, no key or phrase)
+  - [ ] Call 2: the voice-over recorded over it, played back and checked (both voices in time with the picture)
   - [ ] the file saved as `GroupName.mp4`, at most 10 minutes and 300 MB, and the recording environment stopped and `/tmp/sc4053-demo` removed
 - [ ] **Agree the shared-file wording**: `CLAUDE.md` still names the brief `docs/project.pdf`, while the file in the repository is `docs/Development_Project.pdf`. `CLAUDE.md` is shared, so neither teammate has edited it.
 - [ ] **Decide whether the brief PDF should stay in the public repository** (see section 6).
@@ -59,7 +60,7 @@ The cases below were not performed with MetaMask. They are optional unless the t
 - Switching account while a request is open.
 - An RPC outage and a chain reset during a transaction.
 - Cancelling a buy order, and the engine's refund of a stop that cannot enter a deep book (real-chain suite only).
-- The later steps of `TESTING.md` Tests 5 to 11 that were not reported, and screenshots and transaction hashes for the journeys already run.
+- The later steps of `TESTING.md` Tests 5 to 11 that were not reported. (We decided not to add MetaMask screenshots; the demo video shows the MetaMask flow.)
 
 ## 5. Confirm on NTULearn (not stated in the brief)
 

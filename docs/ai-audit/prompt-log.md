@@ -1111,3 +1111,49 @@ Each must be checked against the source before drawing. Use one colour-blind-saf
 **What the AI got wrong:** a first draft of Section 2.6 said every Person 1 log entry records what the human did. Not every entry has that line, so it was narrowed before committing.
 
 **What the human did:** asked for the final check and set its criteria.
+
+## 2026-11-08: Zip test, screenshot clean-up, two-call video workflow
+**Phase:** wrap-up. **Branch:** working tree on `main` (not committed).
+
+**Prompt (summary):** (1) run every testing step of the submission ZIP before calling it ready; (2) Person 2 decided not to supply MetaMask screenshots, so remove that requirement everywhere; (3) re-sort the video script and cue sheet for the team's plan: Zoom call 1 is a silent screen capture by Person 2 kept under 9 minutes, and Zoom call 2 is a voice-over by both while the capture plays.
+
+**What the AI did:**
+- **ZIP test**, from a fresh unzip of the Downloads ZIP:
+  - `unzip`; `forge build`; `forge test` 335 passed, 0 failed; `npm ci`; `npm test` 604 passed, 76 skipped
+  - `DEMO_PORT=8550 bash contracts/script/demo-journey.sh`: DEMO COMPLETE
+  - `Deploy.s.sol` on scratch 8546: the five app addresses had code
+  - `npm run dev` on 3103: all six pages returned 200
+  - the sell 100 at 2, buy 40 at 2.2 and cancel journey, sent with `cast` (the expected balances matched)
+  - **Not done:** the MetaMask clicks themselves
+  - the scratch chain and the app were stopped, and the test folder deleted
+- **Screenshots:**
+  - removed the 15 "Screenshot to supply" placeholders and the list of 19 files in `TESTING.md` Section D (now "Reference renders")
+  - removed the "screenshots still needed" notes in `TESTING.md`, the report (D4 row, 6.1 table, 6.5, 6.7 and 6.9), `PRODUCT.md`, `FRONTEND.md`, `BONUS_INTEGRATION.md`, `BEGINNERS_GUIDE.md` H4 and the checklist
+  - where the report said screenshots were missing, it now records the decision: "We chose not to add MetaMask screenshots; the demo video shows the MetaMask flow"
+  - historical logs and evidence files are unchanged
+- **Video:**
+  - **`VIDEO_CUE_SHEET.md` rewritten:**
+    - Part A, call 1: Person 2's actions, each with a hold time sized to the line spoken over it, plus checkpoints ending at 8:35, latest 9:00
+    - Part B, call 2: every line with its on-screen cue and a blank "At" column
+    - checked by script: the lines equal `VIDEO_SCRIPT.md` word for word in all 9 segments
+  - **`VIDEO_SCRIPT.md`:** the timing table now gives the call 1 footage plan (8:35) next to the speaking time (about 6 minutes). The handoff cues and fallbacks were changed for silent capture with pause and resume.
+  - **`VIDEO_PLAN.md`:** section 5 now covers both calls (muted capture, then the video shared through Zoom and recorded). Also updated: the rehearsal (a 1-minute pipeline test), the checklist and the after-recording steps.
+  - **README and checklist:** pointers updated
+
+- **Pacing and coverage check** (the user asked for confirmation before committing):
+  - the holds were re-sized from 2.3 to 2.1 words per second plus a two-second breath, and 17 of 17 held lines were checked by script to fit
+  - "go slowly" rules were added for Person 2
+  - the plan is now 8:58, with no more than 9:30
+  - a requirements table maps each feature of the brief (issuance, listing, limit orders, automatic matching with partial fills, Bonuses 1 to 3, architecture first) to its segment
+  - the earlier "run long" cut that would have dropped live token issuance was removed
+
+**What the AI got wrong:**
+- Its first two-call cue sheet sized the holds at a normal speaking pace, and its first "run long" cut dropped a required feature (ERC20 issuance). The user's request for confirmation led to both fixes.
+- It first described the ZIP's testing steps without having run step 1 (`unzip`) or step 5 (the app and the trade). The user asked, and both were then run.
+- The `node` PATH line needed in Git Bash was missing from the first instructions.
+
+**What the human did:**
+- asked for every step to be run before calling the ZIP ready
+- relayed Person 2's decision on screenshots
+- designed the two-call recording workflow and the 9-minute safety margin
+- required confirmation of the pacing and the rubric coverage before any commit
