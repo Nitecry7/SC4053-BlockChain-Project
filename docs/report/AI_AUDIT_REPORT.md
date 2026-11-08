@@ -200,7 +200,7 @@ Person 2's front-end scope was fixed in Prompt 00, a read-only planning session 
   - the front end's prompt log, per-phase evidence files and one issue file per real defect (`docs/ai-audit/`)
 
 ### 2.4 Workflow per phase
-**Person 1 used a two-tier workflow.** Below, "my" means Person 1. The chat tier was used minimally; all of the code was written through Claude Code.
+**Person 1 used a two-tier workflow.** Below, "my" means Person 1. The chat tier was used minimally.
 
 | Tier | Tool | Role |
 |---|---|---|
