@@ -1,0 +1,123 @@
+Compiling 1 files with Solc 0.8.24
+Solc 0.8.24 finished in 1.43s
+Compiler run successful!
+Ran 10 tests for test/termpaper/TermPaper.t.sol:TermPaperExperiments
+[PASS] test_E1_baseline_noAttack() (gas: 4821983)
+Logs:
+  E1 baseline, victim quote paid: 15.000000000000000000
+  E1 baseline, victim gas: 374621
+[PASS] test_E1_sandwich_limitSlackSweep() (gas: 33280855)
+Logs:
+  E1 original engine, limit 0.1% above best ask (1.5015)
+    victim base received: 10.000000000000000000
+    victim quote paid: 15.014999999975000000
+    victim overpaid vs 15.0: 0.014999999975000000
+    attacker quote profit: 0.014999999975000000
+    attacker base delta: 0.000000000000000000
+    attacker gas, all transactions: 3810416
+    victim gas: 948502
+  E1 original engine, limit 1% above best ask (1.515)
+    victim base received: 10.000000000000000000
+    victim quote paid: 15.149999999840000000
+    victim overpaid vs 15.0: 0.149999999840000000
+    attacker quote profit: 0.149999999840000000
+    attacker base delta: 0.000000000000000000
+    attacker gas, all transactions: 3810416
+    victim gas: 948502
+  E1 original engine, limit 5% above best ask (1.575)
+    victim base received: 10.000000000000000000
+    victim quote paid: 15.749999999240000000
+    victim overpaid vs 15.0: 0.749999999240000000
+    attacker quote profit: 0.749999999240000000
+    attacker base delta: 0.000000000000000000
+    attacker gas, all transactions: 3810416
+    victim gas: 948502
+  E1 original engine, limit 33% above best ask (2.0), issue 007 case
+    victim base received: 10.000000000000000000
+    victim quote paid: 19.999999994990000000
+    victim overpaid vs 15.0: 4.999999994990000000
+    attacker quote profit: 4.999999994990000000
+    attacker base delta: 0.000000000000000000
+    attacker gas, all transactions: 3810416
+    victim gas: 948490
+[PASS] test_E2_stopHunt_depthSweep() (gas: 17737013)
+Logs:
+  E2 stop hunt, no honest bid above the attacker
+    victim base sold: 10.000000000000000000
+    victim quote received: 15.000000000000000000
+    victim shortfall vs 2.0 last honest price: 5.000000000000000000
+    attacker base bought: 10.000000000000000000
+    attacker quote paid for fills (at 1.5): 15.000000000000000000
+    attacker paper gain, marked at 2.0: 5.000000000000000000
+    attacker gas, all transactions: 1092741
+  E2 stop hunt, honest bid of 5 at 1.90
+    victim base sold: 10.000000000000000000
+    victim quote received: 17.000000000000000000
+    victim shortfall vs 2.0 last honest price: 3.000000000000000000
+    attacker base bought: 5.000000000000000000
+    attacker quote paid for fills (at 1.5): 7.500000000000000000
+    attacker paper gain, marked at 2.0: 2.500000000000000000
+    attacker gas, all transactions: 1167635
+  E2 stop hunt, honest bid of 10 at 1.90
+    victim base sold: 10.000000000000000000
+    victim quote received: 19.000000000000000000
+    victim shortfall vs 2.0 last honest price: 1.000000000000000000
+    attacker base bought: 0.000000000000000000
+    attacker quote paid for fills (at 1.5): 0.000000000000000000
+    attacker paper gain, marked at 2.0: 0.000000000000000000
+    attacker gas, all transactions: 1108405
+[PASS] test_E3_stopSnipe_originalEngine() (gas: 14312736)
+Logs:
+  E3 baseline, honest trigger, no attacker
+    victim base sold: 10.000000000000000000
+    victim quote received: 20.000000000000000000
+    attacker quote profit: 0.000000000000000000
+    attacker base delta: 0.000000000000000000
+    attacker gas, all transactions: 0
+  E3 stop snipe on the original engine
+    victim base sold: 10.000000000000000000
+    victim quote received: 10.000000011000000000
+    attacker quote profit: 9.999999989000000000
+    attacker base delta: 0.000000000000000000
+    attacker gas, all transactions: 4690913
+[PASS] test_E4_dustGrief_blocksBidSide() (gas: 79093165)
+Logs:
+  E4 dust griefing, 101 one-lot bids one tick below the best ask
+    attacker gas, 101 placements: 67153318
+    attacker quote locked (refundable): 0.000000151499999899
+    defender gas to clear the dust: 6561421
+    defender transactions to clear: 11
+[PASS] test_E5_dustBelowMinimumIsRejected() (gas: 4272013)
+[PASS] test_E5_sandwich_onMitigatedEngine() (gas: 8962975)
+Logs:
+  E5 mitigated engine, M2 only (no crossed rest), limit 2.0
+    victim base received: 10.000000000000000000
+    victim quote paid: 14.999999999990000000
+    victim overpaid vs 15.0: -0.000000000010000000
+    attacker quote profit: 0.000000014990000000
+    attacker base delta: -0.000000010000000000
+    attacker gas, all transactions: 3200671
+    victim gas: 1212317
+[PASS] test_E6_gasOverheadOfMitigation() (gas: 9094925)
+Logs:
+  E6 original engine
+    first resting ask: 305844
+    one full fill as taker: 371906
+    resting bid, opposite side non-empty: 294692
+  E6 mitigated engine
+    first resting ask: 306450
+    one full fill as taker: 371932
+    resting bid, opposite side non-empty: 295763
+[PASS] test_E7_stopHunt_stillWorksOnMitigatedEngine() (gas: 6505869)
+Logs:
+  E7 stop hunt on the mitigated engine, victim quote received: 15.000000000000000000
+[PASS] test_E7_stopSnipe_onMitigatedEngine() (gas: 9497814)
+Logs:
+  E7 stop snipe on the mitigated engine (M2)
+    victim base sold: 0.000000010000000000
+    victim quote received: 0.000000021000000000
+    attacker quote profit: -0.000000021000000000
+    attacker base delta: 0.000000010000000000
+    attacker gas, all transactions: 4069610
+Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 47.39ms (64.20ms CPU time)
+Ran 1 test suite in 48.31ms (47.39ms CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)

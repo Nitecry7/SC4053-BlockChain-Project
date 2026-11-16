@@ -26,3 +26,7 @@ Thumbs.db
 
 # Course brief: kept locally, intentionally untracked
 docs/project.pdf
+
+# Term paper: downloaded papers are never committed
+docs/term-paper/papers/*.pdf
+docs/term-paper/papers/*.html
