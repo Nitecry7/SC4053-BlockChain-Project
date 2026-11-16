@@ -58,3 +58,18 @@ used instead. **FAILED** = no copy obtained. **Library** = needs NTU library acc
 - [10]: the file is hosted by Exodus, not 0x. The content matches the 0x v1 white paper (title, authors, date on
   page 1). An official 0x copy was not located in this session.
 - [24] author: the task says "Miller". Author attribution must be checked in the page (Phase 3 note).
+
+## Phase 4 additions (26 to 33)
+Same checks as above. Peer review status is in each note and in `../notes/PHASE4_GAPS.md`.
+
+| ID | Citation (as on page 1 / page header) | URL used | Local file | Pages | Status |
+|---|---|---|---|---|---|
+| 26 | S. Yang, F. Zhang, K. Huang, X. Chen, Y. Yang, F. Zhu, "SoK: MEV Countermeasures: Theory and Practice", arXiv:2212.05111v2, 20 Oct 2023 | https://arxiv.org/pdf/2212.05111 | 26-yang-2024.pdf | 19 | OK (preprint; published version shorter, see note) |
+| 27 | T. Gong, Z. Liu, A. Kate, "The Case of FBA as a DEX Processing Model", arXiv:2302.01177v5, 16 Feb 2025 | https://arxiv.org/pdf/2302.01177 | 27-gong-2025.pdf | 13 | OK |
+| 28 | G. Ramseyer, A. Goel, D. Mazieres, "SPEEDEX: A Scalable, Parallelizable, and Economically Efficient Decentralized EXchange", arXiv:2111.02719v6, 2 Mar 2023 | https://arxiv.org/pdf/2111.02719 | 28-ramseyer-2023.pdf | 27 | OK |
+| 29 | A. R. Choudhuri, S. Garg, J. Piet, G.-V. Policharla, "Mempool Privacy via Batched Threshold Encryption: Attacks and Defenses", USENIX Security 2024 | https://www.usenix.org/system/files/usenixsecurity24-choudhuri.pdf | 29-choudhuri-2024.pdf | 18 | OK (publisher open access) |
+| 30 | Y. Yuminaga, D. Chen, D. Sui, "Execution Welfare Across Solver-based DEXes", arXiv:2503.00738v3 | https://arxiv.org/pdf/2503.00738 | 30-yuminaga-2025.pdf | 22 | OK (preprint only) |
+| 31 | "Shutterized Optimism: Performance Evaluation", Shutter Forum, 2025-10-27 (grey) | https://shutternetwork.discourse.group/t/shutterized-optimism-performance-evaluation/764 | 31-shutter-2025.html | n/a | OK (HTML) |
+| 32 | Hyperliquid Docs, "Tick and lot size"; "Rate limits and user limits" (grey) | https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/tick-and-lot-size ; https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/rate-limits-and-user-limits | 32-hyperliquid-docs.html, 32-hyperliquid-ratelimits.html | n/a | OK (HTML, saved 2026-11-17) |
+| 33 | "Fenwick + Bitmap: constant-time matching for on-chain order books", Ethereum Research forum, 2025-05-12 (grey) | https://ethresear.ch/t/fenwick-bitmap-constant-time-matching-for-on-chain-order-books/22313 | 33-fenwick-ethresearch.html | n/a | OK (HTML) |
+| (none) | MITRE AADAPT, "Stop Hunting" ADT3021.002 (grey) | https://aadapt.mitre.org/techniques/ADT3021.002/ | 33-mitre-aadapt.failed-js-shell.html | n/a | **FAILED**: HTTP 200 but the page is a JavaScript shell (1990 bytes, title "MITRE \| AADAPT"), no content. Not used, not numbered |
