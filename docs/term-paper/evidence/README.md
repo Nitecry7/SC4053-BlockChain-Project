@@ -145,3 +145,66 @@ with the forge version.
 | `test_E6_gasOverheadOfMitigation` | The M2 check costs at most about 1.1k gas on these three calls. | Measures one book shape only (one order on the opposite side). |
 | `test_E7_stopSnipe_onMitigatedEngine` | With M2, the snipe makes no money and the book is not left crossed. | The victim's stop is cancelled and refunded, so she keeps 9.99999999 base with no protection while the price falls. M2 converts the snipe into a cheap way to cancel someone's stop-loss. |
 | `test_E7_stopHunt_stillWorksOnMitigatedEngine` | M2 does not stop the stop hunt. | The assertion message says "M1 and M2 do not fix" it, but the test runs with `minOrder = 0`, so **M1 is not exercised**. The claim about M1 is not shown by this test (an M1 floor only raises the self-trade size, which nets to zero for a self-trade, but that is reasoning, not a test result). |
+
+# Gap experiments E8 to E10 (Part A of the writing plan)
+
+Source of every number below: `experiments-gaps.txt` (this folder), produced on 2026-11-19 by
+`forge test --match-path "test/termpaper/*" --isolate -vv` from `contracts/`, forge 1.8.6, repo commit 2bf8816.
+Test file: `contracts/test/termpaper/TermPaperGaps.t.sol` (new; helpers copied from `TermPaper.t.sol` so that file
+stays identical to the inbox copy).
+
+Run status: 16 term-paper tests passed (6 new, 10 original). Full suite: `351 tests passed, 0 failed, 0 skipped` (345 before plus 6 new). The E1 to E7 log lines in this rerun are identical to
+`experiments.txt` (checked by diff of every log line). The forge deprecation warning (`lastCallGas(): replaced by
+lastFrameGas`) is printed before the results and is not in the saved file.
+
+## E8: stop hunt with a real minimum order (M1 exercised), `test_E8_stopHunt_withMinOrder`
+Mitigated engine, `minOrder = 0.1e18`, M2 active. Same scenario as E2 depth 0, self-trade of 0.1 base at 1.95.
+
+| Metric | Value |
+|---|---|
+| Reference price moved to 1.95 | yes |
+| Stops activated | 1 |
+| Victim base sold / quote received | 10.0 / 15.0 |
+| Victim shortfall vs 2.0 | 5.0 (same as E2 depth 0) |
+| Attacker base bought / paper gain at 2.0 | 10.0 / 5.0 |
+| Attacker gas, 4 tx | 1160501 |
+
+Proves: M1 at 0.1 base does not stop the stop hunt; the self-trade nets to zero, so the minimum only changes the
+capital briefly posted (0.1 base and 0.195 quote).
+
+## E9: does an honest keeper defeat the attacks?
+| Test | Crossed before keeper | Crossed after | Victim result | Attacker net | Gas |
+|---|---|---|---|---|---|
+| `test_E9_keeperClearsBeforeBackrun_sandwich` (E1 at limit 2.0) | yes | no | received 10.0, paid 14.99999999999 (overpaid -1e-11) | quote +1.499e-8, base -1e-8; -1e-11 marked at 1.5 | attacker 3222611 (10 tx); keeper 153587 (1 tx) |
+| `test_E9_keeperClearsBeforeBackrun_snipe` (E3) | yes | no | sold 10.0, received 20.000000001 | quote -2.1e-8, base +1e-8; -1e-9 marked at 2.0 | attacker 4254708 (11 tx); keeper 145023 (1 tx) |
+| `test_E9_atomicSnipe_noOrderingNeeded` (E3 via one contract call) | n/a | no | sold 10.0, received 10.000000011 | quote profit 9.999999989, base 0 | attacker 3588665 (1 tx) |
+
+Proves:
+- C1 sandwich needs the back-run to land before any `matchOrders` call. One keeper call (153587 gas, about 4.8%
+  of the attacker's dust cost) removes the profit, because the earlier `bookSeq` is maker (`OrderBook.sol:115`).
+- C3 snipe does NOT need ordering control around a victim transaction. Dust, trigger and back-run fit in one
+  transaction, so no keeper can step in. The only race is to call `triggerStopOrders` before an honest keeper does,
+  and the attack with a contract costs less gas (3588665) than the 13-tx version (4942713).
+- Fails on a public chain: keeper timing is assumed, not measured; a builder could still order the keeper after
+  the back-run.
+
+## E10: M2 under a repeated attack
+Attacker front-runs every resubmission with 10 dust asks at 1.499; victim resubmits the refunded remainder with
+limit 2.0.
+
+| Config | Rounds run | Victim base received | Victim quote paid | Victim gas (cumulative) | Attacker gas (cumulative) | Attacker net marked at 1.5 | Rounds to fill 10 base |
+|---|---|---|---|---|---|---|---|
+| `test_E10_..._M2only` (minOrder 0, dust 1 lot) | 5 (cap) | 0.00000005 | 0.00000007495 | 4919053 | 16074955 | -5e-11 | 1,000,000,000 |
+| `test_E10_..._M1andM2` (minOrder 0.1, dust 0.1) | 10 (filled) | 10.0 | 14.99 | 9771458 | 32136410 | -0.010 | 10 |
+
+Per round: victim about 0.97M gas (first round 1029321), attacker about 3.21M gas.
+
+Proves:
+- M2 alone turns theft into an indefinite delay: with one-lot dust the victim gains 1e-8 base per round and would
+  need 1e9 rounds.
+- M1 plus M2 bounds the delay: each round forces at least 1 base of real fills (10 x minOrder), so 10 rounds here;
+  the attacker loses 0.001 quote per round plus about 3.3x the victim's gas.
+- Never overpays in either config (asserted). Assumes the attacker sees every resubmission in time.
+
+## E11: break-even gas price
+See `COST_MODEL.md`.

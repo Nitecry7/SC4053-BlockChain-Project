@@ -17,12 +17,7 @@ Claims with weak or no evidence, and what would close each one. Row IDs refer to
 ## Weak evidence
 | Claim | Map row | Weakness | What would close it |
 |---|---|---|---|
-| M1 does not fix the stop hunt | M1b | `test_E7_stopHunt_stillWorksOnMitigatedEngine` uses `minOrder = 0`, so M1 is not exercised although its assertion message mentions M1 | Add a variant with `minOrder = 0.1e18` (self-trade 0.1 base at 1.95) and assert the stop still fires |
 | What minimum size is enough | M1a | Only shows a one-lot order is rejected | Sweep `minOrder` and recompute E1 attacker profit and gas, with gas priced at a stated gwei and token value |
-| M2 turns theft into delay, which the attacker can repeat | M2a | E5 resubmits once, unattacked | Loop: attacker re-front-runs each resubmission; report victim tx count and gas until filled, and attacker cost per round |
-| C1 to C3 are profitable after gas | C1b, C3b | No test converts gas to money; at 0.1% slack E1 profit is 0.015 quote against 3.91M attacker gas | Add a cost model: gas x gas price x ETH price vs profit in USD for chosen token prices, on L1 and on an L2 |
-| The attacks need ordering control on a public chain | C1b, C3b | Tests prank callers in sequence; a benign `matchOrders` between victim and back-run would neutralise C1/C3 (`OrderBook.sol:115`) | Add a test where a keeper calls `matchOrders` before the back-run and show the attack fails; cite [01], [04], [05] for ordering markets |
-| Dust wall is "cheap" | C4b | Attacker gas (67.4M) is about 8x the defender's (8.06M); only capital is cheap | Report it as capital-cheap, gas-expensive; or test the 101 orders spread across blocks on an L2 cost model |
 | Push-payout DoS by a hostile token | C5b | No test; reasoning plus SPEC | Add a mock token with a blocklist and show a taker reverts when crossing that maker |
 | Keepers will not clear crossings in time | C6b | Argued in [07], [09]; no timing data | No measurement possible on a local chain; state as design risk |
 | Public stops and limits make attacks targetable | S6 | Inference from public views; [13] argues the opposite setting (private stops) | Accept as design reasoning; cite `IOrderBook.sol:49, 52` |
@@ -30,6 +25,19 @@ Claims with weak or no evidence, and what would close each one. Row IDs refer to
 | L2 spam and MEV numbers | S4, M11e | [24] and [31] are grey; [24] "under a tenth of fees" holds only for OP Mainnet | Cite [23] (peer-reviewed) as the main L2 source; quote [24] per chain |
 | Price-level book makes gas constant | M8b | [33] estimates only | Prototype a price-level book or cite [09] measurements only |
 | Frontend guards help | M12 | Advice, no user study | E1 slack sweep is the only evidence that tighter limits cut loss |
+
+## Closed by the gap experiments (2026-11-19)
+| Former open claim | Closed by | Result |
+|---|---|---|
+| M1 does not fix the stop hunt | `test_E8_stopHunt_withMinOrder` | Confirmed with minOrder 0.1: stop fires, victim receives 15.0 |
+| M2 turns theft into delay, which the attacker can repeat | `test_E10_mitigatedSandwich_repeated_*` | M2 alone: 1e-8 base per round (1e9 rounds); M1 plus M2: 10 rounds, attacker loses 0.010 quote |
+| C1 to C3 are profitable after gas | `evidence/COST_MODEL.md` | Break-even constant K per scenario; writer must state gas and token prices with a source to turn K into a yes or no |
+| The attacks need ordering control on a public chain | `test_E9_*` | C1: yes, one keeper `matchOrders` defeats it. C3: no, the atomic 1-tx version works |
+| Dust wall is "cheap" | `evidence/COST_MODEL.md` | Capital-cheap, gas-expensive: attacker 8.4x defender gas |
+
+Still open after the gap experiments:
+- What minimum size is enough (M1a): only 0.1 tested. A sweep remains open.
+- Keeper timing on a real chain (C6b): not measurable locally.
 
 ## Citation and reproduction issues
 | Issue | Effect | What would close it |

@@ -1,0 +1,287 @@
+# forge --version
+forge Version: 1.8.6
+Commit SHA: 6bad0a66de7c83f7b33695044138f0f5fa4c5990
+Build Timestamp: 2026-10-21T17:38:09.096593000Z (1792604289)
+Build Profile: dist
+# repo commit (before this phase's commit): 2bf8816e6beafcfbf30f3ea54eb47e6698d6ed0c
+# command (from contracts/): forge test --match-path "test/termpaper/*" --isolate -vv
+
+Ran 6 tests for test/termpaper/TermPaperGaps.t.sol:TermPaperGapExperiments
+[PASS] test_E10_mitigatedSandwich_repeated_M1andM2() (gas: 45871711)
+Logs:
+  E10 repeated front-run, M1 minOrder 0.1 and M2, dust 0.1
+    round: 1
+      victim base received, cumulative: 1.000000000000000000
+      victim gas, cumulative: 1029321
+      attacker gas, cumulative: 3229031
+      attacker net, marked at 1.5: -0.001000000000000000
+    round: 2
+      victim base received, cumulative: 2.000000000000000000
+      victim gas, cumulative: 2001742
+      attacker gas, cumulative: 6440962
+      attacker net, marked at 1.5: -0.002000000000000000
+    round: 3
+      victim base received, cumulative: 3.000000000000000000
+      victim gas, cumulative: 2974163
+      attacker gas, cumulative: 9652893
+      attacker net, marked at 1.5: -0.003000000000000000
+    round: 4
+      victim base received, cumulative: 4.000000000000000000
+      victim gas, cumulative: 3946584
+      attacker gas, cumulative: 12864824
+      attacker net, marked at 1.5: -0.004000000000000000
+    round: 5
+      victim base received, cumulative: 5.000000000000000000
+      victim gas, cumulative: 4919005
+      attacker gas, cumulative: 16076755
+      attacker net, marked at 1.5: -0.005000000000000000
+    round: 6
+      victim base received, cumulative: 6.000000000000000000
+      victim gas, cumulative: 5891426
+      attacker gas, cumulative: 19288686
+      attacker net, marked at 1.5: -0.006000000000000000
+    round: 7
+      victim base received, cumulative: 7.000000000000000000
+      victim gas, cumulative: 6863847
+      attacker gas, cumulative: 22500617
+      attacker net, marked at 1.5: -0.007000000000000000
+    round: 8
+      victim base received, cumulative: 8.000000000000000000
+      victim gas, cumulative: 7836268
+      attacker gas, cumulative: 25712548
+      attacker net, marked at 1.5: -0.008000000000000000
+    round: 9
+      victim base received, cumulative: 9.000000000000000000
+      victim gas, cumulative: 8808689
+      attacker gas, cumulative: 28924479
+      attacker net, marked at 1.5: -0.009000000000000000
+    round: 10
+      victim base received, cumulative: 10.000000000000000000
+      victim gas, cumulative: 9771458
+      attacker gas, cumulative: 32136410
+      attacker net, marked at 1.5: -0.010000000000000000
+    victim transactions: 10
+    victim quote paid: 14.990000000000000000
+    victim base still unfilled: 0.000000000000000000
+    rounds needed to fill 10 base at this dust size: 10
+
+[PASS] test_E10_mitigatedSandwich_repeated_M2only() (gas: 25288339)
+Logs:
+  E10 repeated front-run, M2 only (minOrder 0), dust 1 lot
+    round: 1
+      victim base received, cumulative: 0.000000010000000000
+      victim gas, cumulative: 1029321
+      attacker gas, cumulative: 3228671
+      attacker net, marked at 1.5: -0.000000000010000000
+    round: 2
+      victim base received, cumulative: 0.000000020000000000
+      victim gas, cumulative: 2001754
+      attacker gas, cumulative: 6440242
+      attacker net, marked at 1.5: -0.000000000020000000
+    round: 3
+      victim base received, cumulative: 0.000000030000000000
+      victim gas, cumulative: 2974187
+      attacker gas, cumulative: 9651813
+      attacker net, marked at 1.5: -0.000000000030000000
+    round: 4
+      victim base received, cumulative: 0.000000040000000000
+      victim gas, cumulative: 3946620
+      attacker gas, cumulative: 12863384
+      attacker net, marked at 1.5: -0.000000000040000000
+    round: 5
+      victim base received, cumulative: 0.000000050000000000
+      victim gas, cumulative: 4919053
+      attacker gas, cumulative: 16074955
+      attacker net, marked at 1.5: -0.000000000050000000
+    victim transactions: 5
+    victim quote paid: 0.000000074950000000
+    victim base still unfilled: 9.999999950000000000
+    rounds needed to fill 10 base at this dust size: 1000000000
+
+[PASS] test_E8_stopHunt_withMinOrder() (gas: 6691720)
+Logs:
+  E8 stop hunt on the mitigated engine, M1 minOrder = 0.1 base and M2 active
+    reference price moved to 1.95 (1 = yes): 1
+    stops activated: 1
+    victim base sold: 10.000000000000000000
+    victim quote received: 15.000000000000000000
+    victim shortfall vs 2.0 last honest price: 5.000000000000000000
+    attacker self-trade size (base): 0.100000000000000000
+    attacker base bought: 10.000000000000000000
+    attacker paper gain, marked at 2.0: 5.000000000000000000
+    attacker gas, all transactions: 1160501
+
+[PASS] test_E9_atomicSnipe_noOrderingNeeded() (gas: 7186894)
+Logs:
+  E9 atomic snipe: dust, trigger and back-run in one transaction
+    victim base sold: 10.000000000000000000
+    victim quote received: 10.000000011000000000
+    attacker quote profit: 9.999999989000000000
+    attacker base delta: 0.000000000000000000
+    attacker gas, one transaction: 3588665
+    book crossed afterwards (1 = yes): 0
+
+[PASS] test_E9_keeperClearsBeforeBackrun_sandwich() (gas: 6992632)
+Logs:
+  E9 sandwich (E1 at limit 2.0), honest keeper calls matchOrders before the back-run
+    book crossed after victim (1 = yes): 1
+    book crossed after keeper (1 = yes): 0
+    victim base received: 10.000000000000000000
+    victim quote paid: 14.999999999990000000
+    victim overpaid vs 15.0: -0.000000000010000000
+    attacker quote delta: 0.000000014990000000
+    attacker base delta: -0.000000010000000000
+    attacker net, marked at 1.5: -0.000000000010000000
+    attacker gas, 10 dust placements: 3222611
+    keeper gas, one matchOrders call: 153587
+
+[PASS] test_E9_keeperClearsBeforeBackrun_snipe() (gas: 7878925)
+Logs:
+  E9 snipe (E3), honest keeper calls matchOrders before the back-run
+    book crossed after attacker trigger (1 = yes): 1
+    book crossed after keeper (1 = yes): 0
+    victim base sold: 10.000000000000000000
+    victim quote received: 20.000000001000000000
+    attacker quote delta: -0.000000021000000000
+    attacker base delta: 0.000000010000000000
+    attacker net, marked at 2.0: -0.000000001000000000
+    attacker gas, 10 dust bids and trigger: 4254708
+    keeper gas, one matchOrders call: 145023
+
+Suite result: ok. 6 passed; 0 failed; 0 skipped; finished in 47.71ms (134.25ms CPU time)
+
+Warning: the following cheatcode(s) are deprecated and will be removed in future versions:
+  lastCallGas(): replaced by `lastFrameGas`
+Ran 10 tests for test/termpaper/TermPaper.t.sol:TermPaperExperiments
+[PASS] test_E1_baseline_noAttack() (gas: 2905823)
+Logs:
+  E1 baseline, victim quote paid: 15.000000000000000000
+  E1 baseline, victim gas: 426821
+
+[PASS] test_E1_sandwich_limitSlackSweep() (gas: 26204224)
+Logs:
+  E1 original engine, limit 0.1% above best ask (1.5015)
+    victim base received: 10.000000000000000000
+    victim quote paid: 15.014999999975000000
+    victim overpaid vs 15.0: 0.014999999975000000
+    attacker quote profit: 0.014999999975000000
+    attacker base delta: 0.000000000000000000
+    attacker gas, all transactions: 3910616
+    victim gas: 1047302
+  E1 original engine, limit 1% above best ask (1.515)
+    victim base received: 10.000000000000000000
+    victim quote paid: 15.149999999840000000
+    victim overpaid vs 15.0: 0.149999999840000000
+    attacker quote profit: 0.149999999840000000
+    attacker base delta: 0.000000000000000000
+    attacker gas, all transactions: 3910616
+    victim gas: 1047302
+  E1 original engine, limit 5% above best ask (1.575)
+    victim base received: 10.000000000000000000
+    victim quote paid: 15.749999999240000000
+    victim overpaid vs 15.0: 0.749999999240000000
+    attacker quote profit: 0.749999999240000000
+    attacker base delta: 0.000000000000000000
+    attacker gas, all transactions: 3910616
+    victim gas: 1047302
+  E1 original engine, limit 33% above best ask (2.0), issue 007 case
+    victim base received: 10.000000000000000000
+    victim quote paid: 19.999999994990000000
+    victim overpaid vs 15.0: 4.999999994990000000
+    attacker quote profit: 4.999999994990000000
+    attacker base delta: 0.000000000000000000
+    attacker gas, all transactions: 3910616
+    victim gas: 1047290
+
+[PASS] test_E2_stopHunt_depthSweep() (gas: 12207725)
+Logs:
+  E2 stop hunt, no honest bid above the attacker
+    victim base sold: 10.000000000000000000
+    victim quote received: 15.000000000000000000
+    victim shortfall vs 2.0 last honest price: 5.000000000000000000
+    attacker base bought: 10.000000000000000000
+    attacker quote paid for fills (at 1.5): 15.000000000000000000
+    attacker paper gain, marked at 2.0: 5.000000000000000000
+    attacker gas, all transactions: 1158241
+  E2 stop hunt, honest bid of 5 at 1.90
+    victim base sold: 10.000000000000000000
+    victim quote received: 17.000000000000000000
+    victim shortfall vs 2.0 last honest price: 3.000000000000000000
+    attacker base bought: 5.000000000000000000
+    attacker quote paid for fills (at 1.5): 7.500000000000000000
+    attacker paper gain, marked at 2.0: 2.500000000000000000
+    attacker gas, all transactions: 1233135
+  E2 stop hunt, honest bid of 10 at 1.90
+    victim base sold: 10.000000000000000000
+    victim quote received: 19.000000000000000000
+    victim shortfall vs 2.0 last honest price: 1.000000000000000000
+    attacker base bought: 0.000000000000000000
+    attacker quote paid for fills (at 1.5): 0.000000000000000000
+    attacker paper gain, marked at 2.0: 0.000000000000000000
+    attacker gas, all transactions: 1173905
+
+[PASS] test_E3_stopSnipe_originalEngine() (gas: 10770427)
+Logs:
+  E3 baseline, honest trigger, no attacker
+    victim base sold: 10.000000000000000000
+    victim quote received: 20.000000000000000000
+    attacker quote profit: 0.000000000000000000
+    attacker base delta: 0.000000000000000000
+    attacker gas, all transactions: 0
+  E3 stop snipe on the original engine
+    victim base sold: 10.000000000000000000
+    victim quote received: 10.000000011000000000
+    attacker quote profit: 9.999999989000000000
+    attacker base delta: 0.000000000000000000
+    attacker gas, all transactions: 4942713
+
+[PASS] test_E4_dustGrief_blocksBidSide() (gas: 78906900)
+Logs:
+  E4 dust griefing, 101 one-lot bids one tick below the best ask
+    attacker gas, 101 placements: 67436118
+    attacker quote locked (refundable): 0.000000151499999899
+    defender gas to clear the dust: 8056221
+    defender transactions to clear: 11
+
+[PASS] test_E5_dustBelowMinimumIsRejected() (gas: 4272013)
+[PASS] test_E5_sandwich_onMitigatedEngine() (gas: 9175096)
+Logs:
+  E5 mitigated engine, M2 only (no crossed rest), limit 2.0
+    victim base received: 10.000000000000000000
+    victim quote paid: 14.999999999990000000
+    victim overpaid vs 15.0: -0.000000000010000000
+    attacker quote profit: 0.000000014990000000
+    attacker base delta: -0.000000010000000000
+    attacker gas, all transactions: 3228671
+    victim gas: 1393517
+
+[PASS] test_E6_gasOverheadOfMitigation() (gas: 7220194)
+Logs:
+  E6 original engine
+    first resting ask: 308644
+    one full fill as taker: 414506
+    resting bid, opposite side non-empty: 297492
+  E6 mitigated engine
+    first resting ask: 309250
+    one full fill as taker: 414532
+    resting bid, opposite side non-empty: 298563
+
+[PASS] test_E7_stopHunt_stillWorksOnMitigatedEngine() (gas: 6632041)
+Logs:
+  E7 stop hunt on the mitigated engine, victim quote received: 15.000000000000000000
+
+[PASS] test_E7_stopSnipe_onMitigatedEngine() (gas: 9742953)
+Logs:
+  E7 stop snipe on the mitigated engine (M2)
+    victim base sold: 0.000000010000000000
+    victim quote received: 0.000000021000000000
+    attacker quote profit: -0.000000021000000000
+    attacker base delta: 0.000000010000000000
+    attacker gas, all transactions: 4254010
+
+Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 79.13ms (255.69ms CPU time)
+
+Ran 2 test suites in 82.35ms (126.84ms CPU time): 16 tests passed, 0 failed, 0 skipped (16 total tests)
+
+# full suite (forge test, from contracts/), same session:
+Ran 29 test suites in 614.31s (738.61s CPU time): 351 tests passed, 0 failed, 0 skipped (351 total tests)
