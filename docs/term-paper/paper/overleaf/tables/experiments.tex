@@ -1,0 +1,31 @@
+% Table I. Numbers from docs/term-paper/evidence/README.md (forge 1.8.6). Gas = attacker gas, all its transactions.
+% "Gain" for E2 and E8 is a paper gain marked at the last honest price 2.0. Profits are not net of gas.
+\begin{table}[t]
+\caption{Attack results on the original engine (quote tokens; victim order 10 base)}
+\label{tab:experiments}
+\centering
+\footnotesize
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Exp. & Case & Victim loss & Attacker gain & Attacker gas (tx) \
+\midrule
+E1 & Sandwich, limit 0.1\% above ask & 0.015 & 0.015 & 3{,}910{,}616 (12) \
+E1 & Sandwich, 1\% & 0.150 & 0.150 & 3{,}910{,}616 (12) \
+E1 & Sandwich, 5\% & 0.750 & 0.750 & 3{,}910{,}616 (12) \
+E1 & Sandwich, 33\% (issue 007) & 5.000 & 5.000 & 3{,}910{,}616 (12) \
+E9 & Sandwich, keeper clears first & 0 & 0 & 3{,}222{,}611 (10) \
+E2 & Stop hunt, depth 0 & 5.0 & 5.0 & 1{,}158{,}241 (4) \
+E2 & Stop hunt, depth 5 & 3.0 & 2.5 & 1{,}233{,}135 (4) \
+E2 & Stop hunt, depth 10 & 1.0 & 0 & 1{,}173{,}905 (4) \
+E8 & Stop hunt, minOrder 0.1 (M1) & 5.0 & 5.0 & 1{,}160{,}501 (4) \
+E3 & Stop snipe & 10.0 & 10.0 & 4{,}942{,}713 (13) \
+E9 & Stop snipe, one transaction & 10.0 & 10.0 & 3{,}588{,}665 (1) \
+E9 & Stop snipe, keeper clears first & 0 & 0 & 4{,}254{,}708 (11) \
+\midrule
+E4 & Dust wall, 101 one-lot bids & \multicolumn{2}{l}{bid side blocked; 11 tx, 8{,}056{,}221 gas to clear} & 67{,}436{,}118 (101) \
+\bottomrule
+\end{tabular}
+\end{table}
+% Exact values (before rounding): E1 0.014999999975 / 0.14999999984 / 0.74999999924 / 4.99999999499;
+% E3 and E9 atomic victim received 10.000000011 (loss 9.999999989 vs 20.0), attacker +9.999999989.
+% E2 victim loss = shortfall vs 20.0 at the last honest price.

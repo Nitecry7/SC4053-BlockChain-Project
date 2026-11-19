@@ -1,0 +1,26 @@
+% Table II. Built from EVIDENCE_MAP.md section B. Strength: S strong, M moderate, W weak, none = no evidence.
+% "E" = measured in our experiments; "L" = literature only. P2: check every cell against EVIDENCE_MAP before submission.
+\begin{table}[t]
+\caption{Mitigations against considerations C1 to C6, with evidence}
+\label{tab:mitigations}
+\centering
+\footnotesize
+\begin{tabular}{@{}lllll@{}}
+\toprule
+ID & Mitigation & Targets & Evidence & Strength \
+\midrule
+M1 & Minimum order size & C1, C3, C4 (not C2) & E5, E8, E10 & S \
+M2 & No crossed rest & C1, C3 & E5, E6, E7, E10 & S \
+M3 & Clear crossings before taking & C1, C3 & none & W \
+M4 & Commit and reveal & C1 to C3 & L & M \
+M5 & Frequent batch auction & C1 to C3 & L & M \
+M6 & Hardened stop reference price & C2 & L (indirect) & W \
+M7 & Trigger-to-limit band & C2, C3 & none & none \
+M8 & Price-level book & C4 & L & M \
+M9 & Keeper reward & C6 & L & M \
+M10 & Token allowlist or pull payments & C5 & L & M \
+M11 & Chain-level ordering protection & C1 to C3 & L & M to S \
+M12 & Frontend guards & C1 & E1 (slack sweep) & W \
+\bottomrule
+\end{tabular}
+\end{table}
