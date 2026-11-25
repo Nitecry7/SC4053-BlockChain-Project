@@ -53,8 +53,19 @@
 - `CLAIM_CHECKLIST.md`: code commit 8753521; page rule including references; reference list rule.
 - `OUTLINE.md`: marked superseded.
 
+### Human answers to the stage 1 questions (2026-11-25)
+1. Template: not available. Use IEEEtran conference mode with the five official sections; if the file arrives in
+   `context/`, adjust in stage 5.
+2. Authors: Kumar Advaith; Muhammadh Faheem Faizal. Affiliation: College of Computing and Data Science, Nanyang
+   Technological University. Matriculation numbers and emails not yet supplied (TODO in `main.tex`).
+3. Deadline: not yet supplied (placeholder). AI rule: none stated for the term paper; a short AI-use
+   acknowledgement placeholder sits after the conclusion in `main.tex`.
+4. Title: "Bounded Loops, Open Books: Economic Security of a Fully On-Chain Limit Order Book" (option c).
+Applied to `overleaf/main.tex` in a follow-up stage 1 commit. Stage 3 should keep the title and read
+"Open Books" as the public order book (rows S5, S6), so the intro must define that idea.
+
 ### Open decisions (for the humans)
-1. Official template file, author block, deadline, AI-use rule, title (asked in the stage report).
+1. Matriculation numbers, emails, deadline date.
 2. Push `term-paper/research` (or a later commit) so experiments can be cited by public URL; until then only the
    engine at 8753521 is publicly citable.
 3. Optional: download [35] Guidi in a browser if anyone wants it cited.
