@@ -3,7 +3,7 @@
 % (never in the engine); D = design, not implemented; X = outside the application (chain level).
 % M3 (clear before take) is not in the table: no evidence; it appears as future work in Sec. V.
 \begin{table}[t]
-\caption{Mitigations against considerations C1 to C6}
+\caption{Mitigations against C1 to C6. Status: RC built and measured in the research copy only; D design, not implemented; X outside the application. Strength: S strong, M moderate, W weak}
 \label{tab:mitigations}
 \centering
 \footnotesize
@@ -11,7 +11,7 @@
 \toprule
 ID & Mitigation & Targets & Status & Evidence (strength) \\
 \midrule
-M1 & Minimum order size & C1, C3, C4; not C2 & RC & E5, E8, E10 (S) \\ % rows M1a, M1b, M1d
+M1 & Minimum order size & C1, C3; not C2 & RC & E5, E8, E10 (S) \\ % rows M1a, M1b, M1d
 M2 & Cancel crossed remainder & C1, C3 & RC & E5 to E7, E10 (S) \\ % rows M2a to M2c
 M6/7 & Stop reference, trigger band & C2 & D & indirect lit. (W) \\ % rows M6, M7
 M5 & Frequent batch clearing & C1 to C3 & D & \cite{src11budish2015,src09moosavi2023} (M) \\ % rows M5a, M5b, M5e

@@ -1,23 +1,62 @@
 \section{Proposed Solutions}\label{sec:solutions}
-% Budget 1.25 page incl. Table II. Plan: ../OUTLINE_V2.md section IV. P1 writes A; P2 writes B to D.
-% Per issue: change, code impact, implemented or not, measured effect, what remains.
-\subsection{C1 and C3: No Crossed Rest with a Minimum Order Size}
-% (0.45) A.1 M2 cancels and refunds a still-crossed remainder at the cap; M1 rejects orders below minOrder.
-%     contracts/test/termpaper/OrderBookMitigated.sol ONLY (research copy, never the engine); reuses ZeroAmount.
-%     Rows M1a, M2a.
-% A.2 E5 Carol pays 14.99999999999; E7 snipe unprofitable; E6 +606 / +26 / +1071 gas. Rows M2a to M2c.
-% A.3 E10 M2 alone: 1e-8 base per round, 1e9 rounds; E7 stop cancelled; M1 plus M2: 10 rounds, attacker -0.010
-%     quote, 3.3x the victim's gas; M1 does not fix C2 (E8); only minOrder 0.1 tested. Rows M1b, M1d.
-%     Attacker assumed to see every resubmission.
-\subsection{C2: Hardened Stop Activation}
-% (0.20) M6 size floor or time-weighted reference; M7 trigger-to-limit band. NOT implemented: "untested design".
-%     Rows M6, M7. \cite{src09moosavi2023,src06zhou2023}. E8 shows an order-size floor alone is not enough.
-\subsection{Batch Clearing}
-% (0.20) M5, design direction. Rows M5a, M5b, M5e, M5d. \cite{src11budish2015,src09moosavi2023}.
-%     38 to 152 trades per block (2021 gas limit). Gap d: no production MEV measurement found.
-\subsection{Other Mitigations}
-% (0.15) D.1 M4 and M11.
-%     \cite{src20canidio2024,src02eskandari2019,src18heimbach2022,src21ferreira2023,src29choudhuri2024}.
-% D.2 M8 \cite{src09moosavi2023}. D.3 M9 \cite{src01daian2020}. D.4 M10 \cite{src15grech2018}.
-% D.5 M12: a 0.1% limit cuts the C1 loss to 0.015, not to zero (E1); \cite{src34chemaya2025} on AMMs (Table 5, p. 14).
+% Budget 1.25 page incl. Table II. Plan: ../OUTLINE_V2.md section IV. P1 wrote A; P2 checks B to D.
+% Pointers as in Sec. III. RC = contracts/test/termpaper/OrderBookMitigated.sol (research copy, NOT the engine).
+
+For each issue we give the change, the functions it touches, its status, the measured effect and what it leaves open; Table~ef{tab:mitigations} summarises them. % template rule (context/REVIEW_AND_ACTION_PLAN.md sec. 1 item 4)
+Table~\ref{tab:mitigations} summarises all of them.
+Only M1 and M2 were built, and only in a research copy of the engine used for our experiments; the submitted engine contains neither. % 00-RULES evidence rules; RC header lines 14-17
+
+\subsection{C1 and C3: No Crossed Rest (M2) and a Minimum Order Size (M1)}\label{sec:m12}
+\emph{Change.}
+M2 removes the state that both attacks need: after a taker has used its fills, a remainder that still crosses the best opposite order is cancelled and refunded instead of resting. % EM M2a
+M1 rejects any order smaller than a constructor parameter \texttt{minOrder}. % EM M1a
+\emph{Code impact.}
+M2 adds one view function, \texttt{\_stillCrossed}, and calls it in \texttt{placeLimitOrder} and in the activation step of \texttt{triggerStopOrders}; M1 adds one check to each placement function and reuses the existing \texttt{ZeroAmount} error. % RC:66, 75-78, 81-88, 98, 162-164
+\emph{Status.} Implemented and tested in the research copy only. % RC header
+
+\emph{Measured effect.}
+With M2 the issue 007 sequence no longer pays: Carol resubmits her refunded remainder once and pays 14.99999999999 quote for 10 base, and Mallory ends $1.499\times10^{-8}$ quote up and $10^{-8}$ base down, a net loss of $10^{-11}$ marked at 1.5 (E5). % EV E5 table; asserted TermPaper.t.sol:309; EM M2a
+The stop snipe also stops paying, with Mallory paying $2.1\times10^{-8}$ quote for $10^{-8}$ base and the book left uncrossed (E7). % EV E7 table; EM M2b
+The check is cheap: it added 606, 26 and 1{,}071 gas to the three calls we measured. % EV E6 table; EM M2c (one book shape)
+
+\emph{What remains open.}
+Neither change is complete on its own. % EM M2a caveat, M1b
+With M2 alone, Mallory can repeat the ten dust asks before every resubmission; each round then gives Carol only $10^{-8}$ base, so filling 10 base would take $10^{9}$ rounds, and theft becomes indefinite delay (E10). % EV E10 table row 1
+In the snipe, M2 cancels Carol's activated stop after it sells $10^{-8}$ base and refunds the rest, so she keeps 9.99999999 base with no stop-loss in a falling market (E7). % EV E7 table and per-test review
+M1 with a minimum of 0.1 base bounds the repeated attack, because each dust round now fills at least one base: Carol is filled in 10 rounds for 14.99 quote, and Mallory loses 0.010 quote while spending 3.3 times Carol's gas (E10). % EV E10 table row 2; CM griefing table; EM M1d
+M1 does nothing against the stop hunt (E8), and we tested only one minimum, so how large it must be for a given token is open. % EV E8; EM M1a, M1b; OPEN_QUESTIONS weak M1a
+A fixed minimum also excludes small traders, and E10 assumes Mallory sees every resubmission. % EV E10 "Assumes"
+
+\subsection{C2: Hardened Stop Activation (M6, M7)}\label{sec:m67}
+\emph{Change.}
+M6 would let only fills above a minimum size update the trigger reference, or would trigger on a time-weighted price instead of the last fill; M7 would reject or clip a stop whose limit lies more than a set band from its trigger. % EM M6, M7
+Both touch \texttt{\_settleFill}, which writes \texttt{lastTradePrice}, and \texttt{\_eligibleStop}, which reads it; M7 also touches \texttt{placeStopLimitOrder}. % OB:242-248, 291, 73-85
+\emph{Status.} Not implemented and not tested; these are design options. % OPEN_QUESTIONS no-evidence M7, weak M6
+\emph{Known weaknesses.}
+E8 shows that a size floor on orders alone does not help, since a self-trade of any size nets to zero, so M6 would have to weight the reference by size or time rather than just raise the floor. % EV E8; EM M1b
+Moosavi and Clark avoid publishing a clearing price for this reason, noting that one wash trade can fix it, and suggest a rolling median~\cite{src09moosavi2023}. % [09] p. 19 App. D (F10); EM C2g, M6
+A time-weighted price would lag real moves, and on-chain price manipulation was the most frequent protocol-layer incident type on Ethereum and BSC from 2018 to 2022~\cite{src06zhou2023}. % [06] p. 12 Sec. VI Insight 3: 28 (15%) incidents (F4); p. 1 date range; EM M6
+We expect M7 to cap Carol's loss at the band but to leave some stops unexecuted in a fast fall. % design reasoning, no source (EM M7: none)
+
+\subsection{C4, C5, C6 and the Front End}\label{sec:m8to12}
+For C4, M1 would raise the capital locked in a dust wall by the ratio of the minimum to one lot, which we did not test, and a price-level book (M8) would let an insertion skip whole price levels instead of walking orders, touching \texttt{\_tryInsert} and the list storage; in Lissy, the choice of data structure alone changed the gas to dequeue 50 orders about fivefold~\cite{src09moosavi2023}. % OB:320-343; [09] p. 4 to 5 Table 3 (F2); EM M8a
+For C6, a keeper reward (M9) paid from fees would add a transfer to \texttt{matchOrders} and \texttt{triggerStopOrders}, but a public reward becomes a prize that bots compete for with fees~\cite{src01daian2020}. % [01] p. 10 to 14 (F4); EM M9
+For C5, an allowlist in \texttt{MarketFactory} or pull payments in \texttt{\_settleFill} (M10) would stop a refusing token from blocking fills~\cite{src15grech2018}, at the cost of permissionless listing or an extra withdrawal step. % [15] p. 7 to 8 Sec. 3.2 (F5); EM M10
+For C1, the front end can default to tight limits (M12): E1 shows a 0.1\% limit shrinks the loss to 0.015 quote without removing it, and on AMMs a tighter dynamic default cut Uniswap losses per 100 USD swapped by 54.7\%~\cite{src34chemaya2025}. % EV E1 0.1% row; [34] p. 14 Table 5 (F5); EM M12 (weak)
+None of the four is implemented. % status
+
+\subsection{Design Directions: Batching and Ordering Protection}\label{sec:m4511}
+A frequent batch auction (M5) clears all orders of an interval at one price, so arrival order within the interval stops mattering and speed is worth only a fraction of a continuous market's~\cite{src11budish2015}. % [11] Sec. 7.2 Prop. 8 (F6), no page numbers (2013 draft); EM M5a
+It would remove the time race behind C1 and C3, and an on-chain call market resists insertion and displacement~\cite{src09moosavi2023}, but it replaces \texttt{placeLimitOrder} matching with a separate clearing call and an on-chain call market closed only 38 to 152 trades per block. % [09] p. 8 to 10 Sec. 5 Table 7 (F7), p. 6 to 7 Table 5 (F3); EM M5b, M5e (2021 gas limit)
+We found no production measurement showing that batch DEXs reduce extractable value. % OPEN_QUESTIONS no-evidence M5d (gap d)
+Commit and reveal (M4) hides an order until a later reveal, at the cost of one extra message and at least a block of delay, and works only when the attacker cannot guess the hidden order~\cite{src20canidio2024}; in a price-time book an attacker can commit many orders and reveal only the profitable ones~\cite{src02eskandari2019}. % [20] p. 16 Sec. 3.1 Prop. 2, p. 16 (F5, F6); [02] p. 15 Sec. 6.2 (F8); EM M4a, M4b
+Chain-level protection (M11) changes no contract code but depends on the chain: no reordering defence meets every requirement~\cite{src18heimbach2022}, deterministic sequencing rules still leave AMM miners risk-free profit~\cite{src21ferreira2023}, and an encrypted mempool needed 2{,}818.6 ms for partial decryption of a 512-transaction batch and had a real flaw in a deployed system~\cite{src29choudhuri2024}. % [18] p. 1, p. 11 Sec. 6 (F5); [21] p. 17 Thm 4.2, p. 25 Sec. 6; [29] p. 6 Sec. 3 (F1), p. 12 Table 2 (F5); EM M11a, M11c, M11d
+None of these is implemented, and none fixes the one-transaction snipe on its own, since that attack never waits in a mempool. % EV E9 atomic; reasoning
+
 \input{tables/mitigations}
+
+\emph{Recommended order of adoption.}
+We would adopt M2 together with M1 first, because they are the only changes with measured effect, they are local to two functions, and E10 shows that M2 without M1 converts theft into delay. % EV E5 to E7, E10; RC
+Second, M6 and M7 for stops, since C2 is untouched by M1 and M2 and C3's residual effect, the cancelled stop, needs a better activation rule; both need the experiments we have not run. % EV E8, E7; OPEN_QUESTIONS M6, M7
+Third, M12 and M10, which reduce exposure without touching matching. % EM M12, M10
+Batching and ordering protection are larger redesigns whose cost we can cite but not yet measure for our engine. % EM M5e, M4c, M11d

@@ -69,3 +69,72 @@ Applied to `overleaf/main.tex` in a follow-up stage 1 commit. Stage 3 should kee
 2. Push `term-paper/research` (or a later commit) so experiments can be cited by public URL; until then only the
    engine at 8753521 is publicly citable.
 3. Optional: download [35] Guidi in a browser if anyone wants it cited.
+
+## Stage 2: technical core (2026-11-25, Claude Code, same session as stage 1)
+
+### Done
+- `overleaf/sections/03-observations.tex`: full prose. Opening (engine in five sentences, adversary in three),
+  III-A C1, III-B C2 with C3, III-C C4, III-D C5 and C6. Section structure follows the stage 2 prompt (opening
+  without a subsection heading, then A to D), not the A to E split in `OUTLINE_V2.md`.
+- `overleaf/sections/04-solutions.tex`: full prose. IV-A M1 and M2, IV-B M6 and M7, IV-C C4, C5, C6 and M12,
+  IV-D M5, M4, M11, Table II, recommended order of adoption.
+- `overleaf/figures/fig1-sandwich.tex`: TikZ, three lifelines (Mallory, order book with Bob's ask, Carol), four
+  numbered steps with 1.499, 2.0, 2.0 and 1.5, the E9 keeper window marked, wrapped in `\resizebox{\columnwidth}`.
+  `main.tex` now loads `tikz`.
+- Table I caption now states before gas, paper gains, Foundry 1.8.6. Table II caption explains RC / D / X and the
+  strength letters; M1's targets changed from "C1, C3, C4" to "C1, C3" (C4 effect untested).
+- Every line with a number or literature claim has a `%` pointer (EV = evidence/README.md, CM = COST_MODEL.md,
+  EM = EVIDENCE_MAP row, OB = OrderBook.sol line, RC = OrderBookMitigated.sol line, [NN] = note and page).
+- Mechanical checks: no em or en dashes; no novelty words ("first" occurs only as an ordinal); every `\cite` key
+  exists in `references.bib` and is on `REFERENCES_FINAL.md`.
+
+### Failed or not done
+- **Not compiled.** No LaTeX toolchain on this machine. Downloading a portable Tectonic binary into the scratchpad
+  was blocked by the auto-mode permission classifier; not worked around. Page use and overfull boxes are therefore
+  NOT measured. Needs a human: install MiKTeX (`winget install --id MiKTeX.MiKTeX -e`) or upload `overleaf/` to
+  Overleaf, then compile and check.
+- Page estimate from word counts only (prose words outside comments, about 1,000 words per IEEE two-column page):
+  III about 1,520 words, about 1.5 pages of text plus Fig. 1 (about 0.3) and Table I (about 0.25), roughly 2.05
+  pages against 1.90. IV about 1,075 words, about 1.05 pages plus Table II (about 0.3), roughly 1.35 against 1.25.
+  Both likely 0.1 to 0.15 page over; already trimmed once. Next cuts if the compile confirms: III-A comparable
+  cases to two sentences; IV-D M11 sentence shortened; drop the IV opening sentence.
+- `figures/e1_slack.dat` and `e2_depth.dat` unused (optional Fig. 2 not drawn, as planned to be cut first).
+
+### Numbers
+- No number changed. Every number in III, IV, Fig. 1 and the tables was checked against `evidence/README.md`,
+  `COST_MODEL.md` and the notes. One near miss fixed before commit: E5 attacker quote is 1.499e-8, not 1.5e-8.
+
+### Sentences hedged, and why
+| Where | Hedge | Why |
+|---|---|---|
+| III opening | "observed being bought with transaction fees on proof-of-work Ethereum" | [01] is PoW-era (EM C1e caveat) |
+| III opening | "every experiment is a deterministic Foundry test on a local chain" | scope rule |
+| III-A | "Carol never pays above her own limit and no escrow is lost" | loss is relative to the best resting price, not a limit breach |
+| III-A | "These are profits before gas" plus the K formula without prices | no cited gas or token prices (CM) |
+| III-A | AMM sandwich "only analogous" | rule: AMM results never stated as order-book results; gap a |
+| III-A | E9 keeper paragraph | C1 needs ordering control (checklist) |
+| III-B | "paper gain marked at 2.0", "ordinary stop slippage" | E2 per-test review (1), (3) |
+| III-B | "order-book DEXs that match off-chain", "on EtherDelta alone" | [12] caveat; self-trade majority is EtherDelta only |
+| III-B | Osler "foreign exchange data from 1996 to 2000", lore, private stops | [13] F5, F7, F8 |
+| III-B | "We did not find a study of stop hunting" | gap b; not "none exists" |
+| III-B | "The stop still executes within the limit Carol chose" | stop-limit semantics |
+| III-B | "we argue it hits the order meant to protect the victim" | reason three for C3 is an argument, not a measurement |
+| III-B | [08] "although not for stop orders" | [08] covers liquidations and payouts |
+| III-C | "in line with" (not "matches") Grech's 10x | our 8.4x is a different setting |
+| III-C | "We argue that gas is therefore the only barrier"; Arbitrum testnet, excludes L2 work; "We did not measure the wall on a layer two" | S3 caveats; no L2 experiment |
+| III-D | "reasoning from the code without an experiment"; "no test reproduces it"; "we have no data on how long" | C5b and C6b have no test or timing data |
+| IV opening | "the submitted engine contains neither" | M1, M2 exist only in the research copy |
+| IV-A | "Neither change is complete on its own" plus E10, E7 limits | checklist: M2 not a fix alone, M1 not for C2 |
+| IV-A | "we tested only one minimum"; "E10 assumes Mallory sees every resubmission" | M1a weak; E10 assumption |
+| IV-B | "Not implemented and not tested; these are design options"; "would lag"; "We expect M7 to..." | M6 weak, M7 none |
+| IV-B | [06] "on Ethereum and BSC from 2018 to 2022" | [06] date and chain scope |
+| IV-C | M1 effect on C4 "which we did not test" | no experiment |
+| IV-C | M12 "on AMMs" for [34] | AMM result |
+| IV-D | "We found no production measurement showing that batch DEXs reduce extractable value" | gap d |
+| IV-D | [20] "works only when the attacker cannot guess"; [21] "AMM miners" | [20] Prop. 2; [21] AMM setting |
+| IV-D | "none fixes the one-transaction snipe on its own, since that attack never waits in a mempool" | reasoning from E9 atomic, stated as such |
+
+### Open decisions
+1. Compile (human or permission to install a toolchain), then trim to budget.
+2. Section III structure: the prompt's A to D was used; `OUTLINE_V2.md` still lists A to E. Update the outline or
+   accept the prompt's version (no content difference).
