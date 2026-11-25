@@ -73,3 +73,14 @@ Same checks as above. Peer review status is in each note and in `../notes/PHASE4
 | 32 | Hyperliquid Docs, "Tick and lot size"; "Rate limits and user limits" (grey) | https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/tick-and-lot-size ; https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/rate-limits-and-user-limits | 32-hyperliquid-docs.html, 32-hyperliquid-ratelimits.html | n/a | OK (HTML, saved 2026-11-17) |
 | 33 | "Fenwick + Bitmap: constant-time matching for on-chain order books", Ethereum Research forum, 2025-05-12 (grey) | https://ethresear.ch/t/fenwick-bitmap-constant-time-matching-for-on-chain-order-books/22313 | 33-fenwick-ethresearch.html | n/a | OK (HTML) |
 | (none) | MITRE AADAPT, "Stop Hunting" ADT3021.002 (grey) | https://aadapt.mitre.org/techniques/ADT3021.002/ | 33-mitre-aadapt.failed-js-shell.html | n/a | **FAILED**: HTTP 200 but the page is a JavaScript shell (1990 bytes, title "MITRE \| AADAPT"), no content. Not used, not numbered |
+
+## Stage 1 additions (34 to 38), 2026-11-25
+Sources cited in `../context/` that had no note. Same checks as above, plain curl, no bot-challenge bypass.
+
+| ID | Citation | URL used | Local file | Status |
+|---|---|---|---|---|
+| 34 | N. Chemaya et al., "The Power of Default: Measuring the Effect of Slippage Tolerance in Decentralized Exchanges", FC 2024, LNCS, 2025, pp. 192 to 208 | https://seclab.cs.ucsb.edu/files/publications/mclaughlin2024slippage.pdf | 34-chemaya-2025.pdf (22 pages) | OK (authors' pre-publication copy) |
+| 35 | B. Guidi, A. Michienzi, "Linking MEV attacks to further maximise attackers' gains", Blockchain: Research and Applications 7(3), 2026 | ScienceDirect PDF; arpi.unipi.it handle | 35-guidi-2025.error.html | **FAILED**: HTTP 403 bot checks on both; Elsevier API needs a key. Gold OA (CC BY), so a manual browser download should work. Do not cite |
+| 36 | Solidity 0.8.24 docs, "Security Considerations" (grey) | https://docs.soliditylang.org/en/v0.8.24/security-considerations.html | 36-solidity-docs.html | OK (HTML, version-matched to solc 0.8.24) |
+| 37 | OpenZeppelin Contracts 5.x API, Utilities and ERC20 SafeERC20 (grey) | https://docs.openzeppelin.com/contracts/5.x/api/utils | 37-openzeppelin-docs.html, 37-openzeppelin-safeerc20.html | OK (HTML; installed library is v5.7.0, docs link v5.6.1 source) |
+| 38 | OWASP SCWE-110, "Fee-On-Transfer Token Misaccounting" (grey) | https://scs.owasp.org/SCWE/SCSVS-COMP/SCWE-110/ | 38-owasp-scwe110.html | OK (HTML, last updated Aug. 19, 2026) |

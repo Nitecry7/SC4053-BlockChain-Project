@@ -44,7 +44,7 @@ single indirect source, or reasoning only.
 | C5c | Hostile or look-alike contracts are a frequent real attack vector | Paper | [06] p. 12 Sec. VI Insight 4: 19 (10.5%) incidents used contracts with expected ABI but harmful logic (F5) | moderate | Not specific to token listing on order books |
 | C5d | Push-payment DoS by a reverting recipient is a known pattern | Paper | [15] p. 7 to 8 Sec. 3.2 wallet griefing (F5); [16] p. 14 to 15 King of the Ether (F6) | moderate | |
 | C5e | Look-alike symbols mislead users | none | not found | none | No source found; only `TokenFactory.sol:25` shows symbols are free text |
-| C6a | `matchOrders` and `triggerStopOrders` pay no reward | Code + spec | `OrderBook.sol:103-119`, `:127-146` (no transfer to caller); `SPEC.md:222, 258` | strong | |
+| C6a | `matchOrders` and `triggerStopOrders` pay no reward | Code + spec | `OrderBook.sol:103-119`, `:127-145` (no transfer to caller); `SPEC.md:222, 258` | strong | |
 | C6b | Contracts need incentivised keepers; unrewarded keeper tasks can be left undone | Paper | [07] p. 2 Sec. 2.2, p. 10 Sec. 6.1 (F6); [09] p. 11 to 12 Sec. 6.3, "who pays to close" (F9) | moderate | No measurement of how long crossed books or eligible stops wait |
 | C6c | A crossed book breaks price-time priority until cleared | Test | `test_match_crossedBookNewTakerFillsOppositeHeadAheadOfOlderOrder` (`OrderBook.Match.t.sol:294`); `SPEC.md` section 8 | strong | |
 
@@ -81,7 +81,7 @@ single indirect source, or reasoning only.
 | M11d | Encrypted mempools have measured costs and real flaws | Paper | [29] p. 6 to 7 Sec. 3 (Shutter malleability, no pending privacy), p. 12 Table 2 (2818.6 ms partial decryption, 512 tx) | strong | Gas per ciphertext is estimated (p. 14 Table 3) |
 | M11e | Live threshold-decryption latency is about 1 to 3 s | Paper (grey) | [31] Results, Figure 1 | weak | Vendor forum post |
 | M11f | Rollups without a public mempool still have MEV | Paper | [23] p. 2 Sec. 1, p. 4 Sec. 2.3 (no public mempool, F2, F3), p. 7 Sec. 4 (arbitrage on Arbitrum 7.2x Ethereum in Apr 2023, F4) | strong | Sandwiches absent; extraction is back-running/arbitrage |
-| M12 | Frontend guards (tight limits, self-trade warnings) | Spec + paper | Issue 007 advice "use a tight limit price" (`SPEC.md` section 8); [04] p. 2, p. 13 Sec. IX (slippage trade-off, F8) | weak | E1 shows tight limits shrink loss (0.015 at 0.1% slack) but do not remove it |
+| M12 | Frontend guards (tight limits, self-trade warnings) | Spec + paper | Issue 007 advice "use a tight limit price" (`SPEC.md` section 8); [04] p. 2, p. 13 Sec. IX (slippage trade-off, F8); [34] p. 14 Table 5 (dynamic tighter default: Uniswap loss per 100 USD swapped down 54.7%, on AMMs) | weak | E1 shows tight limits shrink loss (0.015 at 0.1% slack) but do not remove it |
 
 ## C. Security versus Privacy versus Scalability
 

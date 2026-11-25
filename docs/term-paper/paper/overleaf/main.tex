@@ -1,41 +1,51 @@
-% Term paper skeleton. Upload this folder to Overleaf (zip it). Plan: ../OUTLINE.md. Checks: ../CLAIM_CHECKLIST.md.
-% Only headings and TODO comments; no prose yet.
+% Term paper skeleton, official five-section template (stage 1, 2026-11-25).
+% Plan: ../OUTLINE_V2.md. References: ../REFERENCES_FINAL.md. Checks: ../CLAIM_CHECKLIST.md.
+% Limit: 4 to 6 pages INCLUDING references. Headings and TODO comments only; no prose yet.
+% If the official template (context/paper-template.*) differs, it overrides this file.
 \documentclass[conference]{IEEEtran}
 \usepackage{cite}
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{url}
+% pgfplots is only for the optional Fig. 2 (cut first); remove both lines if Fig. 2 is cut.
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 
 \begin{document}
 
-\title{TODO: title}
+\title{TODO: title (three options in the stage 1 report; humans decide)}
 
+% TODO: author block. Names, matriculation numbers and emails exactly as supplied by the authors. Never invent.
 \author{\IEEEauthorblockN{TODO: author 1}
-\IEEEauthorblockA{Nanyang Technological University}
+\IEEEauthorblockA{TODO: affiliation and email}
 \and
 \IEEEauthorblockN{TODO: author 2}
-\IEEEauthorblockA{Nanyang Technological University}}
+\IEEEauthorblockA{TODO: affiliation and email}}
 
 \maketitle
 
 \begin{abstract}
-% TODO (Both, write last). See OUTLINE.md, Abstract. Rows: S1, C1b, C3b, C3d, M2a, M1d.
+% TODO (Both, stage 3, write last). OUTLINE_V2.md front matter. Rows S1, C1b, C3d, M2a, M1d. About 150 words.
 TODO
 \end{abstract}
 
-\input{sections/01-intro}
-\input{sections/02-background}
-\input{sections/03-system}
-\input{sections/04-considerations}
-\input{sections/05-mitigations}
-\input{sections/06-tradeoffs}
-\input{sections/07-limitations}
-\input{sections/08-conclusion}
+\begin{IEEEkeywords}
+blockchain, decentralized exchange, limit order book, front-running, transaction ordering, economic security
+\end{IEEEkeywords}
+
+\input{sections/01-introduction}
+\input{sections/02-motivation-survey}
+\input{sections/03-observations}
+\input{sections/04-solutions}
+\input{sections/05-conclusion}
+
+% TODO: AI-use declaration. Placeholder only until the course rule is known (stage 1 question 3).
+% \section*{AI-Use Declaration}
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
+
+% Optional appendix after the references is allowed by the template (context/README.md).
 
 \end{document}

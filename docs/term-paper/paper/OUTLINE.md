@@ -1,5 +1,7 @@
 # Paper outline (master plan for the two writers)
 
+Stage 1 (2026-11-25): superseded as the plan by `OUTLINE_V2.md` (official five sections). Kept for history.
+
 Target: IEEE conference format (IEEEtran), 4 to 6 pages; aim for 5 pages plus references. Lens: Security, framed as
 transaction ordering and economic security. Row IDs (C1a, M2a, S1, ...) refer to `../EVIDENCE_MAP.md`. Experiment
 numbers come from `../evidence/README.md` and `../evidence/COST_MODEL.md`. Bib keys are in `overleaf/references.bib`.

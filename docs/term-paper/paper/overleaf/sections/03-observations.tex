@@ -1,0 +1,40 @@
+\section{Observations and Analysis}\label{sec:analysis}
+% Owner: P1. Budget 1.90 page incl. Fig. 1 and Table I. Plan: ../OUTLINE_V2.md section III.
+% Every number gets a % pointer on the same line (evidence file and heading, or file:line).
+\subsection{System and Threat Model}
+% (0.35) A.1 escrow, bookSeq price-time, maker price; caps 10 / 100 / LOT_SIZE. Rows C1a, C3a, C4a.
+%     OrderBook.sol:18-21, 67-68.
+% A.2 stops on lastTradePrice (any fill, self-trade allowed); unpaid keepers; permissionless tokens; push payouts.
+%     Rows C2a, C2b, C5a, C5b, C6a. OrderBook.sol:291, 242-248, 103-119, 127-145, 296-298; MarketFactory.sol:27.
+% A.3 Mallory sees pending tx and the book, places orders, calls keepers, may deploy a contract; no consensus control.
+%     C1 needs its back-run before matchOrders (E9 keeper); the one-tx C3 does not (E9 atomic). Bob, Carol honest.
+\subsection{C1: Fill-Cap Sandwich}
+% (0.55 incl. Fig. 1) B.1 mechanism. Row C1a. OrderBook.sol:20, 67-68; OrderBook.Regression.t.sol:184 (issue 007).
+%     Carol never pays above her limit; no escrow is lost.
+% B.2 E1: profit equals overpay, linear in slack; 0.15 at 1%, 5.0 at 33%; 3,910,616 gas over 12 tx. Row C1b.
+%     Table I rows 1 and 2. Before gas; Foundry 1.8.6 local gas; K 3.84 to 1278.57 (evidence/COST_MODEL.md),
+%     give the formula only unless gas and token prices are cited.
+% B.3 E9: one keeper matchOrders (153,587 gas) removes the profit; older order is maker (OrderBook.sol:115).
+%     Table I row 3. Keeper timing not measured.
+% B.4 Analogues: \cite{src02eskandari2019} insertion; \cite{src01daian2020} crossed book; \cite{src05qin2022} AMM.
+%     Rows C1c, C1f, C1d. Say "analogous", "on AMMs".
+% TODO P1 (stage 2): Fig. 1 here, \label{fig:sandwich}. Three-actor sequence Bob / Carol / Mallory; mark where one
+%     matchOrders call (E9) closes the window. One column wide.
+\input{tables/experiments}
+\subsection{C2 and C3: Stop-Order Manipulation}
+% (0.45) C.1 E2: one-lot self-trade to 1.95 fires the stop; shortfall 5.0 / 3.0 / 1.0 at depth 0 / 5 / 10.
+%     Rows C2a to C2c. Table I rows 4 and 5. Paper gain marked at 2.0; part is ordinary stop slippage.
+% C.2 E8: minOrder 0.1 does not help, shortfall 5.0. Row M1b. Table I row 6. One minimum, one depth tested.
+% C.3 \cite{src12victor2021,src13osler2005,src09moosavi2023}. Rows C2d, C2f, C2g. Hedges as in Sec. II.
+% C.4 E3: shared 10-fill budget; Carol receives 10.000000011, not 20.0. Rows C3a, C3b. Table I row 7.
+%     The stop still executes within its own limit.
+% C.5 E9 atomic: one tx, 3,588,665 gas, same profit; only race is calling the trigger first. Rows C3d, C3c.
+%     \cite{src08babel2023} (liquidations and payouts, not stops). Keeper timing not measured. Table I row 8.
+\subsection{C4: Dust Wall, a Security versus Scalability Trade-off}
+% (0.25) D.1 E4: 101 one-lot bids, BookTooDeep, 11 tx to clear. Rows C4a, C4b. Table I row 9.
+% D.2 1.5e-7 quote locked; attacker 67,436,118 vs defender 8,056,221 gas (8.4x). Issue 006 fixed; dust can still
+%     cancel an activated stop. Rows C4b to C4d. \cite{src15grech2018}. Local gas; spans many blocks.
+\subsection{C5 and C6: Tokens and Keepers}
+% (0.10) E.1 a refusing token blocks fills (push payouts); NO TEST. Rows C5a, C5b, C5d. \cite{src15grech2018}.
+%     Optional alternative: fee-on-transfer misaccounting, ../../notes/38-owasp-scwe110.md (grey). C5e dropped.
+% E.2 unpaid keepers; C1 and C3 depend on who calls first. Rows C6a, C6b. \cite{src09moosavi2023}. No timing data.

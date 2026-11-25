@@ -1,0 +1,23 @@
+\section{Proposed Solutions}\label{sec:solutions}
+% Budget 1.25 page incl. Table II. Plan: ../OUTLINE_V2.md section IV. P1 writes A; P2 writes B to D.
+% Per issue: change, code impact, implemented or not, measured effect, what remains.
+\subsection{C1 and C3: No Crossed Rest with a Minimum Order Size}
+% (0.45) A.1 M2 cancels and refunds a still-crossed remainder at the cap; M1 rejects orders below minOrder.
+%     contracts/test/termpaper/OrderBookMitigated.sol ONLY (research copy, never the engine); reuses ZeroAmount.
+%     Rows M1a, M2a.
+% A.2 E5 Carol pays 14.99999999999; E7 snipe unprofitable; E6 +606 / +26 / +1071 gas. Rows M2a to M2c.
+% A.3 E10 M2 alone: 1e-8 base per round, 1e9 rounds; E7 stop cancelled; M1 plus M2: 10 rounds, attacker -0.010
+%     quote, 3.3x the victim's gas; M1 does not fix C2 (E8); only minOrder 0.1 tested. Rows M1b, M1d.
+%     Attacker assumed to see every resubmission.
+\subsection{C2: Hardened Stop Activation}
+% (0.20) M6 size floor or time-weighted reference; M7 trigger-to-limit band. NOT implemented: "untested design".
+%     Rows M6, M7. \cite{src09moosavi2023,src06zhou2023}. E8 shows an order-size floor alone is not enough.
+\subsection{Batch Clearing}
+% (0.20) M5, design direction. Rows M5a, M5b, M5e, M5d. \cite{src11budish2015,src09moosavi2023}.
+%     38 to 152 trades per block (2021 gas limit). Gap d: no production MEV measurement found.
+\subsection{Other Mitigations}
+% (0.15) D.1 M4 and M11.
+%     \cite{src20canidio2024,src02eskandari2019,src18heimbach2022,src21ferreira2023,src29choudhuri2024}.
+% D.2 M8 \cite{src09moosavi2023}. D.3 M9 \cite{src01daian2020}. D.4 M10 \cite{src15grech2018}.
+% D.5 M12: a 0.1% limit cuts the C1 loss to 0.015, not to zero (E1); \cite{src34chemaya2025} on AMMs (Table 5, p. 14).
+\input{tables/mitigations}

@@ -37,7 +37,7 @@ Tick every box before submission. A failed box means fix the sentence, hedge it,
 ## Citations and format
 - [ ] Every `\cite` key exists in `overleaf/references.bib`; no field from the UNVERIFIED FIELDS list is added
       without checking it.
-- [ ] Remove the temporary `\nocite{src01daian2020}` from `main.tex` once the text cites it.
-- [ ] Code is cited as `OrderBook.sol` line numbers at commit 96107ad (engine unchanged since).
-- [ ] Page count within the brief's limit (check whether references count).
+- [ ] Only keys listed in `REFERENCES_FINAL.md` are cited; [35] Guidi is not cited (not read).
+- [ ] Code is cited as `OrderBook.sol` line numbers at public `main` commit 8753521 (`contracts/src` identical to this branch, checked 2026-11-25).
+- [ ] Page count 4 to 6 INCLUDING references (template rule, `../context/README.md`).
 - [ ] AI-use disclosure, if the course requires one.
