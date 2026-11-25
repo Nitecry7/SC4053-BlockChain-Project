@@ -7,18 +7,19 @@
 \label{tab:mitigations}
 \centering
 \footnotesize
+\setlength{\tabcolsep}{3.5pt}
 \begin{tabular}{@{}lllll@{}}
 \toprule
-ID & Mitigation & Targets & Status & Evidence (strength) \\
+ID & Mitigation & Targets & Status & Evidence \\
 \midrule
-M1 & Minimum order size & C1, C3; not C2 & RC & E5, E8, E10 (S) \\ % rows M1a, M1b, M1d
-M2 & Cancel crossed remainder & C1, C3 & RC & E5 to E7, E10 (S) \\ % rows M2a to M2c
-M6/7 & Stop reference, trigger band & C2 & D & indirect lit. (W) \\ % rows M6, M7
-M5 & Frequent batch clearing & C1 to C3 & D & \cite{src11budish2015,src09moosavi2023} (M) \\ % rows M5a, M5b, M5e
-M4/11 & Commit-reveal, fair ordering & C1 to C3 & D, X & \cite{src18heimbach2022,src29choudhuri2024} (M) \\ % rows M4a to M4c, M11a to M11d
+M1 & Minimum order size & C1, C3 & RC & E5, E8, E10 (S) \\ % rows M1a, M1b, M1d
+M2 & Cancel crossed rest & C1, C3 & RC & E5 to E7, E10 (S) \\ % rows M2a to M2c
+M6/7 & Stop ref., trigger band & C2 & D & indirect lit. (W) \\ % rows M6, M7
+M5 & Batch clearing & C1 to C3 & D & \cite{src11budish2015,src09moosavi2023} (M) \\ % rows M5a, M5b, M5e
+M4/11 & Commit-reveal, ordering & C1 to C3 & D, X & \cite{src18heimbach2022,src29choudhuri2024} (M) \\ % rows M4a to M4c, M11a to M11d
 M8 & Price-level book & C4 & D & \cite{src09moosavi2023} (M) \\ % row M8a
 M9 & Keeper reward & C6 & D & \cite{src01daian2020} (M) \\ % row M9
-M10 & Allowlist or pull payments & C5 & D & \cite{src15grech2018} (M) \\ % row M10
+M10 & Allowlist, pull payment & C5 & D & \cite{src15grech2018} (M) \\ % row M10
 M12 & Tight default limits & C1 & D & E1, \cite{src34chemaya2025} (W) \\ % row M12; [34] on AMMs
 \bottomrule
 \end{tabular}

@@ -88,16 +88,19 @@ Applied to `overleaf/main.tex` in a follow-up stage 1 commit. Stage 3 should kee
 - Mechanical checks: no em or en dashes; no novelty words ("first" occurs only as an ordinal); every `\cite` key
   exists in `references.bib` and is on `REFERENCES_FINAL.md`.
 
-### Failed or not done
-- **Not compiled.** No LaTeX toolchain on this machine. Downloading a portable Tectonic binary into the scratchpad
-  was blocked by the auto-mode permission classifier; not worked around. Page use and overfull boxes are therefore
-  NOT measured. Needs a human: install MiKTeX (`winget install --id MiKTeX.MiKTeX -e`) or upload `overleaf/` to
-  Overleaf, then compile and check.
-- Page estimate from word counts only (prose words outside comments, about 1,000 words per IEEE two-column page):
-  III about 1,520 words, about 1.5 pages of text plus Fig. 1 (about 0.3) and Table I (about 0.25), roughly 2.05
-  pages against 1.90. IV about 1,075 words, about 1.05 pages plus Table II (about 0.3), roughly 1.35 against 1.25.
-  Both likely 0.1 to 0.15 page over; already trimmed once. Next cuts if the compile confirms: III-A comparable
-  cases to two sentences; IV-D M11 sentence shortened; drop the IV opening sentence.
+### Compile (after the human installed MiKTeX 25.12 with winget)
+- `pdflatex`, `bibtex`, `pdflatex` x2 from `overleaf/`, output to the session scratchpad (no build files in the repo).
+  No errors, no undefined references or citations. The first attempt to fetch a portable Tectonic was blocked by the
+  auto-mode classifier and was not worked around; the human then installed MiKTeX.
+- First compile: two overfull boxes, Table I 48.1pt and Table II 45.3pt too wide. Fixed by shorter headers and case
+  labels and `	abcolsep` 4pt / 3.5pt; no number changed. Table I header now "Loss / Gain / Gas (tx)" with the
+  caption saying whose each is; E4 case reads "Dust wall, bids blocked", "11 tx to clear". Table II drops
+  "; not C2" from M1 (stated in IV-A text) and "(strength)" from the header (key is in the caption).
+- Final compile: **0 overfull boxes**, 5 underfull boxes (narrow-column justification, cosmetic). 4 pages so far
+  (I, II, V and abstract still empty).
+- Page use measured from the PDF (column 667pt): **III 1.86 pages (budget 1.90)**, **IV 1.18 pages (budget 1.25)**.
+  Both inside budget; no further trimming needed. Fig. 1 checked visually at column width: readable.
+
 - `figures/e1_slack.dat` and `e2_depth.dat` unused (optional Fig. 2 not drawn, as planned to be cut first).
 
 ### Numbers
@@ -135,6 +138,6 @@ Applied to `overleaf/main.tex` in a follow-up stage 1 commit. Stage 3 should kee
 | IV-D | "none fixes the one-transaction snipe on its own, since that attack never waits in a mempool" | reasoning from E9 atomic, stated as such |
 
 ### Open decisions
-1. Compile (human or permission to install a toolchain), then trim to budget.
+1. Compile: done (see above).
 2. Section III structure: the prompt's A to D was used; `OUTLINE_V2.md` still lists A to E. Update the outline or
    accept the prompt's version (no content difference).
