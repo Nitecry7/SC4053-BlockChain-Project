@@ -224,3 +224,46 @@ text is unchanged.
 2. Confirm the repository bib author line.
 3. Push `term-paper/research` and put its public commit in the appendix TODO.
 4. II has 0.34 page of unused budget; stage 4 or 5 may spend some of it, or leave it as margin.
+
+## Stage 3 follow-up: II-B additions (2026-11-25)
+
+### Human decisions
+- Repository bib entry: both authors confirmed (Kumar Advaith and Muhammadh Faheem Faizal). Closed.
+- Matriculation numbers, emails, deadline, AI-use wording, public branch commit: stay as TODO placeholders.
+- Spend about 0.25 page of II's spare budget on II-B, notes only, no new sources.
+
+### Done (all in `overleaf/sections/02-motivation-survey.tex`)
+- (c) AMM versus order book made explicit: AMM price follows deterministically from reserves, so a sandwich moves
+  them ([04] F1, F2, F10); a limit order book prices by resting orders it must store and match ([21] F10); the
+  consequence for an attacker is marked "we argue".
+- (a) Lissy versus our continuous book: in a continuous book landing order decides who trades with whom and who is
+  maker (`OrderBook.sol:38-40, 67-68, 115, 276`), the lever of C1 and C3; in Lissy's call market shuffling within a
+  call changes nothing, except price ties broken by time where its authors accept front-running remains ([09] F7,
+  F8); Lissy drops cancellation because cancels can be front-run, ours keeps it ([09] F8, [02] F4); the cost is
+  throughput, a close can take a whole block ([09] F4).
+- (b) Heimbach and Wattenhofer's seven criteria named (decentralization, security, scope, jostling, goodput, delay,
+  cost) and commit and reveal's scores (good on scope, jostling, decentralization; poor on cost, two on-chain
+  transactions, and delay; reveal can be withheld) ([18] F2, F6, F11); Canidio and Danos' cost and condition kept.
+- Correction caught before commit: my first draft defined "jostling" from memory as position being pushed around.
+  Checked in the PDF (p. 5, Sec. 4): it is competition between traders for inclusion at a preferential position.
+  Text fixed, and the definition added to `notes/18-heimbach-2022.md` as F11 so the pointer resolves to a note.
+
+### Compile and measured pages
+- No errors, no undefined citations, 0 overfull boxes, 6 underfull (cosmetic). 6 physical pages; the appendix ends
+  at the foot of page 6's left column, right column empty.
+
+| Part | Measured | Budget |
+|---|---|---|
+| Front matter | 0.28 | 0.30 |
+| I | 0.53 | 0.55 |
+| II | **0.95** (was 0.71) | 1.05 |
+| III | 1.74 | 1.90 |
+| IV | 1.18 | 1.25 |
+| V (incl. AI-use placeholder) | 0.19 | 0.20 |
+| References | 0.51 | 0.65 |
+| Appendix | 0.12 | n/a |
+| **Total content** | **5.51** | 6.0 |
+
+### Checklist (II)
+- Every new line has a `%` pointer to a note finding or `OrderBook.sol` line; no new source; no dashes; AMM
+  statements labelled; inference marked "we argue"; [20] condition ("only when the attacker cannot guess") kept.

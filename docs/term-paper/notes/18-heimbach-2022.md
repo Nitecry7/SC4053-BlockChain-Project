@@ -24,6 +24,7 @@ L. Heimbach and R. Wattenhofer, "SoK: Preventing transaction reordering manipula
 | 8 | Algorithmic committee ordering: Condorcet paradox makes "fair" receive-order impossible to agree on; attackers with better network connections can still front-run; relies on two-thirds honest nodes. | pp. 9 to 10 (Sec. 5.5) |
 | 9 | eUTXO (or zero slippage / one interaction per block): stops front-running but not fatal front-running and possibly not back-running; goodput limited to one transaction per pool per block. | pp. 8 to 9 (Sec. 5.4) |
 | 10 | Scope note: authors say centralized exchanges use limit order books while the largest DEXes are AMMs; their attack examples are AMM sandwiches, arbitrage, and lending liquidations. | p. 3 (Sec. 3.1); p. 4 (Sec. 3.2) |
+| 11 | Jostling is defined as competition between traders for block inclusion at a preferential position; it can come from a defence limiting transactions per application per block, or from traders over-bidding each other in a PGA. (Added 2026-11-25, stage 3 follow-up, checked in the PDF.) | p. 5 (Sec. 4) |
 
 ## 3. Mapping to considerations and mitigations
 | # | Supports | Directness | Why |
