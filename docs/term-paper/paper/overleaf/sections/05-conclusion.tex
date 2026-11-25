@@ -1,4 +1,7 @@
 \section{Conclusion}\label{sec:conclusion}
-% Owner: Both. Budget 0.20 page. Plan: ../OUTLINE_V2.md section V.
-% P1 Thesis plus C3d one-tx snipe plus "M2 alone is insufficient, M1 plus M2 bounds it". Rows C3d, M2a, M1d.
-% P2 Limits in one sentence (local chain, keeper timing, one minimum). Future: M3, M6, M7, minimum-size sweep.
+% Owner: Both. Budget 0.20 page. Plan: ../OUTLINE_V2.md section V. No new claims: every sentence restates III or IV.
+We examined the economic security of our on-chain limit order book and found that its gas bounds and public order data let an adversary take value without breaking any accounting rule. % Sec. III; EM S1
+The strongest result is the stop snipe: dust, trigger and back-run fit in one transaction and take 9.999999989 of the 20.0 quote a stop holder should have received, so no keeper can step in. % EV E9 atomic; Sec. III-B
+The second is that cancelling a crossed remainder (M2) removes the profit of both the sandwich and the snipe but alone turns theft into a $10^{9}$-round delay, while adding a 0.1-base minimum order size (M1) bounds the delay to 10 rounds. % EV E5, E7, E10; Sec. IV-A
+We recommend M1 with M2 first, but they leave the stop hunt untouched and can cancel a victim's stop, so stop activation needs its own redesign. % EV E8, E7; Sec. IV-A, IV-B
+Future work is to build and measure the stop-hardening options and a sweep of minimum sizes, and to clear crossings before a new order takes. % OPEN_QUESTIONS M1a, M3, M6, M7

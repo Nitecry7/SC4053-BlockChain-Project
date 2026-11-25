@@ -141,3 +141,86 @@ Applied to `overleaf/main.tex` in a follow-up stage 1 commit. Stage 3 should kee
 1. Compile: done (see above).
 2. Section III structure: the prompt's A to D was used; `OUTLINE_V2.md` still lists A to E. Update the outline or
    accept the prompt's version (no content difference).
+
+## Stage 3: frame, abstract, references (2026-11-25, Claude Code, same session as stages 1 and 2)
+
+### Human instructions at the start
+- Section III stays as an unheaded opening plus subsections A to D: `OUTLINE_V2.md` updated to match (III labels
+  A to D; the IV labels C and D also aligned with the written text).
+- Keep I, II, V inside budget; report measured pages from the compiled PDF, not word counts.
+
+### Done
+- Section I (`01-introduction.tex`): blockchain and DEX, the three concerns defined, what we built (verified against
+  `TokenFactory.sol:25`, `DemoToken.sol:7`, `MarketFactory.sol:27`, `OrderBook.sol`), order book not AMM, issue
+  and thesis, three contributions matching III, IV-A and IV / Table II, scope sentence, organisation.
+- Section II (`02-motivation-survey.tex`): II-A motivation from rows S1, S3 to S6, S8 (privacy and scalability get
+  two sentences each); II-B by theme (front-running and EV; economic security and composition; on-chain books and
+  batch auctions; defences); II-C gap (gaps a, b). Every source has one statement and one transfer clause.
+- Section V (`05-conclusion.tex`): five sentences, no new claims.
+- Abstract (about 175 words) and six index terms in `main.tex`; title from stage 1.
+- Appendix "Reproducing Table I" after the references: command, forge 1.8.6, commit 8753521, test names per row,
+  TODO for the public commit of the branch. The template allows appendices; whether they count toward 6 pages is
+  not stated, and it fits on page 6 either way.
+- `pgfplots` removed (optional Fig. 2 cut).
+
+### References
+- `paper/overleaf/references.bib` cut to the 19 cited entries (order of first citation: repo, 25, 09, 23, 05, 02, 01,
+  04, 08, 06, 11, 20, 18, 21, 29, 12, 13, 15, 34). Master `docs/term-paper/references.bib` keeps all 38.
+- UNVERIFIED FIELDS resolved on Crossref DOI records (`api.crossref.org`, opened 2026-11-25): pages added for src01
+  (910--927), src04 (428--445), src05 (198--214), src06 (2444--2461); src08 2499--2516 confirmed and the alternative
+  622--639 discarded. LNCS volume numbers for src02, src09, src34 are absent on Crossref, so not added. DBLP not used.
+- All `note` fields moved to comments in the paper bib (IEEEtran would print them, e.g. "Read as arXiv...").
+- Repository entry author set to the two paper authors (two committers up to 8753521 in `git shortlog`). **Humans
+  confirm.**
+- BibTeX: no warnings. All keys resolve.
+
+### Compile and measured pages (pdflatex, bibtex, pdflatex x2; MiKTeX 25.12)
+- No errors, no undefined references, **0 overfull boxes**, 6 underfull (cosmetic).
+- PDF: **6 physical pages**; content ends on page 6 at about 55% of the left column (5.28 page-equivalents).
+- Measured from heading positions in the PDF (column height 668pt; floats sit inside their own section's range):
+
+| Part | Measured | Budget |
+|---|---|---|
+| Title, authors, abstract, index terms | 0.28 | 0.30 |
+| I. Introduction | 0.53 | 0.55 |
+| II. Motivation and Literature Survey | 0.71 | 1.05 |
+| III. Observations and Analysis (incl. Fig. 1, Table I) | 1.72 | 1.90 |
+| IV. Proposed Solutions (incl. Table II) | 1.20 | 1.25 |
+| V. Conclusion (incl. AI-use placeholder) | 0.19 | 0.20 |
+| References | 0.52 | 0.65 |
+| Appendix (after references) | 0.12 | n/a |
+| **Total content** | **5.28** | 6.0 |
+
+III reads 1.72 here against 1.86 in stage 2 because float placement changed (less white space around Fig. 1); the
+text is unchanged.
+
+### Checklist run (I, II, V, abstract)
+- Every line with a number or literature claim has a `%` pointer; no em or en dashes; "first" only as an ordinal or
+  attributed to Zhou et al.; AMM results said to be on AMMs; [04], [06], [12], [23] corrected wording used; [11] no
+  page numbers; [14], [17], [35] not cited; C1 ordering need and C3 one-transaction form kept distinct; M2 not
+  presented as a fix alone; M1 not presented as fixing C2; no keeper-timing claim.
+
+### Sentences hedged, and why
+| Where | Hedge | Why |
+|---|---|---|
+| I | "we did not deploy publicly, and the engine has had no external audit" | scope rule |
+| II-A | Beres "profiles accounts rather than trading strategies" | EM S8 caveat |
+| II-A | Lissy "under the 2021 gas limit"; rollups carry "mainly arbitrage rather than sandwiches" | EM M5e, S4, M11f caveats |
+| II-A | public book "lets the adversary aim them" cited to code views only | S6 is a design inference |
+| II-B | Eskandari "qualitative and predates working on-chain books" | note 02 limits |
+| II-B | Daian "on proof-of-work Ethereum before today's builder markets" | EM C1e caveat |
+| II-B | Zhou 2021 "describe their work as the first..." | novelty claim attributed, not ours |
+| II-B | "These measurements are all on AMMs" | rule: AMM never stated as order-book result |
+| II-B | "We argue their insight transfers directly" (Babel) | our inference |
+| II-B | Zhou 2023 "on Ethereum and BSC from 2018 to 2022", "few academic papers" | corrected summary |
+| II-B | Budish "evidence from traditional futures and equity markets" | TradFi source |
+| II-B | Ferreira "on an AMM"; "we argue that none alone removes..." | AMM setting; inference |
+| II-C | "We did not find..." | gaps a, b |
+| Abstract | "in our tests the buyer pays up to 5.0"; "profit before gas"; "In a research copy of the engine" | measured range; before gas; M1, M2 not in engine |
+| V | "leave the stop hunt untouched and can cancel a victim's stop" | E8, E7 |
+
+### Open decisions
+1. Matriculation numbers, emails, deadline; AI-use acknowledgement wording (placeholder in `main.tex`).
+2. Confirm the repository bib author line.
+3. Push `term-paper/research` and put its public commit in the appendix TODO.
+4. II has 0.34 page of unused budget; stage 4 or 5 may spend some of it, or leave it as margin.

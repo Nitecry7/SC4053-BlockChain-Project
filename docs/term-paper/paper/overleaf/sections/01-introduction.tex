@@ -1,10 +1,23 @@
 \section{Introduction}\label{sec:intro}
-% Owner: Both. Budget 0.55 page. Plan: ../OUTLINE_V2.md section I. No prose until stage 3.
-% P1 Blockchain and the three concerns (security, privacy, scalability), one sentence each. No citation needed.
-% P2 What we built: TokenFactory, MarketFactory, OrderBook (escrow, price-time, maker price, stops, caps), front end.
-%    Rows S1, C5a. \cite{repo8753521}. SCOPE SENTENCE goes here, once: local Anvil, deterministic Foundry tests,
-%    no public deployment, no external audit.
-% P3 Chosen issue: economic security under transaction ordering; settlement correct, execution unfair.
-%    Rows S1, S9. \cite{src08babel2023}. No "first" or "novel"; issue 007 came from our own audit.
-% P4 Contributions (a) E1 to E4, E8, E9; (b) M1, M2 in a research copy, E5 to E8, E10; (c) mitigation evidence map.
-%    Plus one organisation sentence. M1 and M2 are NOT in the engine.
+% Owner: Both. Budget 0.55 page. Plan: ../OUTLINE_V2.md section I.
+% Pointers: EV = evidence/README.md, CM = evidence/COST_MODEL.md, EM = EVIDENCE_MAP.md row, OB = contracts/src/OrderBook.sol.
+
+A blockchain is a shared ledger whose state changes only through transactions that every node can check, and smart contracts let programs on that ledger hold and move tokens without an operator.
+A decentralized exchange (DEX) uses such contracts so that traders keep custody of their funds until a trade settles.
+Three concerns shape any DEX design: \emph{security}, meaning that funds and trades behave as users intend even against an adversary; \emph{privacy}, meaning what the public ledger reveals about traders; and \emph{scalability}, meaning how much trading the chain can process and at what cost.
+
+Our group built a DEX for an Ethereum-compatible chain~\cite{repo8753521}. % repo at commit 8753521
+A token factory issues fixed-supply ERC-20 tokens, a market factory creates one market per token pair, and each market is an on-chain limit order book with escrow, partial fills, cancellation, a public function that matches a crossed book, and stop-limit orders; a wallet-connected web front end drives it. % TokenFactory.sol:25, DemoToken.sol:7, MarketFactory.sol:27, OB:58-145
+It is an order book, not an automated market maker (AMM): traders post prices, and trades execute at the price of the resting order. % OB:276
+To keep gas bounded, every loop in the engine has a fixed limit, and every order and every stop trigger is readable by anyone. % OB:20-21; IOrderBook.sol:49, 52; EM S1, S6
+
+We study security, framed as \emph{economic} security under transaction ordering: whether a trader can lose value to an adversary who only places legal orders and chooses when they land.
+Our thesis is that an engine can keep every token accounted for and every fill within its limit price while its gas bounds and open data still let an adversary move value away from honest traders. % EM S1, C1b, C3b; [08] p. 5 (F1)
+We make three contributions.
+\begin{itemize}
+\item We reproduce four attacks on our engine as deterministic tests and measure them: a fill-cap sandwich, a stop hunt, a stop snipe that fits in one transaction, and a dust wall that blocks one side of the book (Sec.~\ref{sec:analysis}). % EV E1 to E4, E8, E9
+\item We implement two mitigations in a research copy of the engine and measure what they fix and what they leave, including a case where one of them turns theft into indefinite delay (Sec.~\ref{sec:m12}). % EV E5 to E7, E10; RC only
+\item We map the remaining mitigations to the considerations they target, with their status and the strength of the evidence behind them (Sec.~\ref{sec:solutions}). % Table II; EM part B
+\end{itemize}
+All results come from reproducible Foundry tests on a local chain; we did not deploy publicly, and the engine has had no external audit. % EV header; scope rule (00-RULES)
+Section~\ref{sec:survey} motivates the choice of issue and surveys related work, Section~\ref{sec:analysis} analyses the attacks, Section~\ref{sec:solutions} proposes solutions, and Section~\ref{sec:conclusion} concludes.

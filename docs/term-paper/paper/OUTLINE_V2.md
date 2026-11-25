@@ -105,7 +105,9 @@ M3 (clear before take) leaves the table and appears in V as future work (no evid
 
 ## III. Observations and Analysis (P1 leads, 1.90)
 
-### A. System and threat model (0.35)
+### Opening, no subsection heading: system and threat model (0.35)
+Stage 3 decision (2026-11-25): Section III is an unheaded opening plus subsections A to D, matching the written
+text. Point labels below (III.A.1 etc.) are kept as IDs for the opening.
 1. Engine: full escrow, price-time priority by an internal sequence number, execution at the maker price; caps
    `MAX_MATCHES_PER_TX = 10`, `MAX_INSERT_SCAN = 100`, `LOT_SIZE = 1e9`. Rows: C1a, C3a, C4a. Refs: repository
    (`OrderBook.sol:18-21, 67-68`). Hedge: none.
@@ -118,7 +120,7 @@ M3 (clear before take) leaves the table and appears in V as future work (no evid
    any `matchOrders`; C3 in its one-transaction form does not. Honest actors Bob and Carol. Rows: C1b caveat, C3d.
    Hedge: ordering control is an assumption for C1 only (E9 keeper test).
 
-### B. C1 fill-cap sandwich (0.55, includes Fig. 1)
+### A. C1 fill-cap sandwich (0.55, includes Fig. 1)
 1. Mechanism: ten one-lot asks use up Carol's ten fills; her remainder rests at her own limit, crossed with Bob's
    older, cheaper ask; Mallory sells into Carol at 2.0 and buys Bob's ask at 1.5. Fig. 1. Rows: C1a.
    Refs: repository (`OrderBook.sol:20, 67-68`; `OrderBook.Regression.t.sol:184` for issue 007). Hedge: Carol never
@@ -134,7 +136,7 @@ M3 (clear before take) leaves the table and appears in V as future work (no evid
    [05] as the analogous measured case. Rows: C1c, C1f, C1d. Hedge: "analogous", "on AMMs"; [01] TokenStore was not
    fully on-chain matching.
 
-### C. C2 with C3: stop-order manipulation (0.45)
+### B. C2 with C3: stop-order manipulation (0.45)
 1. C2 stop hunt: a one-lot self-trade moves the reference price to 1.95 and fires Carol's stop; her shortfall
    against 2.0 is 5.0, 3.0, 1.0 as honest depth grows 0, 5, 10. Rows: C2a, C2b, C2c. Table I rows 4, 5.
    Hedge: Mallory's gain is a paper gain marked at 2.0; part of the shortfall is ordinary stop slippage.
@@ -149,7 +151,7 @@ M3 (clear before take) leaves the table and appears in V as future work (no evid
    only calling the trigger before an honest keeper. Rows: C3d, C3c (`src08babel2023` for ordering around a price
    source). Table I row 8. Hedge: keeper timing not measured; [08] is about liquidations and payouts, not stops.
 
-### D. C4 dust wall, the security versus scalability trade-off (0.25)
+### C. C4 dust wall, the security versus scalability trade-off (0.25)
 1. 101 one-lot bids make every non-crossing bid revert `BookTooDeep`; clearing takes 11 transactions. Rows: C4a, C4b.
    Table I row 9. Hedge: crossing bids still work (not tested).
 2. Capital-cheap (1.5e-7 quote locked) but gas-expensive: attacker 67,436,118 gas vs defender 8,056,221 (8.4x).
@@ -157,7 +159,7 @@ M3 (clear before take) leaves the table and appears in V as future work (no evid
    is fixed; dust can still cancel an activated stop. Rows: C4b, C4c, C4d. Refs: `src15grech2018`. Hedge: local gas;
    67.4M gas spans many blocks.
 
-### E. C5 and C6 briefly (0.10)
+### D. C5 and C6 briefly (0.10)
 1. C5: permissionless listing plus pushed payouts means a token that refuses transfers can block fills against an
    address; untested. Rows: C5a, C5b, C5d. Refs: `src15grech2018`. Hedge: "no test reproduces this"; C5e dropped.
 2. C6: no reward for `matchOrders` or `triggerStopOrders`, and C1 and C3 both depend on who calls first. Rows: C6a,
@@ -184,13 +186,13 @@ Per issue: change, code impact, implemented or not, measured effect, what remain
    argument), `src06zhou2023` (oracle manipulation share). Hedge: weak or no evidence; say "untested design";
    E8 already shows a size floor on orders alone does not suffice.
 
-### C. Batch clearing (M5), design direction (0.20)
+### D (written as part of IV-D "Design directions"). Batch clearing (M5), design direction (0.20)
 1. A frequent batch auction removes time priority inside a batch, so fill order within a block stops mattering for
    C1 and C3; Lissy's call market resists insertion and displacement but clears only 38 to 152 trades per block.
    Not implemented. Rows: M5a, M5b, M5e, M5d. Refs: `src11budish2015`, `src09moosavi2023`. Hedge: no production
    measurement of MEV reduction for batch DEXs was found (gap d); throughput figure uses the 2021 gas limit.
 
-### D. Remaining mitigations, one sentence each (0.15), then Table II (0.25)
+### C and D (as written): IV-C "C4, C5, C6 and the front end" holds M8, M9, M10, M12; IV-D "Design directions" holds M5, M4, M11; then Table II and the adoption order (0.15 + 0.25)
 1. Ordering and confidentiality (M4, M11): commit and reveal costs a message and delay and can be gamed by selective
    reveal in a price-time book; no chain-level defence meets every requirement; verifiable sequencing still leaves
    miner profit; encrypted mempools have measured latency and flaws. Rows: M4a, M4b, M11a, M11c, M11d.
