@@ -1,0 +1,5 @@
+# forge --version, recorded 2026-11-25 (stage 4) for the rerun and full-suite logs of that date
+forge Version: 1.8.6
+Commit SHA: 6bad0a66de7c83f7b33695044138f0f5fa4c5990
+Build Timestamp: 2026-10-21T17:38:09.096593000Z (1792604289)
+Build Profile: dist

@@ -1,7 +1,8 @@
 \section{Conclusion}\label{sec:conclusion}
-% Owner: Both. Budget 0.20 page. Plan: ../OUTLINE_V2.md section V. No new claims: every sentence restates III or IV.
-We examined the economic security of our on-chain limit order book and found that its gas bounds and public order data let an adversary take value without breaking any accounting rule. % Sec. III; EM S1
-The strongest result is the stop snipe: dust, trigger and back-run fit in one transaction and take 9.999999989 of the 20.0 quote a stop holder should have received, so no keeper can step in. % EV E9 atomic; Sec. III-B
-The second is that cancelling a crossed remainder (M2) removes the profit of both the sandwich and the snipe but alone turns theft into a $10^{9}$-round delay, while adding a 0.1-base minimum order size (M1) bounds the delay to 10 rounds. % EV E5, E7, E10; Sec. IV-A
+% Owner: Both. Plan: ../OUTLINE_V2.md section V. No new claims: every sentence restates III or IV. Stage 4 revision.
+In local tests, the gas bounds of our on-chain limit order book let an adversary take value without breaking any accounting rule, and we argue that its public order data is what lets her aim the attacks. % Sec. III; EM S1, S6
+The strongest result is the stop snipe: dust, trigger and back-run fit in one transaction and take 9.999999989 of the 20.0 quote, before gas, that a stop holder should have received; once the attacker is first to call the trigger, no keeper can step in. % EV E9 atomic; Sec. III-B
+The second is that, in a research copy of the engine, cancelling a crossed remainder (M2) removes the profit of both the sandwich and the snipe but alone turns theft into an extrapolated $10^{9}$-round delay, while adding a 0.1-base minimum order size (M1) bounded the delay to 10 rounds in our test, assuming the attacker sees every resubmission. % EV E5, E7, E10; Sec. IV-A
 We recommend M1 with M2 first, but they leave the stop hunt untouched and can cancel a victim's stop, so stop activation needs its own redesign. % EV E8, E7; Sec. IV-A, IV-B
-Future work is to build and measure the stop-hardening options and a sweep of minimum sizes, and to clear crossings before a new order takes. % OPEN_QUESTIONS M1a, M3, M6, M7
+These results rest on local tests only: we measured no layer-two deployment, tested one minimum size, and did not reproduce C5 or C6. % EV header; OPEN_QUESTIONS M1a, C5b, C6b
+Future work: build and measure the stop-hardening options, a minimum-size sweep, and clearing crossings before a new order takes (M3). % OPEN_QUESTIONS M1a, M3, M6, M7

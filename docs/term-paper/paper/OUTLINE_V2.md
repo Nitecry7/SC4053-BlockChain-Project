@@ -190,7 +190,7 @@ Per issue: change, code impact, implemented or not, measured effect, what remain
 1. A frequent batch auction removes time priority inside a batch, so fill order within a block stops mattering for
    C1 and C3; Lissy's call market resists insertion and displacement but clears only 38 to 152 trades per block.
    Not implemented. Rows: M5a, M5b, M5e, M5d. Refs: `src11budish2015`, `src09moosavi2023`. Hedge: no production
-   measurement of MEV reduction for batch DEXs was found (gap d); throughput figure uses the 2021 gas limit.
+   measurement of MEV reduction for batch DEXs was found (gap d); throughput figure is the worst case under the July 2020 gas limit (corrected in stage 4).
 
 ### C and D (as written): IV-C "C4, C5, C6 and the front end" holds M8, M9, M10, M12; IV-D "Design directions" holds M5, M4, M11; then Table II and the adoption order (0.15 + 0.25)
 1. Ordering and confidentiality (M4, M11): commit and reveal costs a message and delay and can be gamed by selective

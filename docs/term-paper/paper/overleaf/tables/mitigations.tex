@@ -1,26 +1,27 @@
-% Table II (max 9 rows). Built from EVIDENCE_MAP.md section B. Strength: S strong, M moderate, W weak, -- none.
+% Table II (max 9 rows). Built from EVIDENCE_MAP.md section B. Strength: S strong, M moderate, W weak.
 % Status: RC = implemented and measured in the research copy contracts/test/termpaper/OrderBookMitigated.sol only
 % (never in the engine); D = design, not implemented; X = outside the application (chain level).
-% M3 (clear before take) is not in the table: no evidence; it appears as future work in Sec. V.
+% M3 (clear before take) is not in the table: no evidence; it is named as future work in Sec. IV and V.
+% Stage 4: M1 targets narrowed (C3 untested), M2 marked partial, M7 none, M4/11 not the one-tx snipe, M9 weak.
 \begin{table}[t]
-\caption{Mitigations against C1 to C6. Status: RC built and measured in the research copy only; D design, not implemented; X outside the application. Strength: S strong, M moderate, W weak}
+\caption{Mitigations. Status: RC built and measured in the research copy only; D design only; X outside the application. Strength: S strong, M moderate, W weak. M1, M2 are partial: M2 alone turns C1 into delay (E10) and cancels the C3 stop (E7)}
 \label{tab:mitigations}
 \centering
-\footnotesize
-\setlength{\tabcolsep}{3.5pt}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
 \begin{tabular}{@{}lllll@{}}
 \toprule
 ID & Mitigation & Targets & Status & Evidence \\
 \midrule
-M1 & Minimum order size & C1, C3 & RC & E5, E8, E10 (S) \\ % rows M1a, M1b, M1d
-M2 & Cancel crossed rest & C1, C3 & RC & E5 to E7, E10 (S) \\ % rows M2a to M2c
-M6/7 & Stop ref., trigger band & C2 & D & indirect lit. (W) \\ % rows M6, M7
-M5 & Batch clearing & C1 to C3 & D & \cite{src11budish2015,src09moosavi2023} (M) \\ % rows M5a, M5b, M5e
-M4/11 & Commit-reveal, ordering & C1 to C3 & D, X & \cite{src18heimbach2022,src29choudhuri2024} (M) \\ % rows M4a to M4c, M11a to M11d
+M1 & Minimum order size & C1 with M2 & RC & E10 (S); E8: not C2 \\ % rows M1a, M1b, M1d; C3 untested (E7 minOrder 0)
+M2 & Cancel crossed rest & C1, C3, partial & RC & E5 to E7, E10 (S) \\ % rows M2a to M2c
+M6/7 & Stop reference, band & C2 & D & M6 W; M7 none \\ % rows M6, M7
+M5 & Batch clearing & C1, C3 & D & \cite{src11budish2015,src09moosavi2023} (M) \\ % rows M5a, M5b, M5e
+M4/11 & Commit-reveal, ordering & C1; not 1-tx C3 & D, X & \cite{src20canidio2024,src18heimbach2022,src29choudhuri2024} (M) \\ % rows M4a to M4c, M11a to M11d
 M8 & Price-level book & C4 & D & \cite{src09moosavi2023} (M) \\ % row M8a
-M9 & Keeper reward & C6 & D & \cite{src01daian2020} (M) \\ % row M9
-M10 & Allowlist, pull payment & C5 & D & \cite{src15grech2018} (M) \\ % row M10
-M12 & Tight default limits & C1 & D & E1, \cite{src34chemaya2025} (W) \\ % row M12; [34] on AMMs
+M9 & Keeper reward & C6 & D & \cite{src01daian2020} analogy (W) \\ % row M9 (corrected to weak)
+M10 & Allowlist, pull payment & C5 & D & \cite{src15grech2018,src06zhou2023} (M) \\ % row M10
+M12 & Tight default limits & C1 & D & E1; \cite{src34chemaya2025} on AMMs (W) \\ % row M12
 \bottomrule
 \end{tabular}
 \end{table}

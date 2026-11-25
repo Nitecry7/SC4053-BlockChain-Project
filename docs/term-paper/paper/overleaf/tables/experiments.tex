@@ -2,11 +2,12 @@
 % evidence/rerun-2026-11-25.txt (forge 1.8.6). Gas = attacker gas over all its transactions, local Foundry
 % measurement. E2 and E8 "gain" is a paper gain marked at the last honest price 2.0. Profits are before gas.
 % Dropped rows (in text only): E1 0.1% (0.015) and 5% (0.75); E2 depth 5 (3.0 / 2.5); E9 snipe, keeper first (0).
+% Stage 4: rounding stated; E9 keeper gain shown as negative; E4 defender figures moved to the caption; E8 = M1 and M2.
 \begin{table}[t]
-\caption{Attack results in quote tokens, victim order 10 base. Gains are before gas; E2 and E8 gains are paper gains marked at 2.0. Loss is the victim's, gain and gas (transactions) the attacker's; gas measured locally with Foundry 1.8.6. E8 runs on the research copy with M1}
+\caption{Attack results, quote tokens, victim order 10 base, rounded. Loss: victim's overpayment (E1, E9 sandwich) or shortfall against 2.0. Gain (before gas; base valued at 2.0 in E2, E8 and 1.5 in E9) and gas (transactions): attacker's. E8: research copy, M1 0.1 and M2. E4: defender cleared in 11 tx, 8{,}056{,}221 gas}
 \label{tab:experiments}
 \centering
-\footnotesize
+\scriptsize
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}llrrr@{}}
 \toprule
@@ -14,13 +15,13 @@ Exp. & Case & Loss & Gain & Gas (tx) \\
 \midrule
 E1 & Sandwich, 1\% slack & 0.15 & 0.15 & 3{,}910{,}616 (12) \\ % evidence/README.md E1, 1% row: 0.14999999984
 E1 & Sandwich, 33\% (issue 007) & 5.0 & 5.0 & 3{,}910{,}616 (12) \\ % E1, 33% row: 4.99999999499
-E9 & Sandwich, keeper first & 0 & 0 & 3{,}222{,}611 (10) \\ % E9 table, row 1 (net -1e-11 at 1.5)
+E9 & Sandwich, keeper first & 0 & $<0$ & 3{,}222{,}611 (10) \\ % E9 table, row 1 (attacker net -1e-11 at 1.5)
 E2 & Stop hunt, depth 0 & 5.0 & 5.0 & 1{,}158{,}241 (4) \\ % E2 table, depth 0
-E2 & Stop hunt, depth 10 & 1.0 & 0 & 1{,}173{,}905 (4) \\ % E2 table, depth 10
+E2 & Stop hunt, depth 10 & 1.0 & 0 & 1{,}173{,}905 (4) \\ % E2 table, depth 10 (1.0 is ordinary slippage)
 E8 & Stop hunt, minOrder 0.1 & 5.0 & 5.0 & 1{,}160{,}501 (4) \\ % E8 table
 E3 & Stop snipe & 10.0 & 10.0 & 4{,}942{,}713 (13) \\ % E3 table: received 10.000000011 vs 20.0; profit 9.999999989
 E9 & Stop snipe, one tx & 10.0 & 10.0 & 3{,}588{,}665 (1) \\ % E9 table, row 3
-E4 & Dust wall, bids blocked & \multicolumn{2}{r}{11 tx to clear} & 67{,}436{,}118 (101) \\ % E4 table; defender 8,056,221 gas
+E4 & Dust wall, bids blocked & n/a & n/a & 67{,}436{,}118 (101) \\ % E4 table; defender 11 tx, 8,056,221 gas
 \bottomrule
 \end{tabular}
 \end{table}

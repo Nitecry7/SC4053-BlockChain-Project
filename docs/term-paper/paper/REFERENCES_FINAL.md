@@ -23,7 +23,7 @@ of `../EVIDENCE_MAP.md`. Sections refer to `OUTLINE_V2.md`. Everything not liste
 | 14 | `src11budish2015` | Frequent batch auctions end the speed race (M5a). No page numbers (2013 draft read) | II.B.3, IV.C |
 | 15 | `src20canidio2024` | Commit and reveal: one extra message and delay, only when guessing is hard (M4a) | IV.D.1 |
 | 16 | `src21ferreira2023` | Verifiable sequencing still leaves risk-free miner profit, AMM setting (M11c) | IV.D.1 |
-| 17 | `src13osler2005` | Stop clustering and cascades, FX (C2f); only literature on stops (gap b) | II.B.3, III.C.3 |
+| 17 | `src13osler2002sr` (stage 4: the FRBNY staff report actually read, replacing `src13osler2005`) | Stop clustering and cascades, FX (C2f); only literature on stops (gap b) | II.B.3, III.C.3 |
 | 18 | `src34chemaya2025` | Defaults drive user limits; dynamic tighter default cut Uniswap losses per 100 USD swapped by 54.7% (Table 5, p. 14), on AMMs (M12, supports E1 direction) | IV.D.5 |
 | 19 | `src25beres2021` | Ethereum users can be profiled from public behaviour (S8), privacy background only | II.A.1 |
 
@@ -37,7 +37,7 @@ point moves to a sentence without citation), then 18 (M12 falls back to E1 only)
 | `src03torres2021` | Same role as [05] (measured front-running on AMMs); [05] is broader |
 | `src07werner2021` | S9 covered by [08]; published venue unverified (arXiv only) |
 | `src10warren2017` | White paper; S2 covered by [09] |
-| `src13osler2002sr` | Duplicate record of Osler (staff report version); cite `src13osler2005` |
+| `src13osler2005` | Journal version, not read; stage 4 cites the staff report actually read (`src13osler2002sr`) |
 | `src14mackinga2022`, `src17baum2023` | Never read (rule: do not cite) |
 | `src16atzei2017` | C5d covered by [15] |
 | `src19kelkar2020` | M11b; one-sentence M11 treatment covered by [18], [21] |

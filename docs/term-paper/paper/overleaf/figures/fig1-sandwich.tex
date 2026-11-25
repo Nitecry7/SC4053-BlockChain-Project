@@ -15,27 +15,26 @@
 \node[life] (M) at (0,0) {Mallory};
 \node[life] (B) at (3.6,0) {Order book\\[-1pt]\scriptsize Bob: ask 10 @ 1.5};
 \node[life] (C) at (7.2,0) {Carol};
-\draw[dashed, gray] (M.south) -- (0,-5.6);
-\draw[dashed, gray] (B.south) -- (3.6,-5.6);
-\draw[dashed, gray] (C.south) -- (7.2,-5.6);
+\draw[dashed, gray] (M.south) -- (0,-4.85);
+\draw[dashed, gray] (B.south) -- (3.6,-4.85);
+\draw[dashed, gray] (C.south) -- (7.2,-4.85);
 
 % Step 1: dust front-run.
-\draw[msg] (0,-1.0) -- node[lbl, above] {\textbf{1} 10 one-lot asks @ \textbf{1.499}} (3.6,-1.0);
+\draw[msg] (0,-0.95) -- node[lbl, above] {\textbf{1} 10 one-lot asks @ \textbf{1.499}} (3.6,-0.95);
 % Step 2: victim order uses its 10 fills on dust; remainder rests at its limit.
-\draw[msg] (7.2,-1.9) -- node[lbl, above] {\textbf{2} buy 10, limit \textbf{2.0}} (3.6,-1.9);
-\node[lbl, align=left, anchor=west] at (3.75,-2.45)
+\draw[msg] (7.2,-1.7) -- node[lbl, above] {\textbf{2} buy 10, limit \textbf{2.0}} (3.6,-1.7);
+\node[lbl, align=left, anchor=west] at (3.75,-2.25)
   {10 fills buy only $10^{-8}$ base;\\remainder rests as bid @ 2.0,\\crossed with Bob's ask @ 1.5}; % EV E1 setup; OB:67-68
 % Keeper window between steps 2 and 3 (E9).
-\draw[gray, thick, dotted] (-0.3,-3.15) -- (7.5,-3.15);
-\node[lbl, text=gray, anchor=west] at (-0.3,-3.38)
+\draw[gray, thick, dotted] (-0.3,-2.95) -- (7.5,-2.95);
+\node[lbl, text=gray, anchor=west] at (-0.3,-3.18)
   {\scriptsize one honest \texttt{matchOrders} here fills Carol @ 1.5 and ends the attack (E9)};
 % Step 3: back-run, Carol is now the maker so the price is her limit.
-\draw[msg] (0,-4.0) -- node[lbl, above] {\textbf{3} sell $\approx$10 into Carol @ \textbf{2.0}} (3.6,-4.0);
+\draw[msg] (0,-3.75) -- node[lbl, above] {\textbf{3} sell $\approx$10 into Carol @ \textbf{2.0}} (3.6,-3.75);
 % Step 4: buy Bob's cheaper ask.
-\draw[msg] (0,-4.9) -- node[lbl, above] {\textbf{4} buy Bob's 10 @ \textbf{1.5}} (3.6,-4.9);
+\draw[msg] (0,-4.55) -- node[lbl, above] {\textbf{4} buy Bob's 10 @ \textbf{1.5}} (3.6,-4.55);
 \end{tikzpicture}}
-\caption{C1 fill-cap sandwich (issue 007). Carol pays 19.99999999499 quote for 10 base instead of 15.0;
-Mallory gains the 4.99999999499 difference before gas (E1). Step 3 must land before any \texttt{matchOrders} call.} % EV E1 33% row; EV E9
+\caption{C1 fill-cap sandwich (issue 007); one lot is $10^{-9}$ base. The 10 base cost Carol 19.99999999499 quote rather than 15.0, and the 4.99999999499 excess is Mallory's profit before gas (E1). Step 3 must land before any \texttt{matchOrders} call.} % EV E1 33% row; EV E9; OB:18
 \label{fig:sandwich}
 \end{figure}
 % Caption numbers: evidence/README.md E1, 33% row (Carol quote paid 19.999999994990, Mallory profit 4.999999994990).

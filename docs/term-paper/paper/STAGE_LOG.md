@@ -267,3 +267,60 @@ text is unchanged.
 ### Checklist (II)
 - Every new line has a `%` pointer to a note finding or `OrderBook.sol` line; no new source; no dashes; AMM
   statements labelled; inference marked "we argue"; [20] condition ("only when the attacker cannot guess") kept.
+
+## Stage 4: independent verification (2026-11-25, Claude Code, same session as stages 1 to 3)
+
+### Independence caveat
+The prompt asks for a new session. The human asked for it here. Every audit and re-audit was done by a fresh
+subagent that had not seen the drafting and received only the paper source and the files it needed; this session
+only collected findings, applied fixes and recompiled. Full results: `VERIFICATION_REPORT.md`.
+
+### Audits run
+- A numbers, B1 citations (I, II, V, abstract, appendix, plus the human's PDF-level checks on [09], [18], [20] in
+  II-B), B2 citations (III, IV, tables, figure), C code (re-ran 16/16 and 351/351 tests), D overclaims, E originality
+  (8-word runs against 38 notes, 18 PDFs, the ChatGPT draft), F assessment fit and format, G cold-read readability.
+- Re-audit after fixes: A, B, D by three more fresh subagents on `git diff HEAD`; E script rerun. Result: 0 must-fix
+  from A, B, D; one new 11-word run (Qin) caught by E and reworded. 23 should-fix items then applied.
+
+### What was wrong (main items)
+- A literal carriage return had replaced `\r` in `Table~\ref` in IV since stage 2 (a Python edit sent through a shell
+  heredoc collapsed `\r`). The PDF printed "Table eftab:mitigations". Stage 2 and 3 page checks missed it because
+  they measured layout, not text. Full byte scan now clean.
+- Misattributions or overstatements: Beres (two graph embeddings, not three behavioural features); Lissy gas limit
+  (July 2020, not 2021) and worst case; Lissy "except price ties" (also suppression and a hybrid attack); Lissy
+  cancellation (two reasons); Eskandari "predates working books"; Canidio condition; Choudhuri (own scheme vs Shutter
+  flaw); Chemaya "tighter" default; EtherDelta "matched off-chain"; Osler causal wording; [06] "price" vs "oracle".
+- Overclaims: abstract C1 without ordering assumption; Table II M1, M2, M4/11 rows; conclusion profit not before gas;
+  M5 contradiction in IV.
+- Code precision: C3 cause (cap, not only shared budget); E2 setup; issue 006; M7 functions; "local to two functions".
+- Originality: Zhou 2021 verbatim run; intro sentence from the draft; 13 sentences following the draft's structure
+  (all rewritten, human instruction).
+- Readability: base/quote, crossed, dust, lot, C/E/M labels, K, stop trigger direction undefined; missing steps in the
+  C1, C2, C3 examples. Fixed by a Notation paragraph at the start of III, the trigger direction where stops are first
+  described, and the extra steps.
+
+### Upstream corrections (notes and evidence map)
+13 corrections, each tagged "[corrected 2026-11-25, stage 4]", listed in `VERIFICATION_REPORT.md` for hand checking:
+EVIDENCE_MAP S8, M5e, C2d, C2f, S5, M9, M11d, M12, C3a, C4c; notes 09 F4, 13 F1, 05 F4; OUTLINE_V2 IV hedge.
+Paper bib: Osler now `src13osler2002sr` (the version read); `REFERENCES_FINAL.md` updated.
+
+### Evidence added
+- `evidence/fullsuite-2026-11-25.txt` (raw full-suite run: 351 passed, 0 failed).
+- `evidence/forge-version-2026-11-25.txt` (forge 1.8.6, commit 6bad0a6).
+
+### Declined (by the human)
+- Adding "first measurement" to the conclusion (no-novelty rule).
+- Renumbering M labels (IDs shared with the evidence files; the Notation paragraph explains them).
+
+### Compile and pages
+pdflatex, bibtex, pdflatex x2 (MiKTeX 25.12): **6 pages**, 5.95 page-equivalents, 0 errors, 0 overfull, 0 undefined
+citations, 0 BibTeX warnings, 7 underfull (cosmetic); abstract 179 words. Per section: front 0.28, I 0.49, II 1.10,
+III 1.99, IV 1.30, V 0.24, references and appendix 0.55. The fixes first pushed the paper to 7 pages (6.28); space was
+recovered without cutting analysis, hedges or "what remains open" clauses (see the report's Space section).
+
+### Needs a human
+1. Matriculation numbers, emails, deadline, AI-use wording (placeholders kept, human instruction).
+2. Push the branch and fill the appendix's public-commit TODO.
+3. Recheck the 13 upstream corrections against the PDFs.
+4. Page margin is about 0.05 page; the real template or the appendix rule could change the fit.
+5. Citation versions: published versions are cited while most page pointers come from preprints (see bib comments).
