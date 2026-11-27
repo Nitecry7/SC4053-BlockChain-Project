@@ -6,14 +6,14 @@ A blockchain is a shared ledger that every node can check, and on it a decentral
 Three concerns shape any DEX design: \emph{security}, meaning that funds and trades behave as users intend even against an adversary; \emph{privacy}, meaning what the public ledger reveals about traders; and \emph{scalability}, meaning how much trading the chain can process and at what cost.
 
 Our group built a DEX for an Ethereum-compatible chain~\cite{repo8753521}. % repo at commit 8753521
-The system has three parts: a token factory that mints fixed-supply ERC-20 tokens, a market factory that deploys a separate market for each token pair, and a web front end that connects to the user's wallet. % TokenFactory.sol:25, DemoToken.sol:6-12, MarketFactory.sol:27
+The system has three parts: a token factory that mints fixed-supply tokens following the ERC-20 token standard, a market factory that deploys a separate market for each token pair, and a web front end that connects to the user's wallet. % TokenFactory.sol:25, DemoToken.sol:6-12, MarketFactory.sol:27
 Each market is an on-chain limit order book supporting escrow, partial fills, cancellation, stop-limit orders and a public function that matches a crossed book. % OB:58-145
-Traders quote their own prices and each trade settles at the price of the order already resting in the book, the \emph{maker}, which makes it a limit order book rather than an automated market maker (AMM). % OB:276
+Traders quote their own prices, and each trade settles at the price of the order already resting in the book, the \emph{maker}; this makes each market a limit order book rather than an automated market maker (AMM). % OB:276
 Every loop that changes state has a fixed limit, which keeps the gas of each call bounded, and every order, including each stop's trigger, is public. % OB:20-21, 106, 132, 255, 327; IOrderBook.sol:49 (getOrder returns triggerPrice); EM S1, S6
 
 We study security, framed as \emph{economic} security under transaction ordering: whether a trader can lose value to an adversary who only places legal orders and chooses when they land.
 Our thesis is that an engine can keep every token accounted for and every fill within its limit price while its gas bounds and open data still let an adversary move value away from honest traders. % EM S1, C1b, C3b; [08] p. 5 (F1)
-We make three contributions: we reproduce and measure four attacks as deterministic tests, a fill-cap sandwich, a stop hunt, a stop snipe that fits in one transaction and a dust wall that blocks one side of the book (Sec.~\ref{sec:analysis}); % EV E1 to E4, E8, E9
-we implement two mitigations in a research copy of the engine, a modified copy kept only for experiments, and measure what they change and leave, including a case where one turns theft into a delay that we extrapolate to $10^{9}$ rounds (Sec.~\ref{sec:m12}); % EV E5 to E7, E10; RC only
-and we map the remaining mitigations to their targets, status and evidence strength (Sec.~\ref{sec:solutions}). % Table II; EM part B
+We make three contributions: we reproduce and measure four attacks as deterministic tests (a fill-cap sandwich, a stop hunt, a stop snipe that fits in one transaction and a dust wall that blocks one side of the book; Section~\ref{sec:analysis}); % EV E1 to E4, E8, E9
+we implement two mitigations in a research copy of the engine (a modified copy kept only for experiments) and measure what they change and what they leave open, including a case where one turns theft into a delay that we extrapolate to $10^{9}$ rounds (Section~\ref{sec:m12}); % EV E5 to E7, E10; RC only
+and we map the remaining mitigations to their targets, status and evidence strength (Section~\ref{sec:solutions}). % Table II; EM part B
 All results come from reproducible Foundry tests on a local chain; we did not deploy publicly, and the engine has had no external audit. % EV header; scope rule (00-RULES)
