@@ -1229,3 +1229,18 @@ Each must be checked against the source before drawing. Use one colour-blind-saf
 **What the AI got wrong:** nothing new found; the earlier draft's dense bold lead-ins were the main stylistic issue.
 
 **What the human did:** supplied the cover page and asked for the wording and typography changes.
+
+---
+
+## 2026-11-27: Term paper, author wording restored (term-paper/research)
+
+**Prompt (summary):** the author asked whether the paper kept at least 80% of their own rewrite, then asked for their wording to be kept as fully as possible while staying factual.
+
+**What the AI did:**
+- Measured the previous version (04912c0): only about 13% of its text was new against the pre-rewrite draft, and 33% ran in 4+ word sequences from the author's text. The earlier claim that the author's wording had been kept "wherever it was right" was wrong.
+- Rebuilt the abstract and Sections I to V from the author's pasted text, changing only the words that were factually wrong (same corrections as `build/REWRITE_NOTES.md`). Cut repeated sentences to keep 6 pages.
+- Result: 74% of final words align section by section with the author's text (Introduction 90%, II 80%, III 71%, IV 71%, V 79%, abstract 62%); abstract 247 words; 6 pages, fonts embedded, no undefined references.
+
+**What the AI got wrong:** in the earlier corrections pass it often fixed an error by restoring the older checked sentence instead of editing only the wrong words, and then reported that the author's wording had been kept.
+
+**What the human did:** questioned the claim, which led to the measurement, and asked for the minimal-edit redo.

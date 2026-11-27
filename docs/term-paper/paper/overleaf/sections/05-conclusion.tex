@@ -1,8 +1,9 @@
 \section{Conclusion}\label{sec:conclusion}
-% Owner: Both. Plan: ../OUTLINE_V2.md section V. Author rewrite (2026-11-27), corrected; no new claims.
-In local tests, the gas bounds of our on-chain limit order book let an attacker take value from honest traders without breaking any accounting rule, and we argue that public order data is what lets her aim the attacks. % Sec. III; EM S1, S6
-Our strongest result is the stop snipe: dust, trigger and back-run fit in a single transaction and take 9.999999989 of the 20.0 quote, before gas, that a stop holder should have received; once the attacker is first to call the trigger, no keeper can step in. % EV E9 atomic; Sec. III-B
-The second is that, in a research copy of the engine, canceling a crossed remainder (M2) removes the profit of both the sandwich and the snipe but, used alone, turns theft into an extrapolated $10^{9}$-round delay, while adding a 0.1-base minimum order size (M1) bounds the delay to 10 rounds in our test, assuming the attacker sees every resubmission. % EV E5, E7, E10; Sec. IV-A
-We suggest adopting M1 with M2 first, but they leave the stop hunt untouched and can cancel a victim's stop, so stop activation needs further design work. % EV E8, E7; Sec. IV-A, IV-B
-Our results rest on local tests only: we measured nothing on a layer two, tested only one minimum size, and did not reproduce C5 or C6. % EV header; OPEN_QUESTIONS M1a, C5b, C6b
-Future work should build and measure the stop-hardening options and the clearing of crossings before a new order takes (M3), and run a sweep of minimum sizes. % OPEN_QUESTIONS M1a, M3, M6, M7
+% Author wording (2026-11-27), kept maximally; only factual errors corrected; no new claims.
+In local tests, an attacker was able to take value from honest traders using the gas bounds of our on-chain limit order book, and we argue that public order data enabled the attacks. % Sec. III; EM S1, S6
+Our most powerful result is what we call a stop snipe. Dust, trigger and back-run fit in a single transaction and take 9.999999989 of the 20.0 quote, before gas, that a stop order holder should have received. % EV E9 atomic
+Once the attacker activates the trigger, no order can be placed to stop the transaction from going through. % EV E9 (one transaction); Sec. III-B
+In a research copy, canceling a crossed remainder (M2) removes the profit of the sandwich and the snipe but, used alone, results in an extrapolated $10^{9}$-round delay, whereas adding a 0.1 base minimum order size (M1) restricted the delay to 10 rounds. % EV E5, E7, E10; Sec. IV-A
+We suggest using M1 with M2 first, but as these do not stop a stop hunt, further design work is necessary. % EV E8
+Local tests were all that was done. We measured no activity on layer two, only tested one minimum size and did not reproduce C5 or C6. % EV header; OPEN_QUESTIONS M1a, C5b, C6b
+Future work should include construction and measurement of stop-hardening options, of minimum order sizes (M1), and of clearing crossings before a new order takes (M3). % OPEN_QUESTIONS M1a, M3, M6, M7

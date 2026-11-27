@@ -33,13 +33,13 @@ muha0289@e.ntu.edu.sg}}
 \maketitle
 
 \begin{abstract}
-% Author rewrite (2026-11-27), corrected against the evidence. Pointers: EV = evidence/README.md. Rows S1, C1b, C3d, M2a, M1d.
-We describe four attacks on limit-order traders in our fully on-chain decentralized exchange. % EV E1 to E4
-They exploit the contract's execution limits and matching rules, guided, we argue, by public order data, and each reproduces in local Foundry tests. % EV E1 to E4, E8, E9
-In one, an adversary places ten one-lot (dust) orders to exhaust a buyer's ten-fill budget; if the follow-up trade lands before anyone clears the book, a buyer whose limit is 33 percent above the ask pays 5.0 quote more on a 15.0 trade. % EV E1 33% row; E9 keeper
-In a second, a one-lot self-trade fires a stop into the adversary's bid, and in a third the adversary takes half a stop's proceeds in our test, in one transaction that no keeper can interrupt once the adversary triggers it first. % EV E2, E9 atomic
-A fourth, a wall of 101 dust bids, blocks new non-crossing bids but costs 8.4 times the gas needed to clear it. % EV E4; COST_MODEL griefing table
-In a research copy, canceling a still-crossed remainder removes the sandwich and snipe profits but, used alone, turns theft into an extrapolated billion-round delay and cancels the sniped stop; a 0.1-base minimum bounds the delay to 10 rounds. % EV E5, E7, E10
+% Author wording (2026-11-27), kept maximally; only factual errors corrected. Pointers: EV = evidence/README.md. Rows S1, C1b, C3d, M2a, M1d.
+We describe several attacks on decentralized exchange (DEX) traders using limit orders on our fully on-chain order book. % EV E1 to E4
+These attacks leverage the execution constraints and matching rules of the smart contract, guided, we argue, by public order visibility. We implement four such attacks in the Foundry testing framework and demonstrate that each is successful in local tests. % EV E1 to E4, E8, E9
+One attack consists of an adversary placing 10 one-lot (or dust) orders to exhaust a buyer's ten-fill execution budget. If the adversary's follow-up trade lands before the order book is cleared, a buyer whose limit is 33 percent above the ask would pay 5.0 quote units over the ask on a trade of 15.0 units. % EV E1 33% row; E9 keeper
+In a second attack, an adversary trades one lot against herself to trigger a stop order. In a third, the adversary can sweep a triggered stop order at a price half of what the stop order was set at, in one transaction that no keeper can interrupt. % EV E2, E3 (limit 1.0 = half the 2.0 trigger), E9 atomic
+A fourth attack consists of an adversary creating a wall of 101 dust orders to block new bids, which though effective is costly, as the adversary pays 8.4 times the gas the defender needs to clear it. % EV E4; COST_MODEL griefing table
+In a research copy, canceling a still-crossed remainder removes the profit of the first and third attacks, but used alone it delays the victim's order by an extrapolated billion rounds and cancels the sniped stop. Enforcing a minimum order size of 0.1 base would bound the delay to 10 rounds. % EV E5, E7, E10
 \end{abstract}
 
 \begin{IEEEkeywords}

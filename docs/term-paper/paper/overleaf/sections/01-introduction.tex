@@ -1,21 +1,29 @@
 \section{Introduction}\label{sec:intro}
-% Owner: Both. Plan: ../OUTLINE_V2.md section I. Author rewrite (2026-11-27), corrected against the evidence.
-% Pointers: EV = evidence/README.md, CM = evidence/COST_MODEL.md, EM = EVIDENCE_MAP.md row, OB = contracts/src/OrderBook.sol.
+% Author wording (2026-11-27), kept maximally; only factual errors corrected. Pointers: EV = evidence/README.md, EM = EVIDENCE_MAP.md, OB = contracts/src/OrderBook.sol.
 
-A blockchain is a shared ledger that every node can check, and a decentralized exchange (DEX) uses smart contracts on it to let users trade tokens without a central operator.
-Traders in our application submit orders to the smart contract, which holds their tokens until the order is executed or canceled. % OB:214-221 (_pullEscrow), 226-239 (_closeAndRefund)
-Risks for any DEX design include \emph{security}, \emph{privacy} and \emph{scalability}.
-Security risk concerns safeguarding users' funds and executing trades as intended in the face of malicious attacks; privacy risk concerns the information the public blockchain reveals about traders; and scalability risk concerns how many transactions the blockchain can process and at what cost.
+A blockchain is a shared ledger that every node can check.
+A decentralized exchange (DEX) uses smart contracts to enable users to transact tokens without the need for a centralized entity.
+Traders in our application submit orders to the smart contract which then holds the tokens till the order is executed or canceled. % OB:214-239
+Risks for any DEX design include security, privacy and scalability.
+Security risk is concerned with the safeguarding of users' funds and executing trades as intended in the face of malicious attacks.
+Privacy risk is concerned with the information revealed about traders on the public blockchain.
+The final risk, scalability, is concerned with the number of transactions the blockchain can process.
+We have focused on security risk, since vulnerabilities in smart contract execution can impact the value traders expect to receive.
 
-Our group developed a DEX for an Ethereum-compatible chain~\cite{repo8753521}. % repo at commit 8753521
-The system consists of a token factory, a market factory and a web interface built with Next.js. % TokenFactory.sol, MarketFactory.sol, web/package.json (next 16.4.5)
-The token factory mints fixed-supply tokens following the ERC-20 token standard, and the market factory deploys a separate market for each token pair. % TokenFactory.sol:25, DemoToken.sol:6-12, MarketFactory.sol:27
-The web interface lets traders connect their wallet and place orders, and each market is an on-chain limit order book that supports escrow, partial fills, cancellation, stop-limit orders and a public function that matches a crossed book. % OB:58-145
-Users set their own prices, and each trade executes at the price of the order already resting in the book, the \emph{maker}; this makes it a limit order book rather than an automated market maker (AMM). % OB:276
-Every loop that changes state has a fixed limit, which keeps the gas of each call bounded, and every order, including each stop's trigger, is public. % OB:20-21, 106, 132, 255, 327; IOrderBook.sol:49 (getOrder returns triggerPrice); EM S1, S6
+Our group developed a DEX application for an Ethereum compatible chain~\cite{repo8753521}. % repo at commit 8753521
+This system consists of a token factory, market factory and a web interface implemented with Next.js. % web/package.json (next 16.4.5)
+A token factory can be used to produce a fixed supply of ERC-20 tokens. % TokenFactory.sol:25, DemoToken.sol:6-12
+Each token pair has a corresponding market deployed by the market factory. % MarketFactory.sol:27
+The Next.js interface allows traders to interact with their wallet to place limit orders on the market.
+Each market contract contains an order book, and supports stop limit orders, escrow, order cancellations and crossed-book matching. % OB:58-145
+Users set their own prices in this exchange, and each trade is executed against the best order in the book at that resting order's price (the \emph{maker}'s price), making it a limit order book as opposed to an automated market maker (AMM). % OB:276
+Every state changing loop has an upper bound, which caps the gas cost for each transaction, and each order, including each stop's trigger, is publicly visible. % OB:20-21; IOrderBook.sol:49; EM S1, S6
 
-This paper focuses on the economic security of our DEX against malicious order flow: whether an attacker can extract value from honest users by exploiting the interaction between public order data, order execution limits and order matching rules. % EM S1, C1b, C3b; [08] p. 5 (F1)
-We implemented and measured four attacks: a fill-cap sandwich, a stop hunt, a stop snipe that fits in one transaction, and a dust wall that obstructs order placement (Section~\ref{sec:analysis}). % EV E1 to E4, E8, E9
-We then tried two mitigations in a research copy of the engine (a modified copy kept only for experiments) and measured their effect, including a case where one of them turns theft into a delay that we extrapolate to $10^{9}$ rounds (Section~\ref{sec:m12}). % EV E5 to E7, E10; RC only
-From these tests and the literature, we map each remaining mitigation to its targets, status and strength of evidence (Section~\ref{sec:solutions}). % Table II; EM part B
-All results come from local Foundry tests; we did not deploy publicly and had no external audit. % EV header; scope rule (00-RULES)
+The focus of this paper is on the economic security of our DEX in the presence of malicious order flow.
+In particular, we study if and how attackers might exploit the system to extract value from honest users through manipulation of the interaction between publicly available order data, order execution limits and order matching rules. % EM S1
+
+We have implemented and measured four attacks: a fill-cap `sandwich' attack, a stop hunt, a stop snipe, and a dust wall to obstruct order placement (see Section~\ref{sec:analysis}). % EV E1 to E4, E8, E9
+Then, we tried two possible solutions in a modifiable copy of the engine (our research copy) and assessed their impact (see Section~\ref{sec:m12}). % EV E5 to E7, E10
+One of these solutions, used alone, only delayed the victim's order, preventing the attack from extracting immediate value. % EV E10
+From these tests, we evaluate and assign a preliminary impact and strength of evidence to each of the possible solutions (see Section~\ref{sec:solutions}). % Table II; EM part B
+Results are from local, non-deployed tests of the engine which has not been through an external audit. % scope rule

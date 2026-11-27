@@ -1,91 +1,110 @@
 \section{Observations and Analysis}\label{sec:analysis}
-% Owner: P1. Plan: ../OUTLINE_V2.md section III. Author rewrite (2026-11-27), corrected against the evidence.
-% Pointer convention: every line with a number or a literature claim ends in a % comment.
+% Author wording (2026-11-27), kept maximally; only factual errors corrected.
 % EV = docs/term-paper/evidence/README.md; CM = evidence/COST_MODEL.md; EM = EVIDENCE_MAP.md row; OB = contracts/src/OrderBook.sol.
 
 \emph{Notation.}
-Each market pairs a \emph{base} token with a \emph{quote} token, prices are quote tokens per base token, and both have 18 decimals. % OB:49 (18-decimal check)
+Each market pairs a \emph{base} token with a \emph{quote} token, prices are quoted in quote tokens per base token, and both have 18 decimals. % OB:49
 The resting order in a trade is the \emph{maker} and the incoming one the \emph{taker}; the order book is \emph{crossed} when the best bid is at or above the best ask. % OB:113, 260
-Order amounts are multiples of $10^{9}$ of a token's smallest units, so the smallest order, one \emph{lot}, is $10^{-9}$ token, and we call orders of this size \emph{dust}. % OB:18
-Limit slack is how far a buyer's limit lies above the best ask, as a fraction of that ask. % EV E1 setup
-We label the considerations C1 to C6 (in order: fill-cap sandwich, stop hunt, stop snipe, dust wall, refusing tokens, unpaid keepers), the experiments E1 to E11 (attack runs in Table~\ref{tab:experiments}, mitigation runs E5 to E7 and E10 in Section~\ref{sec:solutions}, E11 the gas break-even model) and the mitigations M1 to M12, as in our evidence map. % EV E1 to E10 headings; CM (E11); EM parts A, B
-All gas figures for our engine are local Foundry 1.8.6 measurements, and all profits are stated before gas. % EV header; CM header
+Order amounts are in multiples of one \emph{lot}, 0.000000001 tokens, the smallest order. We call orders of this size \emph{dust}.
+Limit slack is how far a buyer's limit lies above the best ask, and we measure this as a fraction of the best ask. % EV E1 setup
+We label the considerations C1 to C6 (fill-cap sandwich, stop hunt, stop snipe, dust wall, refusing tokens, unpaid keepers). % EM part A
+We label defense mechanisms M1 to M12 and experiments E1 to E11 (Table~\ref{tab:experiments} and Section~\ref{sec:solutions}; E11 is the gas break-even model). % EV; CM; EM part B
+Gas is measured with Foundry 1.8.6; profits exclude gas. % EV header; CM header
 
-Each market is one \texttt{OrderBook} contract that escrows an order's tokens until it fills or is canceled~\cite{repo8753521}; orders are ranked by price and then by an internal sequence number stamped when they enter the book, and every fill executes at the maker's price. % OB:214-221 (_pullEscrow), 38-40, 115, 276
-Two constants bound the work of one call: a taker makes at most ten fills (\texttt{MAX\_MATCHES\_PER\_TX}), and an insertion walks past at most 100 better-ranked orders (\texttt{MAX\_INSERT\_SCAN}). % OB:18-21; EM C1a, C4a
-A taker that runs out of fills rests in the book with its remainder; anyone may later call \texttt{matchOrders} to clear a crossed book or \texttt{triggerStopOrders} to activate stop-limit orders, without any reward, and we call such callers \emph{keepers}. % OB:67-68, 103-119, 127-145; EM C6a
-Stop-limit orders are checked against one stored value, \texttt{lastTradePrice}, which any fill rewrites: a sell stop with trigger $T$ and limit $L$ becomes a sell limit order at $L$ once \texttt{lastTradePrice} $\le T$, and a buy stop once it is $\ge T$. % OB:242-248 (_eligibleStop), 291; EM C2a
+Each market is implemented as one \texttt{OrderBook} contract. Orders are added and removed atomically.
+Tokens associated with orders are escrowed until the order fills or is canceled~\cite{repo8753521}. % OB:214-239
+In our implementation, orders are ranked by price and then by an internal sequence number, and every fill executes at the price of the resting order (the maker order). % OB:38-40, 115, 276
+A taker may make at most ten fills in a single transaction (\texttt{MAX\_MATCHES\_PER\_TX}), and an insertion may walk past at most 100 better ordered orders (\texttt{MAX\_INSERT\_SCAN}). % OB:18-21; EM C1a, C4a
+A taker that runs out of fills is placed in the book with the remainder. % OB:67-68
+Callers of \texttt{matchOrders} and \texttt{triggerStopOrders} are rewarded nothing; we call them \emph{keepers}. % OB:103-145; EM C6a
+In response to a trigger, a stop-limit order's original type is changed to a limit order.
+If \texttt{lastTradePrice}, which any fill rewrites, is less than or equal to the stop price of a sell stop order, it becomes a sell limit order with the limit price of the stop order. % OB:242-248, 291; EM C2a
+Similarly, if \texttt{lastTradePrice} is greater than or equal to the stop price of a buy stop order it becomes a buy limit order.
 
 \emph{Threat model.}
-Our adversary, Mallory, faces honest traders Bob and Carol: she sees pending transactions and the whole public order book, can place and cancel orders from several accounts, can call both keeper functions, and can deploy a contract that makes several calls in one transaction. % EM C1b caveat, C3d
-Her limits are those of any user: she cannot move escrow belonging to others or fake another trader's orders, and she has no control over consensus. % OB:89-91 (owner check); threat model
-Any ordering advantage comes from landing before or after a victim, which we assume can be bought with fees, as in the priority gas auctions of Section~\ref{sec:related}. % [01] via Sec. II-B; EM C1e
+Facing honest traders Bob and Carol, Mallory can see pending transactions and the public order book.
+She is also able to place and cancel orders using multiple accounts.
+She can also execute both of the keeper functions and create a contract to execute multiple functions in a single transaction. % EM C3d
+Her constraints are that she cannot move other traders' escrow or fake their orders, and she has no control over the consensus mechanism. % OB:89-91
+Any order execution advantage is assumed to be purchased with fees, as in the priority gas auctions described in Section~\ref{sec:related}. % [01] via Sec. II-B; EM C1e
 
 \subsection{Fill-Cap Sandwich}\label{sec:c1}
 \emph{Component and cause.}
-The ten-fill cap in \texttt{placeLimitOrder} allows Mallory to consume a victim's fills with dust: whatever is left over when the tenth fill completes goes into the book at the victim's own limit, and the engine does not check whether a cheaper opposing order is still waiting there. % OB:20, 67-68 (_insert with no cross check); EM C1a
-Fig.~\ref{fig:sandwich} traces issue 007 from our development bug log: Bob rests an ask for 10 base at 1.5, and Mallory places ten one-lot asks at 1.499 just before Carol buys 10 at a limit of 2.0. % EV E1 setup (TermPaper.t.sol:97-112)
-Because Mallory's asks are priced below Bob's, Carol's order fills them first: ten fills of one lot buy only $10^{-8}$ base, and her remaining 9.99999999 base rest as a bid at her limit 2.0, crossed with Bob's ask. % EV E1 setup; OB:67-68; TermPaper.t.sol:98-111
-Since Carol's resting bid makes her the maker, her own 2.0 limit becomes the price at which Mallory sells her those 9.99999999 base; Mallory then restocks by taking Bob's ask at 1.5. % OB:276 (maker price); TermPaper.t.sol:105-111 (sell remainder, then buy Bob)
+The ten-fill cap in \texttt{placeLimitOrder} allows Mallory to consume a victim's fills with dust. % OB:20, 67-68; EM C1a
+Whatever is left over at the time the tenth fill completes is added to the book at that victim's limit, and the engine does not check whether a better-priced opposing order is still there. % OB:67-68
+See Fig.~\ref{fig:sandwich} to understand issue 007 in our bug log. % OrderBook.Regression.t.sol:184
+Bob rests an order to sell 10 at 1.5, and Mallory then places 10 orders to sell 1 lot at 1.499, just before Carol buys 10 at a limit of 2.0. % EV E1 setup (TermPaper.t.sol:97-112)
+Given Mallory's orders are at a lower price than Bob's, Carol's order fills 10 of Mallory's orders, buying only $10^{-8}$ base. % EV E1 setup
+This leaves 9.99999999 base, which becomes Carol's resting bid at her limit of 2.0, crossed with Bob's ask. % OB:67-68
+Since the bid now rests in the book, Carol is the maker, and her bid of 2.0 becomes the price at which Mallory sells her the 9.99999999 base. % OB:276
+Mallory restocks by taking Bob's order at 1.5. % TermPaper.t.sol:105-111
 
 \input{figures/fig1-sandwich}
 
 \emph{Impact.}
-Carol pays 19.99999999499 quote for the 10 base rather than 15.0, and Mallory's quote profit exactly matches that excess. % EV E1, 33% row; asserted TermPaper.t.sol:146-148
-No escrow is lost and Carol never pays more than her own limit, so every accounting check in our suite passes; the loss is the gap between her limit and the best price that was resting in the book. % EM C1b; OrderBook.Regression.t.sol:184
-The loss grows linearly with limit slack: 0.015, 0.15, 0.75 and 5.0 quote at 0.1\%, 1\%, 5\% and 33\% slack, while Mallory's cost stays at 3{,}910{,}616 gas over 12 transactions (Table~\ref{tab:experiments}). % EV E1 rows; CM table
-With $Q$ the dollar value of one quote token, $P$ the dollar price of ether (ETH) and gas priced in gwei ($10^{-9}$ ETH), the attack pays only while the gas price stays below $K Q / P$, where $K$ (E11), the profit times $10^{9}$ divided by the attacker's gas, is about 4 at 0.1\% slack and about 1{,}300 at 33\%. % CM formula and table: 3.84, 1278.57
-$K$ counts gas only, not any extra fee paid to secure ordering, and is only an order-of-magnitude estimate, since our gas readings may exclude the fixed cost of each transaction. % CM reading notes
-Gas is fixed by transaction count while profit grows with size and slack, so larger orders with looser limits would pay best. % CM reading notes
+Carol incurs a cost of 19.99999999499 quote for the 10 base rather than paying 15.0, and Mallory's profit exactly matches the excess 4.99999999499 quote. % EV E1 33% row; TermPaper.t.sol:146-148
+No escrow is lost as Carol never pays more than her quoted limit. % EM C1b
+This loss grows linearly with limit slack, and is 0.015, 0.15, 0.75 and 5.0 quote at 0.1\%, 1\%, 5\% and 33\% limit slack respectively. % EV E1 rows
+Mallory's cost in this attack stays at 3{,}910{,}616 gas over 12 transactions (Table~\ref{tab:experiments}). % EV E1; CM
+The attack is only profitable as long as the gas price, in gwei, remains less than $KQ/P$, where $Q$ is the dollar value of a quote token, $P$ the dollar price of ether (ETH), and $K$ (E11), the profit times $10^{9}$ divided by the attacker's gas, is about 4 and 1{,}300 for 0.1\% and 33\% limit slack respectively. % CM formula and table: 3.84, 1278.57
+Note that $K$ counts gas only, not any separate payment for order execution, and is only an order-of-magnitude estimate. % CM reading notes
+Gas is fixed by the number of transactions while profit grows with order size and slack, so larger orders with greater slack would generate the most profit. % CM reading notes
 
 \emph{Ordering dependence.}
-The attack depends on Mallory's back-run landing before anyone calls \texttt{matchOrders}. % EV E9 "Proves"
-Bob's ask entered the book before Carol's bid, so in \texttt{matchOrders} it is the maker: one honest call of 153{,}587 gas fills Carol at 1.5 and ends the attack, leaving Mallory $10^{-11}$ quote worse off when the $10^{-8}$ base she sold is valued at 1.5 (Table~\ref{tab:experiments}). % OB:115; EV E9 row 1
+The attack is contingent upon Mallory's back-run landing before anyone calls \texttt{matchOrders}. % EV E9
+Bob's ask was entered before Carol's bid. Therefore, in \texttt{matchOrders} it is the maker's order. % OB:115
+One honest call of 153{,}587 gas fills Carol's bid at 1.5 (E9), terminates the attack, and leaves Mallory $10^{-11}$ quote worse off, valuing at 1.5 the $10^{-8}$ base she sold (Table~\ref{tab:experiments}). % EV E9 row 1
 
-\emph{Related published work.}
-In the taxonomy of Section~\ref{sec:related}, C1 is an insertion attack: the attacker needs the victim's transaction to run and trades against it at the victim's price~\cite{src02eskandari2019}. % [02] p. 4 to 5 Sec. 3 (F1, F2); EM C1c
-Daian et al.\ show a bot capturing a crossed order book on TokenStore, an order-book DEX, after a priority gas auction~\cite{src01daian2020}. % [01] p. 4 to 6 Sec. III-B/C (F3); EM C1f
-The AMM sandwich of Section~\ref{sec:related} is only analogous: it moves the pool price, whereas C1 makes the victim the maker. % EM C1d caveat; notes/PHASE4_GAPS.md gap a
+\emph{Related published works.}
+As described in Section~\ref{sec:related}, C1 is a type of insertion attack: the attacker takes advantage of the victim's transaction running by trading against the victim's order at the victim's price~\cite{src02eskandari2019}. % [02] p. 4 to 5 (F1, F2); EM C1c
+Daian et al.\ provide an example of a bot capturing a crossed order book on TokenStore, a DEX order book, following a priority gas auction~\cite{src01daian2020}. % [01] p. 4 to 6 (F3); EM C1f
 
 \input{tables/experiments}
 
 \subsection{Stop-Order Manipulation}\label{sec:c23}
 \emph{C2, stop hunt.}
-Because any fill sets \texttt{lastTradePrice} and the engine does not stop a trader from filling her own order, Mallory can move the reference price by trading one lot with herself. % OB:251-265 (no trader check), 291; EM C2a, C2b
-In our test the last honest trade is at 2.0 and Carol holds a sell stop of 10 base with trigger 1.95 and limit 1.5; Mallory rests a bid of 10 at 1.5, then posts a one-lot ask at 1.95 and buys it herself, which fires the stop. % EV E2 setup; TermPaper.t.sol:173-180 (asserts :179-180)
-With no honest bids, the stop sells all 10 base into Mallory's bid at Carol's limit 1.5, so Carol receives 15.0 quote instead of 20.0 at the last honest price. % EV E2 table, depth 0
-Her shortfall is 5.0, 3.0 and 1.0 quote when honest bids of 0, 5 and 10 base wait at 1.90; at 10 base those bids absorb the whole stop, Mallory gains nothing, and the 1.0 is ordinary stop slippage. % EV E2 table; EM C2c
-Mallory's 5.0 gain at zero depth is a paper gain that values her base at 2.0. % EV E2 per-test review (1)
-A minimum order size does not change this: with a 0.1-base minimum the self-trade is simply 0.1 base and still nets to zero, and in our test the shortfall stays 5.0 (E8, one minimum and one depth). % EV E8 table; EM M1b
-Self-trades occurred on real order-book DEXs of 2017 to 2020 that kept their books off-chain, with 58{,}791 on EtherDelta alone~\cite{src12victor2021}. % [12] p. 9 Table 2, p. 2 (F1, F4); EM C2d (corrected)
-In foreign exchange data, stop orders cluster just beyond round numbers and rates trend faster once those levels are crossed, which Osler reads as evidence that stops may contribute to price cascades~\cite{src13osler2002sr}. % [13] p. 3, p. 7 Sec. I-A (F3, F4), pp. 10 to 12 (F5), p. 22; EM C2f (corrected)
-She reports deliberate stop running only as market lore, and her stops were private while ours are public; we found no crypto study of it (Section~\ref{sec:gap}). % [13] p. 3 (F7), p. 9 (F8); PHASE4_GAPS gap b
+Mallory can adjust the reference price by trading one lot against herself, because the engine does not prevent a trader from filling her own order. % EM C2a, C2b; OB:251-265 (no trader check)
+In our test the last honest trade is at 2.0, and Carol has placed a sell stop of 10 base at 1.95 with a limit of 1.5. % EV E2 setup
+Here, Mallory has placed a bid of 10 at 1.5 and an ask of one lot at 1.95, then buys that ask herself at 1.95, which triggers the stop order. % TermPaper.t.sol:173-180
+With no honest bids, the 10 base order is filled against Mallory's bid at Carol's limit of 1.5. % EV E2 depth 0
+Therefore, instead of receiving 20.0 quote at the last honest price, Carol receives 15.0 quote.
+Mallory's self trade to trigger Carol's stop order gains Mallory 5.0 quote at zero depth, a paper gain that values her base at 2.0. % EV E2 per-test review (1)
+When honest bids of 0, 5 and 10 base are waiting at 1.90, Carol's shortfall is 5.0, 3.0 and 1.0 quote; at 10 base the stop order is filled at 1.90, and Mallory gains nothing. % EV E2 table; EM C2c
+A minimum order size of 0.1 base does not change this, since the self-trade still nets to zero (E8). % EV E8; EM M1b
+In foreign exchange markets, Osler finds that stop orders cluster at round numbers and rates change more rapidly once these are crossed, and argues that stops may contribute to price cascades~\cite{src13osler2002sr}. % [13] p. 3, p. 7, pp. 10 to 12, p. 22; EM C2f
+Osler does cite stop running as an example of market lore, but in this case our stops are public and hers were private, and we found no crypto studies of it (Section~\ref{sec:gap}). % [13] p. 3 (F7), p. 9 (F8)
 
 \emph{C3, stop snipe.}
-The fill cap also applies when \texttt{triggerStopOrders} activates a stop, and one budget of ten fills is shared by every stop the call activates, so an activated stop that meets dust first can run out of fills and rest at its own limit. % OB:131, 141-142; EM C3a (corrected: the cap is the cause with one stop)
-In E3 the last trade was at 2.0, so Carol's sell stop of 10 base (trigger 2.0, limit 1.0) is already eligible, and Bob bids 10 at 2.0. % EV E3 setup
-Mallory places ten one-lot bids at 2.1, which outrank Bob's bid, and calls the trigger: Carol's sell spends its ten fills on the dust, and its remaining 9.99999999 base rest as an ask at her limit 1.0, crossed with Bob's bid. % EV E3 setup; OB:141-142
-Mallory buys that ask at 1.0 and sells the base to Bob at 2.0, so Carol receives 10.000000011 quote instead of 20.0 and Mallory keeps 9.999999989. % EV E3 setup and table; EM C3b
-The stop still executes within the limit Carol chose; the loss is against Bob's resting bid. % EM C3b
-An honest \texttt{matchOrders} between the trigger and the back-run defeats this version, as in C1, but Mallory can place the dust, call the trigger and back-run in one call: the same 9.999999989 profit for 3{,}588{,}665 gas in one transaction (E9). % EV E9 rows 2 and 3; EM C3d
+The fill cap also applies when \texttt{triggerStopOrders} activates a stop, so the stop's fills can be depleted by dust. % OB:131, 141-142; EM C3a
+In E3, the last trade was at 2.0. So Carol's sell stop of 10 base (trigger 2.0, limit 1.0) is already eligible and available to be filled. % EV E3 setup
+Bob places a bid of 10 at 2.0.
+Mallory places 10 one lot bids at 2.1, which is higher than Bob's bid, and calls the trigger. % EV E3 setup
+Carol's sell stop spends its 10 fills on the dust, and the remaining 9.99999999 base of its sell order is left at a limit of 1.0, crossed with Bob's bid. % OB:141-142
+Mallory buys it at 1.0 and sells it to Bob at 2.0.
+Thus Carol gets 10.000000011 quote instead of the 20.0 she expected, and Mallory gets a profit of 9.999999989 quote. % EV E3 table; EM C3b
+An honest \texttt{matchOrders} call between the trigger and the back-run defeats this, just like C1, but Mallory can also place the dust, call the trigger and back-run in one transaction, taking the same profit for 3{,}588{,}665 gas (E9). % EV E9 rows 2 and 3; EM C3d
 
-C3 is the stronger finding for three reasons. First, % EM C3d
- the one-transaction form leaves no window in which a keeper can act, so it needs no ordering control around Carol's transaction; the only race is to be first to call the trigger once the stop is eligible. % EV E9 "Proves"
-Second, in our setups it takes about half of the victim's proceeds (a limit half the trigger), against a third of what Carol should have paid in C1 at 33\% slack (5.0 of 15.0). % EV E3 (10 of 20); EV E1 33% row (5 of 15)
-Third, we argue it hits the order meant to protect the victim: a stop-loss limit is set a substantial distance away so that it executes in a fall, and that distance is what Mallory takes. % EV E3 setup (limit 1.0 vs trigger 2.0)
-Babel et al.\ describe the same pattern of ordering around a price source, an AMM price in their examples, to trigger liquidations and payouts~\cite{src08babel2023}, although not for stop orders. % [08] p. 18 Sec. 4.2 (F7); EM C3c
+C3 is the stronger finding for three reasons. % EM C3d
+First, the one-transaction method leaves no window of opportunity for a keeper to act, so no control over the ordering of Carol's transaction is needed. The only thing to race for is who is first to call the trigger. % EV E9
+Second, in our implementation, half of the victim's proceeds (a limit of half the trigger) is taken against a third of what Carol should have paid in C1 at 33\% slack (5 of 15). % EV E3, E1
+Third, we argue, a stop-loss limit is set a substantial distance away so that it executes in a price drop, and that distance is what Mallory takes. % EV E3 setup
+Babel et al.\ also describe ordering to trigger liquidations and payouts around an AMM price, though they do not discuss stop orders~\cite{src08babel2023}. % [08] p. 18 (F7); EM C3c
 
 \subsection{Dust Wall, a Security versus Scalability Trade-off}\label{sec:c4}
-The insertion cap that keeps placement gas bounded also allows 101 resting orders to obstruct the side of the book behind them, because a new order that would walk past more than 100 better-ranked orders reverts with \texttt{BookTooDeep}. % OB:21, 313-314, 327-328; EM C4a
-In E4 Mallory places 101 one-lot bids one tick below the best ask, after which every new non-crossing bid reverts, even one placed far below at 1.0. % EV E4 table; asserted TermPaper.t.sol:278-282
-A defender cleared the wall by selling into it and then calling \texttt{matchOrders} repeatedly, ten fills per transaction: 11 transactions and 8{,}056{,}221 gas, while building it cost Mallory 67{,}436{,}118 gas and locked only about $1.5\times10^{-7}$ quote. % EV E4 table (1.515e-7); asserted TermPaper.t.sol:298; CM griefing table
-The attack is cheap in capital but costs 8.4 times the defender's gas, consistent in direction with Grech et al.'s remark that adding an array element costs about an order of magnitude more gas than iterating over one more~\cite{src15grech2018}. % CM griefing table; [15] p. 23 Sec. 6.4 (F10); EM C4b, C4d
-Building the wall grows the book while clearing it only walks it, so we argue that gas is the attacker's only barrier, and a weak one where layer-one gas per operation is small, as on the rollup of Section~\ref{sec:motivation}; we did not measure the wall on a layer two. % [09] p. 7 Table 6 (F6, cited in Sec. II-A); EM S3; OPEN_QUESTIONS
-Issue 006 let an unplaceable stop at the head of the stop list, behind such dust, revert every \texttt{triggerStopOrders} call; the fix makes the engine cancel and refund any activated stop for which the book has no room, so the wall can no longer freeze activation but can still cancel another trader's stop. % docs/ai-audit/issues/006; OrderBook.Stop.t.sol:620; OB:142; EM C4c (corrected)
+The insertion cap also allows 101 resting orders to obstruct the side of the order book behind them. % OB:21; EM C4a
+An order that walks past more than 100 orders of higher rank is reverted by the system with the error \texttt{BookTooDeep}. % OB:313-314, 327-328
+In E4, Mallory places 101 one-lot bids one tick below the best ask. All other non-crossing bids are then reverted, even one placed far from the best ask, at a level of 1.0. % EV E4; TermPaper.t.sol:278-282
+A defender cleared the wall by selling into it and then repeatedly calling \texttt{matchOrders}. % EV E4
+This resulted in 11 transactions costing the defender 8{,}056{,}221 gas, while building the wall cost Mallory 67{,}436{,}118 gas and locked only about $1.5\times10^{-7}$ quote. % EV E4; TermPaper.t.sol:298; CM
+The attack is cheap in capital but costs 8.4 times the defender's gas, consistent with Grech et al.'s statement that adding an element to an array costs about 10 times the gas of iterating over one~\cite{src15grech2018}, so we argue that gas is the main limitation for the attack. % CM; [15] p. 23 (F10); EM C4b, C4d
+Building the wall increases the size of the order book, while clearing the wall only walks through the orders.
+Therefore, in the rollup of Section~\ref{sec:motivation}, where layer-one gas per operation is small, we argue that gas is a weak restriction on the attack. % [09] p. 7 Table 6; EM S3
+Bug 006 allowed an unplaceable stop order at the head of the stop order list, behind such dust, to cause all \texttt{triggerStopOrders} calls to revert. % docs/ai-audit/issues/006; EM C4c
+A fix to this issue caused the engine to cancel and refund the stop order, if there is no space in the order book to accommodate it. % OB:142; OrderBook.Stop.t.sol:620
+The wall can no longer block activation but can still cancel another trader's stop order.
 
 \subsection{Tokens and Keepers}\label{sec:c56}
-We reason about both from the code; neither has an experiment. % OPEN_QUESTIONS weak C5b, C6b
-\emph{C5.} Anyone can create a market for any 18-decimal token, and each fill pushes tokens to both traders inside settlement, so a token that refuses transfers to a chosen address would make every fill against that address revert. % MarketFactory.sol:27; OB:49, 296-298; EM C5a, C5b
-This is analogous to wallet griefing, where one failing push payment inside a loop blocks every recipient~\cite{src15grech2018}; no test reproduces it here. % [15] p. 7 to 8 Sec. 3.2 (F5); EM C5d
-\emph{C6.} \texttt{matchOrders} and \texttt{triggerStopOrders} pay their callers nothing, yet C1 and C3 are both decided by who calls first. % OB:103-119, 127-145; EM C6a
-Who pays to close an on-chain market is an open question in existing work~\cite{src09moosavi2023}, and we lack data on how long a crossed book or eligible stop would wait on a public chain. % [09] p. 11 to 12 Sec. 6.3 (F9); EM C6b caveat
+Without any tests, C5 states that since anyone is free to create a market for any 18-decimal token, and each fill pushes tokens to both traders in the settlement, having a token that refuses transfers to a given address would cause all fills against that address to revert. % MarketFactory.sol:27; OB:49, 296-298; EM C5a, C5b
+This is similar to griefing a wallet, where one failing payment in a loop blocks all payments to the recipients~\cite{src15grech2018}. % [15] p. 7 to 8 (F5); EM C5d
+C6 states that calls to \texttt{matchOrders} and \texttt{triggerStopOrders} pay their callers nothing, yet C1 and C3 are decided by who calls first, and who pays to close an on-chain market is an open question in existing work~\cite{src09moosavi2023}. % OB:103-145; [09] p. 11 to 12 (F9); EM C6a, C6b
+We also do not have information on the expected time a crossed book or an eligible stop order would wait to be executed on a public blockchain. % EM C6b caveat
