@@ -12,6 +12,13 @@
 \usepackage{tikz}
 % Optional Fig. 2 (E1 loss vs slack) was cut in stage 3, so pgfplots is no longer loaded.
 
+% Authors' request (2026-11-27): "Abstract." and "Index Terms." instead of IEEEtran's em dash.
+% Same as IEEEtran.cls two-column branch (lines 5275-5292) with "---" replaced by ".\ ".
+\makeatletter
+\def\abstract{\normalfont\@IEEEabskeysecsize\bfseries\textit{\abstractname}.\ \relax\@IEEEgobbleleadPARNLSP}
+\def\IEEEkeywords{\normalfont\@IEEEabskeysecsize\bfseries\textit{\IEEEkeywordsname}.\ \relax\@IEEEgobbleleadPARNLSP}
+\makeatother
+
 \begin{document}
 
 \title{Economic Security of a Fully On-Chain Limit Order Book with Bounded Loops and Open Books}
@@ -63,8 +70,9 @@ Decentralized exchange, limit order book, front-running, transaction ordering, e
 \section*{Appendix: Reproducing Table I}
 % Pointers: evidence/README.md header and per-experiment headings; evidence/rerun-2026-11-25.txt; STAGE_LOG stage 1.
 {\footnotesize\raggedright
-From \texttt{contracts/}, run \texttt{forge test -{}-match-path "test/termpaper/*" -{}-isolate -vv} with \texttt{forge} 1.8.6; all 16 term-paper tests and the full suite of 351 passed on Nov. 25, 2026. % EV header; evidence/rerun-2026-11-25.txt; evidence/fullsuite-2026-11-25.txt (raw, saved in stage 4); forge commit 6bad0a6
-The engine is identical to commit 8753521~\cite{repo8753521}; the tests \texttt{TermPaper.t.sol}, \texttt{TermPaperGaps.t.sol} and the research copy \texttt{OrderBookMitigated.sol} are in \texttt{contracts/test/termpaper/} on branch \texttt{term-paper/research}. % git diff 8753521 HEAD -- contracts/src empty (STAGE_LOG stage 1)
+\noindent\textit{Command.} From \texttt{contracts/}, run \texttt{forge test -{}-match-path "test/termpaper/*" -{}-isolate -vv} with Foundry \texttt{forge} 1.8.6.\par % EV header; forge commit 6bad0a6
+\noindent\textit{Result.} All 16 term-paper tests and the full suite of 351 tests passed on Nov.~25, 2026.\par % evidence/rerun-2026-11-25.txt; evidence/fullsuite-2026-11-25.txt (raw, saved in stage 4)
+\noindent\textit{Code.} The engine is identical to commit 8753521~\cite{repo8753521}. The tests \texttt{TermPaper.t.sol} and \texttt{TermPaperGaps.t.sol} and the research copy \texttt{OrderBookMitigated.sol} are in \texttt{contracts/test/termpaper/} on branch \texttt{term-paper/research}. % git diff 8753521 HEAD -- contracts/src empty (STAGE_LOG stage 1)
 % Row tests are named test_E1_* to test_E10_*; per-row names in evidence/README.md. % evidence/README.md E1 to E4, E8, E9 headings (row tests: E1 sandwich_limitSlackSweep rows 1-2; E9 keeperClearsBeforeBackrun_sandwich 3; E2 stopHunt_depthSweep 4-5; E8 stopHunt_withMinOrder 6; E3 stopSnipe_originalEngine 7; E9 atomicSnipe_noOrderingNeeded 8; E4 dustGrief_blocksBidSide 9)
 \par}
 
