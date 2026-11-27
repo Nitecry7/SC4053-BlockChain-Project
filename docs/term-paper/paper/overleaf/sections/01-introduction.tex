@@ -1,19 +1,21 @@
 \section{Introduction}\label{sec:intro}
-% Owner: Both. Budget 0.55 page. Plan: ../OUTLINE_V2.md section I.
+% Owner: Both. Plan: ../OUTLINE_V2.md section I. Author rewrite (2026-11-27), corrected against the evidence.
 % Pointers: EV = evidence/README.md, CM = evidence/COST_MODEL.md, EM = EVIDENCE_MAP.md row, OB = contracts/src/OrderBook.sol.
 
-A blockchain is a shared ledger that every node can check, and on it a decentralized exchange (DEX) uses smart contracts so that traders keep custody of their funds until a trade settles, with no operator.
-Three concerns shape any DEX design: \emph{security}, meaning that funds and trades behave as users intend even against an adversary; \emph{privacy}, meaning what the public ledger reveals about traders; and \emph{scalability}, meaning how much trading the chain can process and at what cost.
+A blockchain is a shared ledger that every node can check, and a decentralized exchange (DEX) uses smart contracts on it to let users trade tokens without a central operator.
+Traders in our application submit orders to the smart contract, which holds their tokens until the order is executed or canceled. % OB:214-221 (_pullEscrow), 226-239 (_closeAndRefund)
+Risks for any DEX design include \emph{security}, \emph{privacy} and \emph{scalability}.
+Security risk concerns safeguarding users' funds and executing trades as intended in the face of malicious attacks; privacy risk concerns the information the public blockchain reveals about traders; and scalability risk concerns how many transactions the blockchain can process and at what cost.
 
-Our group built a DEX for an Ethereum-compatible chain~\cite{repo8753521}. % repo at commit 8753521
-The system has three parts: a token factory that mints fixed-supply tokens following the ERC-20 token standard, a market factory that deploys a separate market for each token pair, and a web front end that connects to the user's wallet. % TokenFactory.sol:25, DemoToken.sol:6-12, MarketFactory.sol:27
-Each market is an on-chain limit order book supporting escrow, partial fills, cancellation, stop-limit orders and a public function that matches a crossed book. % OB:58-145
-Traders quote their own prices, and each trade settles at the price of the order already resting in the book, the \emph{maker}; this makes each market a limit order book rather than an automated market maker (AMM). % OB:276
+Our group developed a DEX for an Ethereum-compatible chain~\cite{repo8753521}. % repo at commit 8753521
+The system consists of a token factory, a market factory and a web interface built with Next.js. % TokenFactory.sol, MarketFactory.sol, web/package.json (next 16.4.5)
+The token factory mints fixed-supply tokens following the ERC-20 token standard, and the market factory deploys a separate market for each token pair. % TokenFactory.sol:25, DemoToken.sol:6-12, MarketFactory.sol:27
+The web interface lets traders connect their wallet and place orders, and each market is an on-chain limit order book that supports escrow, partial fills, cancellation, stop-limit orders and a public function that matches a crossed book. % OB:58-145
+Users set their own prices, and each trade executes at the price of the order already resting in the book, the \emph{maker}; this makes it a limit order book rather than an automated market maker (AMM). % OB:276
 Every loop that changes state has a fixed limit, which keeps the gas of each call bounded, and every order, including each stop's trigger, is public. % OB:20-21, 106, 132, 255, 327; IOrderBook.sol:49 (getOrder returns triggerPrice); EM S1, S6
 
-We study security, framed as \emph{economic} security under transaction ordering: whether a trader can lose value to an adversary who only places legal orders and chooses when they land.
-Our thesis is that an engine can keep every token accounted for and every fill within its limit price while its gas bounds and open data still let an adversary move value away from honest traders. % EM S1, C1b, C3b; [08] p. 5 (F1)
-We make three contributions: we reproduce and measure four attacks as deterministic tests (a fill-cap sandwich, a stop hunt, a stop snipe that fits in one transaction and a dust wall that blocks one side of the book; Section~\ref{sec:analysis}); % EV E1 to E4, E8, E9
-we implement two mitigations in a research copy of the engine (a modified copy kept only for experiments) and measure what they change and what they leave open, including a case where one turns theft into a delay that we extrapolate to $10^{9}$ rounds (Section~\ref{sec:m12}); % EV E5 to E7, E10; RC only
-and we map the remaining mitigations to their targets, status and evidence strength (Section~\ref{sec:solutions}). % Table II; EM part B
-All results come from reproducible Foundry tests on a local chain; we did not deploy publicly and had no external audit. % EV header; scope rule (00-RULES)
+This paper focuses on the economic security of our DEX against malicious order flow: whether an attacker can extract value from honest users by exploiting the interaction between public order data, order execution limits and order matching rules. % EM S1, C1b, C3b; [08] p. 5 (F1)
+We implemented and measured four attacks: a fill-cap sandwich, a stop hunt, a stop snipe that fits in one transaction, and a dust wall that obstructs order placement (Section~\ref{sec:analysis}). % EV E1 to E4, E8, E9
+We then tried two mitigations in a research copy of the engine (a modified copy kept only for experiments) and measured their effect, including a case where one of them turns theft into a delay that we extrapolate to $10^{9}$ rounds (Section~\ref{sec:m12}). % EV E5 to E7, E10; RC only
+From these tests and the literature, we map each remaining mitigation to its targets, status and strength of evidence (Section~\ref{sec:solutions}). % Table II; EM part B
+All results come from local Foundry tests; we did not deploy publicly and had no external audit. % EV header; scope rule (00-RULES)
