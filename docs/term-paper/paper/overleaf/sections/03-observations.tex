@@ -84,7 +84,7 @@ Building the wall grows the book while clearing it only walks it, so we argue th
 Issue 006 in our bug log let an unplaceable stop at the head of the stop list, behind such dust, revert every \texttt{triggerStopOrders} call; the fix makes the engine cancel and refund any activated stop for which the book has no room, so the wall can no longer freeze activation but can still wipe out another trader's stop. % docs/ai-audit/issues/006; OrderBook.Stop.t.sol:620; OB:142; EM C4c (corrected)
 
 \subsection{C5 and C6: Tokens and Keepers}\label{sec:c56}
-These two are reasoning from the code without an experiment. % OPEN_QUESTIONS weak C5b, C6b
+We reason about both from the code; neither has an experiment. % OPEN_QUESTIONS weak C5b, C6b
 \emph{C5.} Anyone can create a market for any 18-decimal token, and each fill pushes tokens to both traders inside settlement, so a token that refuses transfers to a chosen address would make every fill against that address revert. % MarketFactory.sol:27; OB:49, 296-298; EM C5a, C5b
 This is analogous to wallet griefing, where one failing push payment inside a loop blocks every recipient~\cite{src15grech2018}; no test reproduces it here. % [15] p. 7 to 8 Sec. 3.2 (F5); EM C5d
 \emph{C6.} \texttt{matchOrders} and \texttt{triggerStopOrders} pay their callers nothing, yet C1 and C3 are both decided by who calls first. % OB:103-119, 127-145; EM C6a
