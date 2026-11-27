@@ -14,18 +14,20 @@
 
 \begin{document}
 
-\title{Bounded Loops, Open Books: Economic Security of a Fully On-Chain Limit Order Book}
+\title{Economic Security of a Fully On-Chain Limit Order Book with Bounded Loops and Open Books}
 
 % Author block as supplied on 2026-11-25. TODO (humans): fill matriculation numbers and emails. Never invent.
 \author{\IEEEauthorblockN{Kumar Advaith}
-\IEEEauthorblockA{College of Computing and Data Science\\
-Nanyang Technological University\\
+\IEEEauthorblockA{\textit{College of Computing and Data Science}\\
+\textit{Nanyang Technological University}\\
+Singapore\\
 TODO: matriculation number\\
 TODO: email}
 \and
 \IEEEauthorblockN{Muhammadh Faheem Faizal}
-\IEEEauthorblockA{College of Computing and Data Science\\
-Nanyang Technological University\\
+\IEEEauthorblockA{\textit{College of Computing and Data Science}\\
+\textit{Nanyang Technological University}\\
+Singapore\\
 TODO: matriculation number\\
 TODO: email}}
 
@@ -35,10 +37,10 @@ TODO: email}}
 % Stage 4 revision. Pointers: EV = evidence/README.md. Rows S1, C1b, C3d, M2a, M1d.
 Correct bookkeeping does not protect a decentralized exchange's traders from whoever controls transaction order.
 We study this in our fully on-chain limit order book, with gas-bounded loops and public orders, and reproduce four attacks in local Foundry tests. % EV E1 to E4, E8, E9
-Ten one-lot (dust) orders exhaust a buyer's ten-fill budget; if the attacker's follow-up lands before anyone clears the book, a buyer whose limit is 33\% above the ask pays 5.0 extra quote on a 15.0 trade. % EV E1 33% row; E9 keeper
+Ten one-lot (dust) orders exhaust a buyer's ten-fill budget; if the attacker's follow-up lands before anyone clears the book, a buyer whose limit is 33 percent above the ask pays 5.0 extra quote on a 15.0 trade. % EV E1 33% row; E9 keeper
 A one-lot self-trade fires a stop order, and a stop can be sniped for half its proceeds in our test, in one transaction that no keeper can interrupt once the attacker triggers it first. % EV E2, E9 atomic
-A wall of 101 dust bids blocks new non-crossing bids but costs the attacker 8.4 times the gas a defender needs to clear it. % EV E4; COST_MODEL griefing table
-In a research copy of the engine, canceling a still-crossed remainder removes the sandwich and snipe profits but, used alone, turns theft into an extrapolated $10^{9}$-round delay and cancels the sniped stop; a 0.1-base minimum bounds the delay to 10 rounds. % EV E5, E7, E10
+A wall of 101 dust bids blocks new non-crossing bids but costs the attacker 8.4 times the gas needed to clear it. % EV E4; COST_MODEL griefing table
+In a research copy of the engine, canceling a still-crossed remainder removes the sandwich and snipe profits but, used alone, turns theft into an extrapolated billion-round delay and cancels the sniped stop; a 0.1-base minimum bounds the delay to 10 rounds. % EV E5, E7, E10
 We recommend both, plus redesigned stop activation.
 \end{abstract}
 
@@ -54,8 +56,8 @@ Decentralized exchange, limit order book, front-running, transaction ordering, e
 
 % AI-use acknowledgement: no course rule stated for the term paper (confirmed 2026-11-25). Short placeholder,
 % wording to be written and approved by both authors. Never invent details of use.
-\section*{Acknowledgment of AI Use}
-TODO (both authors): how AI tools were used.
+\section*{Acknowledgment}
+TODO: how artificial intelligence tools were used.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
@@ -67,7 +69,7 @@ TODO (both authors): how AI tools were used.
 {\footnotesize\raggedright
 From \texttt{contracts/}, run \texttt{forge test -{}-match-path "test/termpaper/*" -{}-isolate -vv} with \texttt{forge} 1.8.6; all 16 term-paper tests and the full suite of 351 passed on Nov. 25, 2026. % EV header; evidence/rerun-2026-11-25.txt; evidence/fullsuite-2026-11-25.txt (raw, saved in stage 4); forge commit 6bad0a6
 The engine is identical to commit 8753521~\cite{repo8753521}; the tests \texttt{TermPaper.t.sol}, \texttt{TermPaperGaps.t.sol} and the research copy \texttt{OrderBookMitigated.sol} are in \texttt{contracts/test/termpaper/} on branch \texttt{term-paper/research}. % git diff 8753521 HEAD -- contracts/src empty (STAGE_LOG stage 1)
-TODO (humans): replace this sentence with the public commit of the branch once it is pushed.
+TODO: public commit of the branch.
 % Row tests are named test_E1_* to test_E10_*; per-row names in evidence/README.md. % evidence/README.md E1 to E4, E8, E9 headings (row tests: E1 sandwich_limitSlackSweep rows 1-2; E9 keeperClearsBeforeBackrun_sandwich 3; E2 stopHunt_depthSweep 4-5; E8 stopHunt_withMinOrder 6; E3 stopSnipe_originalEngine 7; E9 atomicSnipe_noOrderingNeeded 8; E4 dustGrief_blocksBidSide 9)
 \par}
 

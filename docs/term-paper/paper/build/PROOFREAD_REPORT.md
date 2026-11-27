@@ -139,3 +139,25 @@ Recompiled (pdflatex, bibtex, pdflatex x2): 6 pages, about 5.98 page-equivalents
 | R3 publisher field | A choice: add IEEE/USENIX publishers to match the ACM entries, or drop "ACM" from [4], [9], [13], [16] |
 | R4 DOIs | A choice: enable DOI printing (costs space; the paper has about 0.02 page left) or keep the IEEEtran default |
 | N6 appendix heading | A choice: keep the merged "Appendix: Reproducing Table I" (saves a line) or restore IEEE `\appendix` |
+
+## IEEE conference template conformance (applied after the proofread fixes)
+Checked against the IEEE conference template source on Overleaf
+(https://www.overleaf.com/latex/templates/ieee-conference-latex-template/hkfsmxcvymyk). IEEE's own templates page
+returned an empty response and could not be checked.
+
+| Template rule | Change |
+|---|---|
+| "Use the abbreviation Fig.~\ref{fig}, even at the beginning of a sentence" | Reverted proofread fix N1: "Figure 1 traces" back to "Fig. 1 traces" (N1 was wrong for this template) |
+| No symbols, special characters or math in the title or abstract | Abstract: "$10^{9}$-round" to "billion-round", "33%" to "33 percent"; "the gas a defender needs" to "the gas needed" to stay within 180 words (now 179) |
+| Figure labels in 8 point | Fig. 1 keeper note raised from 7 pt to 8 pt and split over two lines; steps 3 and 4 moved down |
+| Sub-titles should not be used | Title "Bounded Loops, Open Books: Economic Security of a Fully On-Chain Limit Order Book" to "Economic Security of a Fully On-Chain Limit Order Book with Bounded Loops and Open Books" (same words, no colon) |
+| Author fields: dept., organization, City, Country, email | Added "Singapore"; department and organization in italics as in the template; matriculation-number and email placeholders kept |
+| No abbreviations in headings unless unavoidable; heading "Acknowledgment" | Headings no longer carry C, M or AI labels; the C1 to C6 names are given in the Notation paragraph, and IV-A and IV-B name the labels in their first sentence; heading is now "Acknowledgment" |
+
+Space: these changes added about seven lines and pushed the appendix onto page 7. Recovered by shortening words
+only, with no claim, hedge or open point removed: scope sentence ("did not deploy publicly and had no external
+audit"), "open problem", "already public", "None is implemented", "futures and equity markets", "makes the victim the
+maker", "E10 assumes Mallory sees every resubmission", and the two placeholders ("TODO: how artificial intelligence
+tools were used", "TODO: public commit of the branch").
+Final compile: 6 pages (US Letter), 0 errors, 0 overfull boxes, 0 undefined references; the last page is full, so
+any further addition needs a matching cut.
